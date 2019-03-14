@@ -1,15 +1,13 @@
 
 #if !defined(__CINT__) || defined(__MAKECINT__)
-#include "makeBKGInputs.C"
+#include "makeDileptonBKGInputs.C"
 #endif
 
-void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string treeDir = "../trees/"){
+void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_NOM, std::string treeDir = "../BETrees/"){
     if(doTopRegion){
         hadCuts[HAD_NONE].cut = preSel.cut;
-        hadCuts[HAD_LB].cut   = preSel.cut+"&&"+wjjBC.cut;
-        hadCuts[HAD_LT].cut   = preSel.cut+ "&&"+abV.cut;
-        hadCuts[HAD_LTMB].cut = preSel.cut ;
-        hadCuts[HAD_FULL].cut = preSel.cut + "&&"+abV.cut+"&&"+wjjBC.cut;
+        hadCuts[HAD_RPhiB].cut = preSel.cut+"&&"+dR.cut+"&&"+mllV.cut+"&&"+metC.cut;
+        hadCuts[HAD_FULL].cut = preSel.cut+"&&"+dR.cut+"&&"+dPhi.cut+"&&"+mllV.cut+"&&"+metC.cut+"&&"+abV.cut;
 
 
 //        hadCuts[HAD_NONE].cut = preSel.cut;
@@ -20,11 +18,11 @@ void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string 
 
 
         hhFilename +="_TopCR";
-        go(bkgToDo,treeDir+"/bkgCompLMT/");
+        go(bkgToDo,treeDir);
     } else {
         btagCats = qgBtagCats;
         hhFilename +="_QGCR";
-        go(bkgToDo,treeDir+"/bkgCompAB/");
+        go(bkgToDo,treeDir);
     }
 
 }
