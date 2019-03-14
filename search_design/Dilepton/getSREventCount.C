@@ -44,7 +44,7 @@ public:
 
     void plotVars(TString sn, TString plotID) {
     	plotter.getOrMake1DPre(smpName+sn+plotID,"ht",";H_{T}",100,0,4000)->Fill(ht_puppi,weight);
-    	plotter.getOrMake1DPre(smpName+sn+plotID,"Mbb",";M_{bb}",40,30,210)->Fill(hbbMass,weight);
+    	plotter.getOrMake1DPre(smpName+sn+plotID,"Mbb",";M_{bb}",30,30,210)->Fill(hbbMass,weight);
     	plotter.getOrMake1DPre(smpName+sn+plotID,"Mhh",";M_{HH}",100,0,4500)->Fill(hh.mass(),weight);
     	plotter.getOrMake1DPre(smpName+sn+plotID,"Mww",";M_{WW}",100,0,400)->Fill(hww.mass(),weight);
 
@@ -52,7 +52,7 @@ public:
 
     	if (!isSignal()) {
         	plotter.getOrMake1DPre("bkg"+sn+plotID,"ht",";H_{T}",100,0,4000)->Fill(ht_puppi,weight);
-        	plotter.getOrMake1DPre("bkg"+sn+plotID,"Mbb",";M_{bb}",40,30,210)->Fill(hbbMass,weight);
+        	plotter.getOrMake1DPre("bkg"+sn+plotID,"Mbb",";M_{bb}",30,30,210)->Fill(hbbMass,weight);
         	plotter.getOrMake1DPre("bkg"+sn+plotID,"Mhh",";M_{HH}",100,0,4500)->Fill(hh.mass(),weight);
         	plotter.getOrMake1DPre("bkg"+sn+plotID,"Mww",";M_{WW}",100,0,400)->Fill(hww.mass(),weight);
 

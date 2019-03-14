@@ -27,14 +27,14 @@ fi
 mkdir ${dirName}
 cd ${dirName}
 mkdir plots
-RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${signal},${condSignal})'"
+RCMD="root -l -b -q '${macroLoc}/makeDileptonCard.C+(${runSR},${signal},${condSignal})'"
 eval $RCMD
 . comp.sh
 cd ..
-RCMD="scp -r ${dirName} cmslpc26.fnal.gov:/uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/combineWork/"
-if [ "${runSR}" = "0" ]; then
-    eval $RCMD
-fi
+#RCMD="scp -r ${dirName} cmslpc26.fnal.gov:/uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/combineWork/"
+#if [ "${runSR}" = "0" ]; then
+#    eval $RCMD
+#fi
 cd ${dirName}
 RCMD="text2workspace.py combinedCard.txt -o combined.root"
 eval $RCMD

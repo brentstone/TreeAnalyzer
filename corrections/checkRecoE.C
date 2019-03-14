@@ -104,6 +104,26 @@ public:
     	plotter.getOrMake1DPre(smpName+"e_reco","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
 //    	if (el->absEta() <= 1.479) plotRecoVars(smpName+"_barrel_",el,e_idx);
 //    	else plotRecoVars(smpName+"_endcap_",el,e_idx);
+
+    	const GenParticle* nearQ = 0;
+    	double minDR2 = 6;
+    	for(const auto& g : reader_genpart->genParticles){
+    	    if(!ParticleInfo::isDoc(g.status())) continue;
+    	    if(!ParticleInfo::isLastInChain(&g)) continue;
+    	    const int pdg = std::abs(g.pdgId());
+    	    if(!(ParticleInfo::p_d <= pdg && pdg < ParticleInfo::p_t)) continue;
+    	    const float dr2 = PhysicsUtilities::deltaR2(g,*genlep);
+    	    if(dr2 > minDR2) continue;
+    	    minDR2 = dr2;
+    	    nearQ = &g;
+    	}
+
+    	float HoEtower = (*reader_electron->hcalOverEcalBc)[e_idx];
+    	float HoEcone = (*reader_electron->hcalOverEcal)[e_idx];
+
+    	plotter.getOrMake2DPre(smpName,"cone",";#DeltaR;H/E (cone)",20,0,1,20,0,3)->Fill(std::sqrt(minDR2),HoEcone,weight);
+    	plotter.getOrMake2DPre(smpName,"tower",";#DeltaR;H/E (tower)",20,0,1,20,0,3)->Fill(std::sqrt(minDR2),HoEtower,weight);
+
         return true;
     }
 

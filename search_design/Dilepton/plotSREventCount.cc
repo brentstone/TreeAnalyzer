@@ -45,6 +45,8 @@ void plotSREventCount() {
     		TH1F *h1l = (TH1F*)f1l->Get("bkg_"+histID);
     		TH1F *hot = (TH1F*)fother->Get("bkg_"+histID);
     		TH1F *hTO = (TH1F*)fbkg->Get("bkg_"+histID);
+    		TH1F *h10 = (TH1F*)fsig->Get("m1000_"+histID);
+    		TH1F *h25 = (TH1F*)fsig->Get("m2500_"+histID);
 
     		if (pane.first.BeginsWith("mu")) { // same flavor leptons
     			TString eeID = "ee_SR_btagLMT_incl_"+var;
@@ -53,20 +55,27 @@ void plotSREventCount() {
     			h1l->Add((TH1F*)f1l->Get("bkg_"+eeID));
     			hot->Add((TH1F*)fother->Get("bkg_"+eeID));
     			hTO->Add((TH1F*)fbkg->Get("bkg_"+eeID));
+    			h10->Add((TH1F*)fsig->Get("m1000_"+eeID));
+    			h25->Add((TH1F*)fsig->Get("m2500_"+eeID));
     		}
 
     		p->addHistLine(hTO,"total bkg");
     		p->addHistLine(hdy,"Drell-Yan");
-    		p->addHistLine(htt,"tbar 2l");
-    		p->addHistLine(h1l,"1l fakes");
+    		p->addHistLine(htt,"t#bar{t} 2l");
+    		p->addHistLine(h1l,"t#bar{t} 1l");
     		p->addHistLine(hot,"others");
 
     		if (var=="Mbb") {
         		if (pane.second == "Incl") {
-            		pp->addStackHist(htt,"tbar 2l");
+            		pp->addStackHist(htt,"t#bar{t} 2l");
             		pp->addStackHist(hdy,"Drell-Yan");
-            		pp->addStackHist(h1l,"1l fakes");
-            		pp->addStackHist(hot,"others");
+            		pp->addStackHist(h1l,"t#bar{t} 1l");
+            		pp->addStackHist(hot,"Other SM");
+
+            		h10->Scale(0.01);
+            		h25->Scale(0.01);
+            		pp->addHistLine(h10,"1 TeV Spin-0");
+            		pp->addHistLine(h25,"2.5 TeV Spin-0");
         		}
     		}
 

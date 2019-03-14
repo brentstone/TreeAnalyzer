@@ -799,6 +799,6 @@ void go(int step,int sig, std::string treeDir) {
 }
 #endif
 
-void makeSignalInputs(int step = 0,int sigToDo = RADION,std::string treeDir = "../trees/"){
+void makeSignalInputs(int step = 0,int sigToDo = RADION,std::string treeDir = "/Users/brentstone/Dropbox/Physics/HHbbWW/BETrees/"){
     go(step,sigToDo,treeDir);
 }
