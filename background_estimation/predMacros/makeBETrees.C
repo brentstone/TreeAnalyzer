@@ -102,6 +102,8 @@ public:
     	outTree->addSingle(hwwPT_,  "",  "hwwPT");
     	outTree->addSingle(hwwChi_,  "",  "hwwChi");
         outTree->addSingle(hwwLi_,  "",  "hwwLi");
+        outTree->addSingle(wwDM_,  "",  "wwDM");
+
     	outTree->addSingle(wjjTau2o1_,  "",  "wjjTau2o1");
     	outTree->addSingle(wjjMass_,  "",  "wjjMass");
     	outTree->addSingle(wlnuMass_,  "",  "wlnuMass");
@@ -182,6 +184,7 @@ public:
 
             hwwChi_  = hwwChi;
             hwwLi_  = hwwLi;
+            wwDM_ = wwDM;
             wlnuMass_ = wlnu.mass();
             wlnuPT_    = wlnu.pt();
 
@@ -227,6 +230,7 @@ public:
 
             hwwChi_  = 0;
             hwwLi_   = 0;
+            wwDM_   = 0;
             wlnuMass_ = 0;
             wlnuPT_   = 0;
             wjjTau2o1_ = 0;
@@ -393,6 +397,7 @@ public:
     float hhMassBasic_ = 0;
     float hwwChi_   = 0;
     float hwwLi_   = 0;
+    float wwDM_   = 0;
 
     float wjjTau2o1_ = 0;
     float wjjMass_   = 0;
