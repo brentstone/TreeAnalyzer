@@ -117,7 +117,7 @@ Lepton* SignalHelper::getMatchedLepton(const GenParticle* genLep,double maxDR) {
 	if(genLep->absPdgId() == ParticleInfo::p_muminus){
 	    if(!candMuons.size()) return 0;
    	    for (const auto& mu : candMuons) {
-   		    if ((mu->q() > 0) == (genLep->pdgId() > 0)) continue;
+   		    if ((mu->q() > 0) == (genLep->pdgId() > 0)) continue; // pdgid convention
    	        double dr = PhysicsUtilities::deltaR(*genLep,*mu);
    	        if (dr < nearestDR) {
    	            nearestDR = dr;
@@ -130,7 +130,7 @@ Lepton* SignalHelper::getMatchedLepton(const GenParticle* genLep,double maxDR) {
     } else {
 	    if(!candElectrons.size()) return 0;
    	    for (const auto& el : candElectrons) {
-   		    if ((el->q() > 0) == (genLep->pdgId() > 0)) continue;
+   		    if ((el->q() > 0) == (genLep->pdgId() > 0)) continue; // pdgid convention
    	        double dr = PhysicsUtilities::deltaR(*genLep,*el);
    	        if (dr < nearestDR) {
    	            nearestDR = dr;

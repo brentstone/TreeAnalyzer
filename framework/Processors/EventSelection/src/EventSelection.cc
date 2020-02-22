@@ -221,7 +221,7 @@ float get2017CrossTrigWeight(const EventReader& reader_event ) {
 
     const bool passFullNoCross = passMuon || passEle || passMET || passJetHT || passPhoton;
 
-    double lumiwt = 0.884; // ratio of CDEF lumi / BCDEF lumi since these cross triggers unavailable in RunB
+    double lumiwt = 0.8845; // ratio of lumi that the *15_IsoVVVL_PFHT450 triggers were on / full 2017 recorded lumi (brilcalc)
     if( (passMuCross || passElCross) && !passFullNoCross) return lumiwt;
     return 1.0;
 
