@@ -12,13 +12,14 @@ parser.add_argument("-b", "--runBatch",      dest="runBatch", action='store_true
 parser.add_argument("-i", "--input",         dest="input", default="procdatasets.conf", help="input config or directory [Default: procdatasets.conf]")
 parser.add_argument("-o", "--outputDir",     dest="outdir", default="out", help="Output directory for ntuples. [Default: \"out\"]")
 parser.add_argument("-j", "--jobdir"       , dest="jobdir", default="jobs", help="Directory for job files  [Default: jobs]")
-parser.add_argument("-r", "--runningDir"    , dest="runningDir", default="running/", help="Where to find helper files for running  [Default: running/]")
+parser.add_argument("-r", "--runningDir"   , dest="runningDir", default="running/", help="Where to find helper files for running  [Default: running/]")
 parser.add_argument("-s", "--runScript"    , dest="runScript", default="running/batchScript.sh", help="File that tells condor how to run  [Default: running/batchScript.sh]")
 parser.add_argument("-c", "--compCommand"  , dest="compCommand", default="running/saComp.C", help="File with to make the macro compilable for batch (use none if not needed) [Default: running/saComp.C]")
 parser.add_argument("-l", "--libDir"       , dest="libDir", default="$CMSSW_BASE/../TreeAnalyzer/framework/", help="Include location for batch (use none if not needed) [Default: $CMSSW_BASE/../TreeAnalyzer/framework/]")
 parser.add_argument("-n", "--numFiles",      dest="numFiles", default=5, help="Number of files per job if no config [Default: 5]")
 parser.add_argument("-t", "--treeInt",       dest="treeInt" , default=1, help="treeInt if no config [Default: 1]")
 parser.add_argument("-d", "--dataDir",       dest="datadir" , default="data", help="where the data directory is (for batch mode) [Default: data]")
+parser.add_argument("-f", "--outFileName",   dest="outFileName" , default="submitall.sh", help="name of the shell script which executes all the jobs submissions")
 if len(sys.argv)==1:
     parser.print_help()
     sys.exit(1)
@@ -207,7 +208,7 @@ else :
                          match.group(3),match.group(4))
         
 if args.runBatch:
-    subscript = open("submitall.sh", "w")
+    subscript = open(args.outFileName, "w")
     subscript.write("#!/bin/bash\n")
     for line in outList :
         subscript.write("%s\n" % line)
