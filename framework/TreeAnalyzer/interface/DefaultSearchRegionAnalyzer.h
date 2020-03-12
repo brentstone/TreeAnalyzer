@@ -206,6 +206,8 @@ private:
     void resetHHInfo();
 
     void fillEventWeight();
+
+    bool isHEMandNot2018();
 public:
     float getXSecWeight();
     float getTriggerWeight();

@@ -169,12 +169,12 @@ bool DefaultSearchRegionAnalyzer::hasPromptLeptons() const {
 
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
+    if(isHEMandNot2018()) return false;
     fillEventLabels();
 
     if(*reader_event->dataEra != lastEra){
         setupParameters();
     }
-
     correctJetsAndMET();
 
     fillGenInfo();
@@ -211,7 +211,7 @@ void DefaultSearchRegionAnalyzer::fillEventLabels() {
 
 
 void DefaultSearchRegionAnalyzer::correctJetsAndMET() {
-    if(!isRealData()) return;
+    if(isRealData()) return;
 
     if(isCorrOn(CORR_JES) ){
         Met dummyMET =reader_event->met;
@@ -388,8 +388,8 @@ void DefaultSearchRegionAnalyzer::fillOneLepHWWInfo() {
     neutrino = hwwInfoLi.neutrino;
     wlnu     = hwwInfoLi.wlnu;
     wqq      = hwwInfoLi.wqqjet;
-    wwDM     = PhysicsUtilities::deltaR( wlnu,wqq) * hWW.pt()/2.0;
     hWW      = hwwInfoLi.hWW;
+    wwDM     = PhysicsUtilities::deltaR( wlnu,wqq) * hWW.pt()/2.0;
 }
 void DefaultSearchRegionAnalyzer::fillTwoLepHWWInfo() {
     hWW = Hww2lSolver::getSimpleHiggsMom(dilep1->p4()+dilep2->p4(),reader_event->met,
@@ -478,6 +478,12 @@ float DefaultSearchRegionAnalyzer::getAK4BTagWeights() {
 }
 float DefaultSearchRegionAnalyzer::getTopPTWeight() {
     return topPTProc->getCorrection(mcProc,smDecayEvt);
+}
+
+bool DefaultSearchRegionAnalyzer::isHEMandNot2018() {
+	if(!isCorrOn(CORR_HEM1516)) return false;
+	if(FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018) return false;
+	return true;
 }
 }
 //--------------------------------------------------------------------------------------------------
