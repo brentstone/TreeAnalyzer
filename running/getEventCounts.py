@@ -66,7 +66,7 @@ def addSample(name,datarun,cross,dasName,configs) :
     	totNumE = nposevents
     
     if totNumE > 0 :
-       cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(1 if datarun.startswith("MC") else 0 ),cross,str(totNumE),args.dataDir))
+       cfgLine = ("%s\t%s\t%s\t%s\t10\t%s" % (name,str(1 if datarun.startswith("MC") else 0 ),cross,str(totNumE),args.dataDir))
        configs.append(cfgLine)
 
 outputLines = []
