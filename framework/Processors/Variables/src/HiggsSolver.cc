@@ -607,7 +607,7 @@ void HSolverLi::resetAltParameters(Minimizer& min) {
     min.SetVariable(HSolverLiAltFunction::HWW_MASS  ,"HWW_MASS",125,500);
 }
 //--------------------------------------------------------------------------------------------------
-void HSolverLi::setParamters(const HWWParameters& hwwParam, bool verbose) {
+void HSolverLi::setParameters(const HWWParameters& hwwParam, bool verbose) {
     TFile * inFile = TObjectHelper::getFile(dataDir+hwwParam.liFileName,"read",verbose);
     ptCorB = hwwParam.ptCorB;
     ptCorM = hwwParam.ptCorM;

@@ -73,6 +73,7 @@ void JERCorrector::processFatJets(FatJetCollection& jets,const GenFatJetCollecti
     std::vector<const GenJet*> gjptrs; gjptrs.reserve(genjets.size());
     for(auto& gj: genjets) gjptrs.push_back(&gj);
     for(auto& j : jets){
+
         if(j.pt() < 15) continue;
         if(j.pt() > 7000) continue;
         parameters.setJetPt(j.pt());
@@ -113,6 +114,7 @@ float JERCorrector::correctJet(Jet* jet, const std::vector<const GenJet*> genjet
 //    else std::cout << "-1,";
 //    std::cout << jres <<","<<resSF<<",";
     float ptSF = 1.0;
+    // Reference: https://twiki.cern.ch/twiki/bin/view/CMS/JetResolution
     if(idx>= 0 && nearDR < coneR/2.0 && std::fabs(jet->pt()-genjets[idx]->pt()) <3.0*jres*jet->pt() ){
         ptSF = 1 + (resSF-1.0)*(jet->pt()-genjets[idx]->pt())/jet->pt();
 //        std::cout <<(jet->pt()-genjets[idx]->pt())/jet->pt() <<","<<ptSF<<")";

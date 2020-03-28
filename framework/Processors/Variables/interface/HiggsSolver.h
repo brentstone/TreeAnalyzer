@@ -280,7 +280,7 @@ public:
     //Setup
     HSolverLi(const std::string& dataDir);
     ~HSolverLi() {}
-    void setParamters(const HWWParameters& hwwParam, bool verbose=false);
+    void setParameters(const HWWParameters& hwwParam, bool verbose=false);
 
     // Run
     double minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
