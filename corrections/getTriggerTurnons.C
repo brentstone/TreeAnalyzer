@@ -32,7 +32,7 @@ public:
         turnOffCorr(CORR_SJBTAG);
         turnOffCorr(CORR_AK4BTAG);
         turnOffCorr(CORR_SDMASS);
-        turnOffCorr(CORR_TOPPT);
+        turnOnCorr(CORR_TOPPT);
 //        turnOffCorr(CORR_JER);
     }
 /*
@@ -1163,28 +1163,18 @@ public:
     	}
     	if(!passSingleEl) return;
 
-
     	// muon triggers
     	bool passMuPath = passSingleMuTriggers(year);
     	bool passCross = passMuCrossTriggers(year,isRealData());
-
-//    	bool passMuPath = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
-//    	bool passCross = passTrig(HLT17_Mu15_IsoVVVL_PFHT450);
-//        bool passMetNoMu = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight);
 
         // jet and met triggers
     	bool passJet = passJetTriggers(year);
     	bool passMet = passMetTriggers(year);
 
-//    	bool passJet = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
-//				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
-//    	bool passMET = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
-//    			|| passTrig17(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60);
-
         bool passSingleCross = passMuPath || passCross;
 
     	auto plt = [&](TString idS, double sf=1) {
-    		TString name = "_"+FillerConstants::DataEraNames[year]+"_mu_" + idS;
+    		TString name = "_mu_" + idS;
     		plotter.getOrMake1DPre(sn+name,"ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
     		plotter.getOrMake1DPre(sn+name,"pt",";pt",2000,0,2000)->Fill(probeMuons.front()->pt(),weight*sf);
 
@@ -1216,17 +1206,19 @@ public:
 
     	bool passFullNoCross = passJet || passMet || passMuPath;
 
-    	double lumiwt = 0.884;
+    	double lumiwt = 0.8845;
     	plt("tt2_passSEl");
     	if(passMuPath) plt("tt2_passSElAndSMu");
     	if(passSingleCross) {
     		plt("tt2_passSElAndSMuCross");
-    		if (passCross && !passMuPath) plt("tt2_passSElAndSMuCross_lumiwt",lumiwt);
-    		else plt("tt2_passSElAndSMuCross_lumiwt",1);
+    		if(year == FillerConstants::ERA_2017 && !isRealData()) {
+        		if (passCross && !passMuPath) plt("tt2_passSElAndSMuCross_lumiwt",lumiwt);
+        		else plt("tt2_passSElAndSMuCross_lumiwt",1);
+    		}
     	}
     	if(passFullNoCross || passCross) {
     		plt("tt2_passSElAndFull");
-    		if(year == FillerConstants::ERA_2017) {
+    		if(year == FillerConstants::ERA_2017 && !isRealData()) {
         		if (passCross && !passFullNoCross) plt("tt2_passSElAndFull_lumiwt",lumiwt);
         		else plt("tt2_passSElAndFull_lumiwt",1);
     		}
@@ -1255,11 +1247,6 @@ public:
     	bool passElPath = passSingleElTriggers(year);
     	bool passCross = passElCrossTriggers(year,isRealData());
 
-//    	bool passElPath = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
-//    			|| passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150) || passTrig(HLT17_Photon200)
-//				|| passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
-//    	bool passCross = passTrig(HLT17_Ele15_IsoVVVL_PFHT450) || passTrig(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
-
         // jet and met triggers
     	bool passJet = passJetTriggers(year);
     	bool passMet = passMetTriggers(year);
@@ -1267,13 +1254,9 @@ public:
     	if(testWithMetNoMu) passMet = passMet || passTrig16(HLT16_PFMETNoMu110_PFMHTNoMu110_IDTight) ||
 				passTrig16(HLT16_PFMETNoMu120_PFMHTNoMu120_IDTight);
 
-//    	bool passJet = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
-//				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
-//    	bool passMET = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
-//    			|| passTrig17(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60);
 
     	auto plt = [&](TString idS, double sf=1) {
-    		TString name = "_"+FillerConstants::DataEraNames[year]+"_el_" + idS;
+    		TString name = "_el_" + idS;
     		plotter.getOrMake1DPre(sn+name,"ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
     		plotter.getOrMake1DPre(sn+name,"pt",";pt",2000,0,2000)->Fill(probeElectrons.front()->pt(),weight*sf);
 
@@ -1304,19 +1287,19 @@ public:
 
     	bool passFullNoCross = passJet || passMet || passElPath;
 
-    	double lumiwt = 0.884;
+    	double lumiwt = 0.8845;
     	plt("tt2_passSMu");
     	if(passElPath) plt("tt2_passSMuAndSEl");
     	if(passElPath || passCross) {
     		plt("tt2_passSMuAndSElCross");
-    		if(year == FillerConstants::ERA_2017) {
+    		if(year == FillerConstants::ERA_2017 && !isRealData()) {
         		if(passCross && !passElPath) plt("tt2_passSMuAndSElCross_lumiwt",lumiwt);
         		else plt("tt2_passSMuAndSElCross_lumiwt",1);
     		}
     	}
     	if(passFullNoCross || passCross) {
     		plt("tt2_passSMuAndFull");
-    		if(year == FillerConstants::ERA_2017) {
+    		if(year == FillerConstants::ERA_2017 && !isRealData()) {
         		if (passCross && !passFullNoCross) plt("tt2_passSMuAndFull_lumiwt",lumiwt);
         		else plt("tt2_passSMuAndFull_lumiwt",1);
     		}
@@ -1482,17 +1465,15 @@ public:
 
         triggerAccepts = reader_event->triggerAccepts.val();
 //        studyDileptonTriggerEffs(smpName);
-        if(isSignal()) testThings(smpName);
+//        if(isSignal()) testThings(smpName);
 
         TString sn = smpName;
         if (mcProc == FillerConstants::TTBAR && smDecayEvt.nLepsTT >= 0 && smDecayEvt.nLepsTT <= 2) {
         	sn += TString::Format("%d",smDecayEvt.nLepsTT);
         }
-//std::cout<<"slurm"<<std::endl;
 //        testInSemileptonicTTBar(sn);
 //        testDileptonInDrellYan(sn);
 
-//        std::cout<<"event num muons (electrons) = "<<reader_muon->muons.size()<<" ("<<reader_electron->electrons.size()<<")"<<std::endl;
 //
 //        if (reader_muon->muons.size()) {
 //        	for (const auto& mu : reader_muon->muons) {
@@ -1506,7 +1487,7 @@ public:
 //        		std::cout<<"passTight = "<<el.passTightID_noIso()<<std::endl;
 //        	}
 //        }
-//        std::cout<<"slurm0.1"<<std::endl;
+
         LeptonParameters tagLeptonParam = parameters.leptons;
     	tagLeptonParam.mu_minPT = 30;
         tagLeptonParam.mu_getID = &Muon::passTightID;
@@ -1514,7 +1495,7 @@ public:
         tagLeptonParam.mu_maxISO = 0.15;
 
         tagLeptonParam.el_minPT = 35;
-        tagLeptonParam.el_getID = &Electron::passTightID;
+        tagLeptonParam.el_getID = &Electron::passTightID_noIso;
         tagLeptonParam.el_getISO = &Electron::pfIso;
         tagLeptonParam.el_maxISO = 0.15;
 
@@ -1531,25 +1512,14 @@ public:
         params2.el_maxSip3D = 9999;
         params2.mu_maxSip3D = 9999;
 
-//        std::cout<<"slurm1"<<std::endl;
-
         auto tagElectrons = LeptonProcessor::getElectrons(tagLeptonParam,*reader_electron);
         auto tagMuons     = LeptonProcessor::getMuons(tagLeptonParam,*reader_muon);
-//        std::cout<<"num tags for muons (electrons) = "<<tagMuons.size()<<" ("<<tagElectrons.size()<<")"<<std::endl;
 
         auto probeElectrons1 = LeptonProcessor::getElectrons(params1,*reader_electron);
         auto probeMuons1     = LeptonProcessor::getMuons(params1,*reader_muon);
-//        std::cout<<"slurm2"<<std::endl;
 
         auto probeElectrons2 = LeptonProcessor::getElectrons(params2,*reader_electron);
         auto probeMuons2     = LeptonProcessor::getMuons(params2,*reader_muon);
-//        std::cout<<"slurm3"<<std::endl;
-
-        params1.el_getID = &Electron::passTightID_noIso;
-        params1.el_maxISO = 0.1;
-        params1.el_maxETA = 2.5;
-        auto probeElectrons1_test = LeptonProcessor::getElectrons(params1,*reader_electron);
-//        std::cout<<"num probes for muons (electrons) = "<<probeMuons.size()<<" ("<<probeElectrons.size()<<")"<<std::endl;
 
         Dataset elName, muName;
         if(*reader_event->dataEra == ERA_2016 || *reader_event->dataEra == ERA_2017) {
@@ -1564,34 +1534,34 @@ public:
         }
 
         if(!isRealData() || reader_event->dataset.val() == elName) {
+        	if(isRealData()) sn = "elData";
         	testMuonInDileptonTTBar(sn+"_id1",tagElectrons,probeMuons1);
         	testMuonInDileptonTTBar(sn+"_id2",tagElectrons,probeMuons2);
         }
         if(!isRealData() || reader_event->dataset.val() == muName) {
+        	if(isRealData()) sn = "muData";
         	testElectronInDileptonTTBar(sn+"_id1",tagMuons,probeElectrons1);
         	testElectronInDileptonTTBar(sn+"_id2",tagMuons,probeElectrons2);
-        	testElectronInDileptonTTBar(sn+"_id1test",tagMuons,probeElectrons1_test,true);
         }
-//        std::cout<<"slurm4"<<std::endl;
 
 
-        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron){
+//        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron){
 //        	testEachTriggerIndividually(smpName,false,tagMuons,probeMuons,tagElectrons,probeElectrons);
 //            doMuonLeg(smpName,tagElectrons,probeMuons);
 //            doHTLegWithElDenom(smpName,tagElectrons,probeMuons);
 //            doGrandLeptonWElDenom(smpName,tagElectrons,probeMuons);
-        }
-        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleMuon){
+//        }
+//        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleMuon){
 //        	testEachTriggerIndividually(smpName,true,tagMuons,probeMuons,tagElectrons,probeElectrons);
 //            doElectronLeg(smpName,tagMuons,probeElectrons);
 //            doHTLegWithMuonDenom(smpName,tagMuons,probeElectrons);
 //            doGrandLeptonWMuDenom(smpName,tagMuons,probeElectrons);
-        }
-        if(!isRealData()) {
-        	if (isSignal() && diHiggsEvt.type < DiHiggsEvent::MU) return false;
+//        }
+//        if(!isRealData()) {
+//        	if (isSignal() && diHiggsEvt.type < DiHiggsEvent::MU) return false;
 //        	doMCLepton(smpName,probeMuons,probeElectrons);
 //        	doSystLepton(smpName);
-        }
+//        }
 
         return true;
     }
