@@ -294,7 +294,7 @@ public:
         xsec_    = getXSecWeight();
         pu_N_    = getPUWeight();
         lep_N_   = getLeptonWeight();
-        btag_N_  = 1.0;
+        btag_N_  = getAK4BTagWeights();
         topPt_N_ = getTopPTWeight();
         trig_N_  = getTriggerWeight();
     }
