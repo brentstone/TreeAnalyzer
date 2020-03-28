@@ -107,8 +107,8 @@ ParameterSet setCommonParameters() {
     paramSet.jets.sjBTagLWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_L];
     paramSet.jets.sjBTagMWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_M];
 
-    paramSet.jets.jetBtagCorrSFFile ="corrections/CSVv2_Moriond17_B_H.csv";
-    paramSet.jets.jetBtagCorrEffFile ="corrections/ak4_csvEff.root";
+    paramSet.jets.jetBtagCorrSFFile = "";
+    paramSet.jets.jetBtagCorrEffFile = "";
     paramSet.jets.jetBtagCorrWP       = paramSet.jets.DeepFlavor_WP      ;
     paramSet.jets.jetBtagCorrGetBTagVal = paramSet.jets.getJetBTagVal;
     paramSet.jets.sjBtagCorrWP         = paramSet.jets.DeepCSV_WP      ;
@@ -155,6 +155,9 @@ ParameterSet set2016Parameters() {
     paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt";
     paramSet.jets.jer_AK8Puppi_sfFile   ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_SF_AK8PFPuppi.txt";
 
+    paramSet.jets.jetBtagCorrSFFile ="corrections/btagging/DeepJet_2016LegacySF_WP_V1.csv";
+    paramSet.jets.jetBtagCorrEffFile ="corrections/btagging/ak4_deepJetEff_2016.root";
+
     paramSet.jets.DeepCSV_WP    = {-100,0.2217,0.6321,0.8953}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
     paramSet.jets.DeepFlavor_WP = {-100,0.0614,0.3093,0.7221}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
     setJetWorkingPoints(paramSet.jets,paramSet.jets.DeepFlavor_WP);
@@ -178,6 +181,8 @@ ParameterSet set2017Parameters() {
     paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000719423;
     paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000741457;
     paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.00052646;
+    paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
+    paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
 
     paramSet.leptons.el_SFFile          ="corrections/lepton/electron_1l_2017_SF.root";
     paramSet.leptons.mu_SFFile          ="corrections/lepton/muon_1l_2017_SF.root";
@@ -188,8 +193,9 @@ ParameterSet set2017Parameters() {
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_SF_AK4PFchs.txt";
     paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_PtResolution_AK8PFPuppi.txt";
     paramSet.jets.jer_AK8Puppi_sfFile   ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_SF_AK8PFPuppi.txt";
-    paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
-    paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
+
+    paramSet.jets.jetBtagCorrSFFile ="corrections/btagging/DeepFlavour_94XSF_WP_V3_B_F.csv";
+    paramSet.jets.jetBtagCorrEffFile ="corrections/btagging/ak4_deepJetEff_2017.root";
 
     paramSet.jets.CSV_WP        = {-100,0.5803,0.8838,0.9693}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
     paramSet.jets.DeepCSV_WP    = {-100,0.1522,0.4941,0.8001}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
@@ -215,6 +221,8 @@ ParameterSet set2018Parameters() {
     paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.00050157;
     paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000514053;
     paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000517094;
+    paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
+    paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
 
     paramSet.leptons.el_SFFile          ="corrections/lepton/electron_1l_2018_SF.root";
     paramSet.leptons.mu_SFFile          ="corrections/lepton/muon_1l_2018_SF.root";
@@ -225,8 +233,9 @@ ParameterSet set2018Parameters() {
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_SF_AK4PFchs.txt";
     paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_PtResolution_AK8PFPuppi.txt";
     paramSet.jets.jer_AK8Puppi_sfFile   ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_SF_AK8PFPuppi.txt";
-    paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
-    paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
+
+    paramSet.jets.jetBtagCorrSFFile ="corrections/btagging/DeepJet_102XSF_WP_V1.csv";
+    paramSet.jets.jetBtagCorrEffFile ="corrections/btagging/ak4_deepJetEff_2018.root";
 
     paramSet.jets.DeepCSV_WP    = {-100,0.1241,0.4184,0.7527}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
     paramSet.jets.DeepFlavor_WP = {-100,0.0494,0.2770,0.7264}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X

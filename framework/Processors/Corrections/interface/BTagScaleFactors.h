@@ -24,22 +24,24 @@ public:
 
     virtual float getJetEff(const BTagging::FLAVOR flv, const float pt, const float eta,
             const BTagging::BTAGWP wp) const;
-    virtual float getJetSF(const BTagging::FLAVOR flv, const float pt, const float eta,
+    virtual float getJetSF(const BTagging::FLAVOR flv, const float pt, const float eta, const float disc,
             const BTagging::BTAGWP wp, CorrHelp::CORRTYPE corrT) const;
     float getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE lightT = CorrHelp::NOMINAL,
             CorrHelp::CORRTYPE heavyT = CorrHelp::NOMINAL ) const;
 
+    void setReshaping();
 
 protected:
     virtual void assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,
-            const float csv, const CorrHelp::CORRTYPE corrT,
+            const float disc, const CorrHelp::CORRTYPE corrT,
             float& lE,float& hE,float& lSF,float& hSF) const =0;
 
 
 const std::string dataDir;
 BTagging::BTAGWP maxWP;
-const std::string heavySFName;
-const std::string lightSFName;
+std::string heavySFName;
+std::string lightSFName;
+bool doReshaping = false;
 std::unique_ptr<BTagCalibration> calib;
 std::vector< std::unique_ptr<BTagCalibrationReader> > calibReaders;
 std::vector< std::vector< std::unique_ptr<TObjectHelper::Hist2DContainer> >> efficiencies;
@@ -60,7 +62,7 @@ public:
             CorrHelp::CORRTYPE heavyT = CorrHelp::NOMINAL) const;
 
 protected:
-    void assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,const float csv,
+    void assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,const float disc,
             const CorrHelp::CORRTYPE corrT, float& lE,float& hE,float& lSF,float& hSF
             ) const override;
 };
@@ -75,7 +77,7 @@ public:
             CorrHelp::CORRTYPE heavyT = CorrHelp::NOMINAL) const;
 
 protected:
-    void assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,const float csv,
+    void assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,const float disc,
             const CorrHelp::CORRTYPE corrT, float& lE,float& hE,float& lSF,float& hSF
             ) const override;
 };
