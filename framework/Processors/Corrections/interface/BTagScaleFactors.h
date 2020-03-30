@@ -28,6 +28,8 @@ public:
             const BTagging::BTAGWP wp, CorrHelp::CORRTYPE corrT) const;
     float getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE lightT = CorrHelp::NOMINAL,
             CorrHelp::CORRTYPE heavyT = CorrHelp::NOMINAL ) const;
+    float getReshapingCorr(const BaseRecoJet* j, CorrHelp::CORRTYPE lightT = CorrHelp::NOMINAL,
+            CorrHelp::CORRTYPE heavyT = CorrHelp::NOMINAL) const;
 
     void setReshaping();
 

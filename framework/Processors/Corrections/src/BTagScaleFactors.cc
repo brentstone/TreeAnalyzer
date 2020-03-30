@@ -1,6 +1,7 @@
 
 #include "../interface/BTagScaleFactors.h"
 #include "DataFormats/interface/Jet.h"
+#include "TreeReaders/interface/JetReader.h"
 #include "DataFormats/interface/FatJet.h"
 #include "Processors/Corrections/interface/BTagCalibrationStandalone.h"
 #include "Configuration/interface/ReaderConstants.h"
@@ -37,11 +38,12 @@ void BTagScaleFactors::setParameters(const std::string& sfFile, const std::strin
 
     if(doReshaping) {
         makeNewReader(BTagEntry::OP_RESHAPING );
-    } else {
-        if(maxWP >= BTAG_L) makeNewReader(BTagEntry::OP_LOOSE );
-        if(maxWP >= BTAG_M) makeNewReader(BTagEntry::OP_MEDIUM);
-        if(maxWP >= BTAG_T) makeNewReader(BTagEntry::OP_TIGHT );
+        return;
     }
+
+    if(maxWP >= BTAG_L) makeNewReader(BTagEntry::OP_LOOSE );
+    if(maxWP >= BTAG_M) makeNewReader(BTagEntry::OP_MEDIUM);
+    if(maxWP >= BTAG_T) makeNewReader(BTagEntry::OP_TIGHT );
 
     TFile * efile = TObjectHelper::getFile(dataDir+effFile,"read",verbose);
     std::vector<TString> taggers {"loose","med","tight"};
@@ -64,11 +66,9 @@ float BTagScaleFactors::getJetEff(const BTagging::FLAVOR flv, const float pt, co
 //_____________________________________________________________________________
 float BTagScaleFactors::getJetSF(const BTagging::FLAVOR flv, const float pt, const float eta, const float disc,
         const BTagging::BTAGWP wp, CorrHelp::CORRTYPE corrT) const{
-    //wp[0] = inclusive, for WP method, iterativefit for Reshaping method
+    //wp[0] = inclusive
     // BTagEntry::JetFlavor set to have same order as BTagging::Flavor
-
-	if(doReshaping) return calibReaders[0]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv),eta,pt,disc);
-	else            return calibReaders[wp-1]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv),eta,pt,disc);
+	return calibReaders[wp-1]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv),eta,pt,disc);
 }
 //_____________________________________________________________________________
 float BTagScaleFactors::getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE lightT,
@@ -152,11 +152,27 @@ void JetBTagScaleFactors::assignVals(const BTagging::FLAVOR flv,const float pt, 
 //_____________________________________________________________________________
 float JetBTagScaleFactors::getSF(const std::vector<const Jet*>& jets, CorrHelp::CORRTYPE lightT,
         CorrHelp::CORRTYPE heavyT) const{
-    float SF = 1.0;
-    for(const auto* j : jets) SF *= getJetCorr(j,lightT,heavyT);
+	float SF = 1.0;
+    if(doReshaping) {
+        for(const auto* j : jets) SF *= getReshapingCorr(j,lightT,heavyT);
+    } else {
+        for(const auto* j : jets) SF *= getJetCorr(j,lightT,heavyT);
+    }
     return SF;
 }
 //_____________________________________________________________________________
+float BTagScaleFactors::getReshapingCorr(const BaseRecoJet* j, CorrHelp::CORRTYPE lightT,
+		CorrHelp::CORRTYPE heavyT) const {
+    const float pt = j->pt();
+    const float eta = j->eta();
+    const auto flv = jetFlavor(*j);
+    const float disc = (j->*btagCorrGetBTagVal)();
+    const CorrHelp::CORRTYPE corrT =  flv == FLV_L ? lightT : heavyT;
+
+//    printf("Input Jet:\npt = %f\neta = %f\nflv = %d\ndisc = %f\n",pt,eta,flv,disc);
+	return calibReaders[0]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv),eta,pt,disc);
+}
+//____________________________________________________________________________
 //_____________________________________________________________________________
 
 SubJetBTagScaleFactors::SubJetBTagScaleFactors(const std::string& dataDir) :

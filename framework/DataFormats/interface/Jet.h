@@ -31,6 +31,9 @@ public :
     void addBTagging( const float deep_csv);
 
     void setRawFactor(float nrw) {_toRaw=nrw;}
+    void setCSV(float val) {_csv=val;}
+    void setDeepCSV(float val) {_deep_csv=val;}
+    void setDeepFlavor(float val) {_deep_flavor=val;}
     float toRawFactor() const {return _toRaw;}
     float deep_csv() const {return _deep_csv;}
     float csv() const {return _csv;}
