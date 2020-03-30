@@ -37,18 +37,6 @@ public:
 //        turnOffCorr(CORR_JER);
     }
 
-
-//    void loadVariables() override {
-//        reader_event       =loadReader<EventReader>   ("event",isRealData());
-//        reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData(),true,true);
-//        reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,false,true);
-//        reader_jet         =loadReader<JetReader>     ("ak4Jet",isRealData());
-//        reader_electron    =loadReader<ElectronReader>("electron");
-//        reader_muon        =loadReader<MuonReader>    ("muon",isRealData());
-//
-//        checkConfig();
-//    }
-
     bool isDeepFlavTagged(const Jet* j, BTagging::BTAGWP bwp) {
     	if(j->deep_flavor() >= parameters.jets.DeepFlavor_WP[bwp]) return true;
     	return false;
@@ -70,11 +58,14 @@ public:
             auto fill = [&](const TString& label) {
                 TString genS = isSignal() ? "sig" : "bkg";
 
-                plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,12,0,2.4)->Fill(pt,absETA,weight);
-                plotter.getOrMake2DPre(genS+"_"+id+"_"+flvS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,12,0,2.4)->Fill(pt,absETA,weight);
+                plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,absETA,weight);
+                plotter.getOrMake2DPre(genS+"_"+id+"_"+flvS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,absETA,weight);
+
+                plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS+"_fulleta", label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(pt,j->eta(),weight);
+                plotter.getOrMake2DPre(genS+"_"+id+"_"+flvS+"_fulleta", label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(pt,j->eta(),weight);
 
                 if(!isSignal() && mcProc != FillerConstants::QCD) {
-                    plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,12,0,2.4)->Fill(pt,absETA,weight);
+                    plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,absETA,weight);
                 }
             };
 
