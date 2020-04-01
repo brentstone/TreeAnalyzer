@@ -480,7 +480,12 @@ float DefaultSearchRegionAnalyzer::getSJBTagWeights() {
     return sjbtagSFProc->getSF(parameters.jets,{hbbCand});
 }
 float DefaultSearchRegionAnalyzer::getAK4BTagWeights() {
-    return ak4btagSFProc->getSF(jets_HbbV);
+    float norm = 1.0;
+    if(isTuneCP5 && *reader_event->dataEra == FillerConstants::ERA_2016) {
+        norm = isSignal() ? parameters.jets.jetBtagCorrTuneCP5norm_sig
+    		: parameters.jets.jetBtagCorrTuneCP5norm_bkg;
+    }
+    return norm*ak4btagSFProc->getSF(jets_HbbV);
 }
 float DefaultSearchRegionAnalyzer::getTopPTWeight() {
     return topPTProc->getCorrection(mcProc,smDecayEvt);

@@ -111,6 +111,8 @@ ParameterSet setCommonParameters() {
     paramSet.jets.jetBtagCorrEffFile = "";
     paramSet.jets.jetBtagCorrWP       = paramSet.jets.DeepFlavor_WP      ;
     paramSet.jets.jetBtagCorrGetBTagVal = paramSet.jets.getJetBTagVal;
+    paramSet.jets.jetBtagCorrTuneCP5norm_sig = 1.0;
+    paramSet.jets.jetBtagCorrTuneCP5norm_bkg = 1.0;
     paramSet.jets.sjBtagCorrWP         = paramSet.jets.DeepCSV_WP      ;
     paramSet.jets.sjBtagCorrGetBTagVal = paramSet.jets.getSJBTagVal;
     paramSet.jets.sjBtagCorrSFFile     = "corrections/subjet_CSVv2_Moriond17_B_H.csv";
@@ -157,6 +159,8 @@ ParameterSet set2016Parameters() {
 
     paramSet.jets.jetBtagCorrSFFile ="corrections/btagging/DeepJet_2016LegacySF_WP_V1.csv";
     paramSet.jets.jetBtagCorrEffFile ="corrections/btagging/ak4_deepJetEff_2016.root";
+    paramSet.jets.jetBtagCorrTuneCP5norm_sig = 0.965307;
+    paramSet.jets.jetBtagCorrTuneCP5norm_bkg = 0.98374956;
 
     paramSet.jets.DeepCSV_WP    = {-100,0.2217,0.6321,0.8953}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
     paramSet.jets.DeepFlavor_WP = {-100,0.0614,0.3093,0.7221}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy

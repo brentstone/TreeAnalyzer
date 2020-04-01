@@ -166,6 +166,8 @@ struct JetParameters {
     BTagging::getBTagVal jetBtagCorrGetBTagVal;
     std::string          jetBtagCorrSFFile;
     std::string          jetBtagCorrEffFile;
+    float jetBtagCorrTuneCP5norm_sig;
+    float jetBtagCorrTuneCP5norm_bkg;
 
     std::vector<float>   sjBtagCorrWP;
     BTagging::getBTagVal sjBtagCorrGetBTagVal;
