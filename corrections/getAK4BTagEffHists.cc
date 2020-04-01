@@ -66,6 +66,7 @@ public:
 
                 if(!isSignal() && mcProc != FillerConstants::QCD) {
                     plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,absETA,weight);
+                    plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS+"_fulleta", label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(pt,absETA,weight);
                 }
             };
 
