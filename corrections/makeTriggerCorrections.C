@@ -1,6 +1,7 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
+#include "HistoPlotting/include/PlotTools.h"
 #include "TFile.h"
 #include "TH1.h"
 #include "TString.h"
