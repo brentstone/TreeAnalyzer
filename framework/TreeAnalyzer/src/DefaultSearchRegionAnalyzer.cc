@@ -82,7 +82,7 @@ void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr)
 void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event       =loadReader<EventReader>   ("event",isRealData());
     reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData(),true,true);
-    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,false,true);
+    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false/*,false,true*/);
     reader_jet         =loadReader<JetReader>     ("ak4Jet",isRealData());
     reader_electron    =loadReader<ElectronReader>("electron");
     reader_muon        =loadReader<MuonReader>    ("muon",isRealData());

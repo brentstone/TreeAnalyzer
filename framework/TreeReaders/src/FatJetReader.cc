@@ -7,10 +7,10 @@
 namespace TAna{
 //--------------------------------------------------------------------------------------------------
 FatJetReader::FatJetReader(std::string branchName, bool isRealData,
-        bool fillGenFatJets,bool fillBTagging, bool fillWTagging, bool fillLSFInfo) :
+        bool fillGenFatJets,bool fillBTagging) :
                 BaseReader("FatJetReader",branchName),
-                realData(isRealData),fillGenFatJets(fillGenFatJets),fillBTagging(fillBTagging),
-                fillWTagging(fillWTagging),fillLSFInfo(fillLSFInfo)
+                realData(isRealData),fillGenFatJets(fillGenFatJets),fillBTagging(fillBTagging)
+//                fillWTagging(fillWTagging),fillLSFInfo(fillLSFInfo)
 {};
 
 FatJetReader::~FatJetReader(){}
@@ -29,26 +29,26 @@ void FatJetReader::setup(TreeReaderWrapper * wrapper){
         wrapper->setBranch(branchName,"deep_MDHbb" ,deep_MDHbb,true);
         wrapper->setBranch(branchName,"deep_Hbb"   ,deep_Hbb,true);
     }
-    if(fillWTagging){
-        wrapper->setBranch(branchName,"deep_W"   ,deep_W,true);
-    }
+//    if(fillWTagging){
+//        wrapper->setBranch(branchName,"deep_W"   ,deep_W,true);
+//    }
     wrapper->setBranch(branchName,"tau1"     ,tau1     ,true);
     wrapper->setBranch(branchName,"tau2"     ,tau2     ,true);
     wrapper->setBranch(branchName,"sdMass_z0p15",sdMass_z0p15     ,true);
     wrapper->setBranch(branchName,"sdMass_z0p05",sdMass_z0p05     ,true);
-    if(fillLSFInfo){
-        wrapper->setBranch(branchName,"ecfN2"      ,ecfN2      ,true);
-        wrapper->setBranch(branchName,"ecfM2"      ,ecfM2      ,true);
-        wrapper->setBranch(branchName,"ecfD2"      ,ecfD2      ,true);
-        wrapper->setBranch(branchName,"ecfN3"      ,ecfN3      ,true);
-        wrapper->setBranch(branchName,"ecfU3"      ,ecfU3      ,true);
-        wrapper->setBranch(branchName,"ecfU2"      ,ecfU2      ,true);
-        wrapper->setBranch(branchName,"tau3"       ,tau3       ,true);
-        wrapper->setBranch(branchName,"tau4"       ,tau4       ,true);
-        wrapper->setBranch(branchName,"lsf3"       ,lsf3       ,true);
-        wrapper->setBranch(branchName,"dRLep"      ,dRLep      ,true);
-        wrapper->setBranch(branchName,"lepInJetMVA",lepInJetMVA,true);
-    }
+//    if(fillLSFInfo){
+//        wrapper->setBranch(branchName,"ecfN2"      ,ecfN2      ,true);
+//        wrapper->setBranch(branchName,"ecfM2"      ,ecfM2      ,true);
+//        wrapper->setBranch(branchName,"ecfD2"      ,ecfD2      ,true);
+//        wrapper->setBranch(branchName,"ecfN3"      ,ecfN3      ,true);
+//        wrapper->setBranch(branchName,"ecfU3"      ,ecfU3      ,true);
+//        wrapper->setBranch(branchName,"ecfU2"      ,ecfU2      ,true);
+//        wrapper->setBranch(branchName,"tau3"       ,tau3       ,true);
+//        wrapper->setBranch(branchName,"tau4"       ,tau4       ,true);
+//        wrapper->setBranch(branchName,"lsf3"       ,lsf3       ,true);
+//        wrapper->setBranch(branchName,"dRLep"      ,dRLep      ,true);
+//        wrapper->setBranch(branchName,"lepInJetMVA",lepInJetMVA,true);
+//    }
 
     if(!realData){
         wrapper->setBranch(branchName,"hadronFlavor",hadronFlavor,true);
@@ -106,8 +106,8 @@ void FatJetReader::processVars() {
                 toRawFact[iO],id[iO]);
         if(fillBTagging)
             jets.back().addFJBtagging(bbt[iO],deep_MDZHbb[iO],deep_MDHbb[iO],deep_Hbb[iO]);
-        if(fillWTagging)
-            jets.back().addWTaging(deep_W[iO]);
+//        if(fillWTagging)
+//            jets.back().addWTaging(deep_W[iO]);
         jets.back().addSubStructure(tau1[iO],tau2[iO],sdMass_z0p15[iO],sdMass_z0p05[iO]);
 
 
