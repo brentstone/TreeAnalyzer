@@ -1,4 +1,3 @@
-
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
 #include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
@@ -40,6 +39,83 @@ public:
     bool isDeepFlavTagged(const Jet* j, BTagging::BTAGWP bwp) {
     	if(j->deep_flavor() >= parameters.jets.DeepFlavor_WP[bwp]) return true;
     	return false;
+    }
+
+    bool isSJDeepCSVTagged(const BaseRecoJet* j, BTagging::BTAGWP bwp) {
+    	std::cout<<"testing if deepcsv tagged"<<std::endl;
+    	std::cout<<"disc = "<<j->deep_csv()<<std::endl;
+    	std::cout<<"wp = "<<parameters.jets.DeepCSV_WP[bwp]<<std::endl<<std::endl;
+    	if(j->deep_csv() >= parameters.jets.DeepCSV_WP[bwp]) return true;
+    	return false;
+    }
+
+    void testAK8Jets(TString pref, TString id) {
+    	if(!reader_fatjet_noLep) return;
+        auto jets = PhysicsUtilities::selObjsMom(reader_fatjet_noLep->jets,50,2.4);
+
+        for(const auto* j : jets) {
+        	if(j->nSubJets() != 2) continue;
+
+        	const auto& sj1 = j->subJets()[0];
+        	const auto& sj2 = j->subJets()[1];
+
+        	int flv1 = BTagging::jetFlavor(sj1);
+        	int flv2 = BTagging::jetFlavor(sj2);
+
+            TString flvS1 = "l";
+            if(flv1 == BTagging::FLV_B) flvS1 = "b";
+            else if(flv1 == BTagging::FLV_C) flvS1 = "c";
+
+            TString flvS2 = "l";
+            if(flv2 == BTagging::FLV_B) flvS2 = "b";
+            else if(flv2 == BTagging::FLV_C) flvS2 = "c";
+
+            const float pt1 = sj1.pt();
+            const float eta1 = sj1.eta();
+            const float pt2 = sj2.pt();
+            const float eta2 = sj2.eta();
+
+            auto fill = [&](const TString& label, bool isSJ1) {
+                TString genS = isSignal() ? "sig" : "bkg";
+                TString suf, flvS;
+                float pt, eta;
+                if(isSJ1) {
+                	suf = "_sj1";
+                	flvS = flvS1;
+                	pt = pt1;
+                	eta = eta1;
+                } else {
+                	suf = "_sj2";
+                	flvS = flvS2;
+                	pt = pt2;
+                	eta = eta2;
+                }
+
+                plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,fabs(eta),weight);
+                plotter.getOrMake2DPre(genS+"_"+id+"_"+flvS+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,fabs(eta),weight);
+
+                plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS+"_fulleta"+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(pt,eta,weight);
+                plotter.getOrMake2DPre(genS+"_"+id+"_"+flvS+"_fulleta"+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(pt,eta,weight);
+
+                if(!isSignal() && mcProc != FillerConstants::QCD) {
+                    plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,fabs(eta),weight);
+                    plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS+"_fulleta"+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(pt,fabs(eta),weight);
+                }
+            };
+
+            if(pt1 >= 20 && fabs(eta1) <= 2.4) {
+                fill("incl",true);
+                if(isSJDeepCSVTagged(&sj1,BTagging::BTAG_L)) fill("loose",true);
+                if(isSJDeepCSVTagged(&sj1,BTagging::BTAG_M)) fill("med",true);
+            }
+            if(pt2 >= 20 && fabs(eta2) <= 2.4) {
+                fill("incl",false);
+                if(isSJDeepCSVTagged(&sj2,BTagging::BTAG_L)) fill("loose",false);
+                if(isSJDeepCSVTagged(&sj2,BTagging::BTAG_M)) fill("med",false);
+            }
+
+        }
+
     }
 
     void testJets(TString pref, TString id) {
@@ -85,13 +161,16 @@ public:
 
         TString prefix = smpName;
 
-        testJets(prefix,"noHbbReq");
+        testJets(prefix,"ak4_noHbbReq");
+        testAK8Jets(prefix,"ak8_noHbbReq");
 
         if(!hbbCand) return false;
-        testJets(prefix,"reqHbb");
+        testJets(prefix,"ak4_reqHbb");
+        testAK8Jets(prefix,"ak8_reqHbb");
 
         if(hbbCand->sdMom().mass() < 10) return false;
-        testJets(prefix,"goodMSD");
+        testJets(prefix,"ak4_goodMSD");
+        testAK8Jets(prefix,"ak8_goodMSD");
 
         return true;
     }
@@ -104,7 +183,7 @@ public:
 
 #endif
 
-void getAK4BTagEffHists(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
+void getAKXBTagEffHists(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
     Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
