@@ -36,7 +36,7 @@ public :
 
     void addFJBtagging( const float bbt, const float deep_MDZHbb, const float deep_MDHbb
             , const float deep_Hbb);
-    void addWTaging(const float deep_W);
+//    void addWTaging(const float deep_W);
     void addSubStructure(const float tau1, const float tau2, const float sdUp, const float sdDown);
 
     void addSubJet(const SubJet& sj);
@@ -45,7 +45,7 @@ public :
     float     deep_MDZHbb()       const;
     float     deep_MDHbb ()       const;
     float     deep_Hbb   ()       const;
-    float     deep_W     ()       const;
+//    float     deep_W     ()       const;
     float     tau1()      const;
     float     tau2()      const;
     float     tau2otau1() const;
@@ -70,7 +70,7 @@ protected :
     float _deep_MDZHbb  =0;
     float _deep_MDHbb   =0;
     float _deep_Hbb     =0;
-    float _deep_W       =0;
+//    float _deep_W       =0;
 
     std::vector<SubJet> _sjs;
 

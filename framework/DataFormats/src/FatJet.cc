@@ -12,9 +12,9 @@ void FatJet::addFJBtagging(const float bbt, const float deep_MDZHbb, const float
 
 }
 //--------------------------------------------------------------------------------------------------
-void FatJet::addWTaging(const float deep_W){
-    _deep_W=deep_W;
-}
+//void FatJet::addWTaging(const float deep_W){
+//    _deep_W=deep_W;
+//}
 //--------------------------------------------------------------------------------------------------
 void FatJet::addSubStructure(const float tau1, const float tau2,
         const float sdUp, const float sdDown){
@@ -30,7 +30,7 @@ float     FatJet::bbt        ()       const{return _bbt        ;}
 float     FatJet::deep_MDZHbb()       const{return _deep_MDZHbb;}
 float     FatJet::deep_MDHbb ()       const{return _deep_MDHbb ;}
 float     FatJet::deep_Hbb   ()       const{return _deep_Hbb   ;}
-float     FatJet::deep_W     ()       const{return _deep_W   ;}
+//float     FatJet::deep_W     ()       const{return _deep_W   ;}
 float     FatJet::tau1()      const{return _tau1;}
 float     FatJet::tau2()      const{return _tau2;}
 float     FatJet::tau2otau1() const{return _tau1 == 0 ? 99 : _tau2/_tau1;}
