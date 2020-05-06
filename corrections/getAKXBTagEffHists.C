@@ -36,28 +36,45 @@ public:
 //        turnOffCorr(CORR_JER);
     }
 
+//    void loadVariables() override {
+//        reader_event       =loadReader<EventReader>   ("event",isRealData());
+//        reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData(),true,true);
+//        reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,true);
+//        reader_jet         =loadReader<JetReader>     ("ak4Jet",isRealData());
+//        reader_electron    =loadReader<ElectronReader>("electron");
+//        reader_muon        =loadReader<MuonReader>    ("muon",isRealData());
+//
+//        if(!isRealData()){
+//            reader_genpart =loadReader<GenParticleReader>   ("genParticle");
+//        }
+//
+//        checkConfig();
+//    }
+
     bool isDeepFlavTagged(const Jet* j, BTagging::BTAGWP bwp) {
     	if(j->deep_flavor() >= parameters.jets.DeepFlavor_WP[bwp]) return true;
     	return false;
     }
 
-    bool isSJDeepCSVTagged(const BaseRecoJet* j, BTagging::BTAGWP bwp) {
-    	std::cout<<"testing if deepcsv tagged"<<std::endl;
-    	std::cout<<"disc = "<<j->deep_csv()<<std::endl;
-    	std::cout<<"wp = "<<parameters.jets.DeepCSV_WP[bwp]<<std::endl<<std::endl;
-    	if(j->deep_csv() >= parameters.jets.DeepCSV_WP[bwp]) return true;
-    	return false;
-    }
-
     void testAK8Jets(TString pref, TString id) {
-    	if(!reader_fatjet_noLep) return;
-        auto jets = PhysicsUtilities::selObjsMom(reader_fatjet_noLep->jets,50,2.4);
+    	if(!reader_fatjet) return;
+        auto jets = PhysicsUtilities::selObjsMom(reader_fatjet->jets,50,2.4);
+        if(lepChan == NOCHANNEL) return;
+
+        if(!jets.size()) return;
 
         for(const auto* j : jets) {
         	if(j->nSubJets() != 2) continue;
+        	if(selectedLepton && PhysicsUtilities::deltaR(*selectedLepton,*j) <= 0.8) return;
+        	if(selectedDileptons.size()) {
+        		if(PhysicsUtilities::deltaR(*selectedDileptons[0],*j) <= 0.8) return;
+        		if(selectedDileptons.size() >= 2) {
+            		if(PhysicsUtilities::deltaR(*selectedDileptons[1],*j) <= 0.8) return;
+        		}
+        	}
 
-        	const auto& sj1 = j->subJets()[0];
-        	const auto& sj2 = j->subJets()[1];
+        	const auto& sj1 = j->subJet(0);
+        	const auto& sj2 = j->subJet(1);
 
         	int flv1 = BTagging::jetFlavor(sj1);
         	int flv2 = BTagging::jetFlavor(sj2);
@@ -105,13 +122,13 @@ public:
 
             if(pt1 >= 20 && fabs(eta1) <= 2.4) {
                 fill("incl",true);
-                if(isSJDeepCSVTagged(&sj1,BTagging::BTAG_L)) fill("loose",true);
-                if(isSJDeepCSVTagged(&sj1,BTagging::BTAG_M)) fill("med",true);
+                if(BTagging::passSubjetBTagLWP(parameters.jets,sj1)) fill("loose",true);
+                if(BTagging::passSubjetBTagMWP(parameters.jets,sj1)) fill("med",true);
             }
             if(pt2 >= 20 && fabs(eta2) <= 2.4) {
                 fill("incl",false);
-                if(isSJDeepCSVTagged(&sj2,BTagging::BTAG_L)) fill("loose",false);
-                if(isSJDeepCSVTagged(&sj2,BTagging::BTAG_M)) fill("med",false);
+                if(BTagging::passSubjetBTagLWP(parameters.jets,sj2)) fill("loose",false);
+                if(BTagging::passSubjetBTagMWP(parameters.jets,sj2)) fill("med",false);
             }
 
         }
