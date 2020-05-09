@@ -164,7 +164,7 @@ ParameterSet set2016Parameters() {
     paramSet.jets.jetBtagCorrTuneCP5norm_sig = 0.965307;
     paramSet.jets.jetBtagCorrTuneCP5norm_bkg = 0.98374956;
     paramSet.jets.sjBtagCorrSFFile     = "corrections/btagging/subjet_DeepCSV_2016LegacySF_V1.csv";
-    paramSet.jets.sjBtagCorrEffFile    = "corrections/btagging/sj_deepcsvEff_2016.root";
+    paramSet.jets.sjBtagCorrEffFile    = "corrections/btagging/sj_ak8_deepcsvEff_2016.root";
 
     paramSet.jets.DeepCSV_WP    = {-100,0.2217,0.6321,0.8953}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
     paramSet.jets.DeepFlavor_WP = {-100,0.0614,0.3093,0.7221}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
@@ -205,7 +205,7 @@ ParameterSet set2017Parameters() {
     paramSet.jets.jetBtagCorrSFFile ="corrections/btagging/DeepFlavour_94XSF_WP_V3_B_F.csv";
     paramSet.jets.jetBtagCorrEffFile ="corrections/btagging/ak4_deepJetEff_2017.root";
     paramSet.jets.sjBtagCorrSFFile     = "corrections/btagging/subjet_DeepCSV_94XSF_V4_B_F.csv";
-    paramSet.jets.sjBtagCorrEffFile    = "corrections/btagging/sj_deepcsvEff_2017.root";
+    paramSet.jets.sjBtagCorrEffFile    = "corrections/btagging/sj_ak8_deepcsvEff_2017.root";
 
     paramSet.jets.CSV_WP        = {-100,0.5803,0.8838,0.9693}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
     paramSet.jets.DeepCSV_WP    = {-100,0.1522,0.4941,0.8001}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
@@ -247,7 +247,7 @@ ParameterSet set2018Parameters() {
     paramSet.jets.jetBtagCorrSFFile ="corrections/btagging/DeepJet_102XSF_WP_V1.csv";
     paramSet.jets.jetBtagCorrEffFile ="corrections/btagging/ak4_deepJetEff_2018.root";
     paramSet.jets.sjBtagCorrSFFile     = "corrections/btagging/subjet_DeepCSV_102XSF_V1.csv";
-    paramSet.jets.sjBtagCorrEffFile    = "corrections/btagging/sj_deepcsvEff_2018.root";
+    paramSet.jets.sjBtagCorrEffFile    = "corrections/btagging/sj_ak8_deepcsvEff_2018.root";
 
     paramSet.jets.DeepCSV_WP    = {-100,0.1241,0.4184,0.7527}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
     paramSet.jets.DeepFlavor_WP = {-100,0.0494,0.2770,0.7264}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
