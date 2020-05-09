@@ -164,7 +164,7 @@ void BtagPlotter::doSelComparison(int year) {
 
 void BtagPlotter::doKinComparison(int year, TString idS) {
 
-	TFile *fin = TFile::Open(path+TString::Format("btagEffs_%d.root",year));
+	TFile *fin = TFile::Open(path+TString::Format("btagEffs%d.root",year));
 
 	for(const auto& fl : flvs) for(const auto& num : numNs) {
 
@@ -242,9 +242,9 @@ void BtagPlotter::doComparisonWithSignal(int year, TString idS) {
 	    	TH1 *effPT = getProjectionEff(hn,hd,fl+"_pt_"+num,1,nETA,true);
 	    	TH1 *effETA = getProjectionEff(hn,hd,fl+"_eta_"+num,1,nPT,false);
 
-	    	delete hd;
-	    	delete hn;
-	    	printf("slurm\n");
+//	    	delete hd;
+//	    	delete hn;
+//	    	printf("slurm\n");
 
 	    	p->addHist(effPT,smp);
 	    	pe->addHist(effETA,smp);
