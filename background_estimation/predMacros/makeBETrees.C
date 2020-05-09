@@ -28,6 +28,8 @@
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/JetAndMETCorrections.h"
 #include "Processors/Corrections/interface/FatJetScaleFactors.h"
+#include "AnalysisSupport/Utilities/interface/Types.h"
+
 
 #include "TPRegexp.h"
 using namespace TAna;
@@ -71,6 +73,7 @@ public:
         	outTree->addSingle(pu_N_,  "",  "pu_N");
         	outTree->addSingle(lep_N_,  "",  "lep_N");
         	outTree->addSingle(btag_N_,  "",  "btag_N");
+        	outTree->addSingle(sjbtag_N_, "", "sjbtag_N");
         	outTree->addSingle(topPt_N_, "",  "topPt_N");
         	outTree->addSingle(hbbDecayType_,  "",  "hbbDecayType");
         	outTree->addSingle(eQuarksInHbb_,  "",  "eQuarksInHbb");
@@ -117,6 +120,8 @@ public:
     	outTree->addSingle(wlnuPT_,  "",  "wlnuPT");
 
     	outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
+//    	outTree->addVector(w_pdf_, "", "w_pdf_N", "w_pdf");
+//    	outTree->addVector(w_scale_, "", "w_scale_N", "w_scale");
 
         if(addUncVariables){
         	outTree->addSingle(w_muIDUp_,  "",  "w_muIDUp");
@@ -133,7 +138,8 @@ public:
         	outTree->addSingle(w_elRecoDown_,  "",  "w_elRecoDown");
         	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
 //        	outTree->addSingle(w_elISODown_,  "",  "w_elISODown");
-
+//        	outTree->addVector(w_pdf_, "", "jerroldPDF", "w_pdf");
+//        	outTree->addVector(w_scale_, "", "jerroldSCA", "w_scale");
         }
 
     }
@@ -287,6 +293,14 @@ public:
         }
         if(addUncVariables) fillUncertaintyVariables();
 
+//        for(unsigned int i = 1; i < 9; ++i){
+////            if(i == 5 || i ==7)continue; //told to ignore
+//            w_scale_->push_back(reader_event->genWeights[i]);
+//        }
+//        for(unsigned int i = 473; i < 574; ++i) {//Number 473 is the nominal
+//            w_pdf_->push_back(reader_event->genWeights[i]);
+//        }
+
         return true;
     }
 
@@ -295,6 +309,7 @@ public:
         pu_N_    = getPUWeight();
         lep_N_   = getLeptonWeight();
         btag_N_  = getAK4BTagWeights();
+        sjbtag_N_= getSJBTagWeights();
         topPt_N_ = getTopPTWeight();
         trig_N_  = getTriggerWeight();
     }
@@ -406,13 +421,14 @@ public:
         w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
         w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
         w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
-
-//            for(unsigned int i = 1; i < 9; ++i){
-//                if(i == 5 || i ==7)continue; //told to ignore
-//                outTree->fillMulti(i_w_scale,(*reader_event->genWeights)[i]);
-//            }
-//            for(unsigned int i = 111; i < 211; ++i) //Number 110 is the nominal
-//                outTree->fillMulti(i_w_pdf,(*reader_event->genWeights)[i]);
+/*
+        for(unsigned int i = 1; i < 9; ++i){
+//            if(i == 5 || i ==7)continue; //told to ignore
+            w_scale_->push_back(reader_event->genWeights[i]);
+        }
+        for(unsigned int i = 473; i < 574; ++i) //Number 473 is the nominal
+            w_pdf_->push_back(reader_event->genWeights[i]);
+*/
     }
 
     //Event information and weights
@@ -425,6 +441,7 @@ public:
     float pu_N_       = 0;
     float lep_N_      = 0;
     float btag_N_     = 0;
+    float sjbtag_N_   = 0;
     float topPt_N_    = 0;
 
     size8 lepChan_    = 0;
@@ -496,8 +513,8 @@ public:
     float w_b_fakeDown_  = 0;
     float w_puDown_      = 0;
 
-//    spv_float w_scale_   = make_spv_float();
-//    spv_float w_pdf_     = make_spv_float();
+//    ASTypes::spv_float w_pdf_     = ASTypes::make_spv_float();
+//    ASTypes::spv_float w_scale_     = ASTypes::make_spv_float();
 
     bool addUncVariables = false;
 
