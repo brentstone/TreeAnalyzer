@@ -680,7 +680,7 @@ void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, int year 
         break;
     case 2:
         if(outName.size()) outName += "_MJJ_fit";
-        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"};
+        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb"/*,"emu_M_I_ltmb","emu_T_I_ltmb"*/};
         else       sels = {"IF_LMT_full","IF_L_full","IF_M_full","IF_T_full"};
 
         writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit",sels);

@@ -1078,7 +1078,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
 
 void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseName, REGION reg, bool doS = false){
 
-    TFile * fd = new TFile((limitBaseName+"/fitDiagnostics.root").c_str(),"read");
+    TFile * fd = new TFile((limitBaseName+"/fitDiagnostics1000.root").c_str(),"read");
     if(!fd){
         std::cout <<"No plots file!"<<std::endl;
         return;
@@ -1170,7 +1170,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(b == btagCats[BTAG_LMT]) continue;
             if(p == purCats[PURE_I] ) continue;
             if(h != selCuts1[SEL1_FULL] ) continue;
-            const std::string wsName = l +"_"+b+"_"+p +"_"+h+"_13TeV";
+            const std::string wsName = l +"_"+b+"_"+p +"_"+h+"_13TeV_Run2";
             fitter.addCategory(l +"_"+b+"_"+p +"_"+h,wsName);
         }
     }
@@ -1179,13 +1179,13 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(l == dilepCats[LEP_INCL] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
             if(s != selCuts2[SEL2_FULL] ) continue;
-            const std::string wsName = l +"_"+b+"_"+s+"_13TeV";
+            const std::string wsName = l +"_"+b+"_"+s+"_13TeV_Run2";
             fitter.addCategory(l +"_"+b+"_"+s,wsName);
         }
     }
 
     fitter.doDataFit();
-    fitter.doToys(100);
+    fitter.doToys(1);
     fitter.write(outName);
 
 }
@@ -1224,11 +1224,11 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
     if(step==0) {//run post fit
     	int chan = do1lep ? 1 : 2;
-        runPostFit(limitBaseName+"/combined.root",postFitFilename,0,chan); // may want option to do one channel at a time
+        runPostFit(limitBaseName+"/combined.root",postFitFilename,0,0); // may want option to do one channel at a time
     }
 
 
-    if(step== 1){ //prefit
+    if(step==1){ //prefit
         if(outName.size())         outName += "prefit_dataComp";
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_PRE;
@@ -1237,11 +1237,18 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         hhPlot.binInY = false;
         hhPlot.sels = srList;
         hhPlot.titles = srListTitles;
+        hhPlot.rebinFactor = 2;
+        if(inreg == REG_SR) hhPlot.bins = {30,100,100,150,210};
+        if(do1lep) hhPlot.sels = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full"};
+        else       hhPlot.sels = {"IF_LMT_full"};
 
         writeables = doDataPlot(hhPlot,filename,postFitFilename,year);
         DataPlotPrefs hbbPlot = hhPlot;
+        hbbPlot.rebinFactor = 1;
         hbbPlot.bins = {700,4000};
         hbbPlot.binInY = true;
+        hbbPlot.addType = MOD_MC;
+        if(inreg == REG_SR) hbbPlot.blindRange = std::pair<double,double>(100,150);
 
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,year);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );

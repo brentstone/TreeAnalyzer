@@ -430,7 +430,7 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
 
         p->setXTitle( (binInY ? hbbMCS : hhMCS) .title.c_str());
         p->setYTitle("N. of events");
-        p->setCMSLumi();
+        p->setCMSLumi(0);
         p->addText(getCategoryLabel(s).c_str(),0.17,0.84,0.04);
 
 //        auto * c = p->draw(false,(s + ": "+flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1])).c_str());
