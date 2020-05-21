@@ -90,6 +90,7 @@ PostFitter::PostFitter(const std::string& inputFileName, double rvalue, double m
 
 
     if(dynamic_cast<RooSimultaneous *>(mc->GetPdf()) && !dynamic_cast<RooSimultaneousOpt *>(mc->GetPdf())  ) {
+    	std::cout<<"isSlurm"<<std::endl;
         RooSimultaneousOpt *optpdf = new RooSimultaneousOpt(static_cast<RooSimultaneous&>(*mc->GetPdf()), TString(mc->GetPdf()->GetName())+"_opt");
         w->import(*optpdf);
         mc->SetPdf(*optpdf);
@@ -98,6 +99,15 @@ PostFitter::PostFitter(const std::string& inputFileName, double rvalue, double m
     observables = mc->GetObservables();
     POI = mc->GetParametersOfInterest();
     nuisances = mc->GetNuisanceParameters();
+
+    std::cout<<std::endl<<"Look at some variables of the workspace"<<std::endl;
+    std::cout<<"Observables:"<<std::endl;
+    observables->Print();
+    std::cout<<std::endl<<"Params of Interest:"<<std::endl;
+    POI->Print();
+    std::cout<<std::endl<<"Nuisances:"<<std::endl;
+    nuisances->Print();
+    std::cout<<std::endl;
 
     // Always reset the POIs to floating (post-fit workspaces can actually have them frozen in some cases, in any case they can be re-frozen in the next step
     TIterator *pois = POI->createIterator();
@@ -128,6 +138,7 @@ PostFitter::PostFitter(const std::string& inputFileName, double rvalue, double m
     // Generate with signal model if r or other physics model parameters are defined
     //signal settings...may want to change
     if(rvalue >= 0){
+    	std::cout<<"rvalue is >= 0 at the moment"<<std::endl;
         ((RooRealVar*)POI->find("r"))->setVal(rvalue);
         ((RooRealVar*)POI->find("r"))->setConstant(true);
     }
@@ -217,6 +228,7 @@ void PostFitter::plot2DPDFComponents(RooAbsPdf* func, const std::string& name){
 void PostFitter::plotTotal2DPDF(RooAbsPdf* func,RooAbsData* data,  const std::string& name){
 	auto simPdf = dynamic_cast<RooSimultaneous *>(func);
 
+	std::cout<<"simPdf address = "<<simPdf<<std::endl;
 
 	if(simPdf){
         for(const auto& cat : categories){
@@ -232,7 +244,8 @@ void PostFitter::plotTotal2DPDF(RooAbsPdf* func,RooAbsData* data,  const std::st
 
             if (!xAxis || !yAxis) {
                 throw std::invalid_argument("null pointer on axis\n");
-            }            auto histogram = createTH2FromPDF(pdf,xvar,yvar,(name+"_"+cat.first).c_str(),"",xAxis,yAxis);
+            }
+            auto histogram = createTH2FromPDF(pdf,xvar,yvar,(name+"_"+cat.first).c_str(),"",xAxis,yAxis);
             histogram->Scale(norm/histogram->Integral());
             histogram->SetDirectory(0);
             plotter.add1D(histogram);
@@ -311,6 +324,7 @@ void PostFitter::doToys(int nToys){
     RooArgSet allFloatingParameters = w->allVars();
     allFloatingParameters.remove(*POI);
     int nFloatingNonPoiParameters = utils::countFloating(allFloatingParameters);
+    std::cout<<std::endl<<"n floating nusiances = "<<nFloatingNonPoiParameters<<std::endl<<std::endl;
 
     //if there are floating parameters, fit to the data
     RooFitResult* fitres = 0;
@@ -321,13 +335,24 @@ void PostFitter::doToys(int nToys){
     RooArgSet* cloneObservables = 0;
     if (nFloatingNonPoiParameters) {
         utils::setAllConstant(*POI, true);
+
+        std::cout<<"r = "<<((RooRealVar*)POI->find("r"))->getVal()<<std::endl;
+        std::cout<<"TOY top_norm_SF_L prefit val = ";
+        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
         fitres = fit(toyModel,*dobs,true);
+
+        std::cout<<"TOY top_norm_SF_L postfit val = ";
+        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
+
         utils::setAllConstant(*POI, false);
         w->saveSnapshot("postfit", utils::returnAllVars(w));
         //Now generate toy models about the fit errors
         cloneFunc =  (RooAbsReal*)toyModel->GetPdf()->cloneTree() ;
+        cloneFunc->Print();
         cloneParams = cloneFunc->getObservables(fitres->floatParsFinal()) ;
+        cloneParams->Print();
         cloneObservables = cloneFunc->getObservables(dobs);
+        cloneObservables->Print();
         paramPdf = fitres->createHessePdf(*cloneParams) ;
         toyParams = paramPdf->generate(*cloneParams,nToys) ;
         newToyMC.reset(new toymcoptutils::SimPdfGenInfo((*(RooAbsPdf*)cloneFunc),*cloneObservables,true) );

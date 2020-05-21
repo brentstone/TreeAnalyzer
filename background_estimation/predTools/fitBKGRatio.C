@@ -9,12 +9,10 @@
 #include "TGraphErrors.h"
 
 
-
-
-
 class fitBKGRatioAnalyzer {
 public:
 
+	// old function not used anymore
     const TH1* makeFitHist(const std::string& name,const TH1 * iHist, const std::vector<double>& coefList, const std::vector<std::unique_ptr<TH1F>>& upHists
             , const std::vector<std::unique_ptr<TH1F>>& downHists) {
 

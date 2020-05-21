@@ -26,6 +26,8 @@ public:
         xIsCond   = p.addBool("xIsCond",
                 "If true, set x as the conditional variable P(X|Y)*P(Y), if false: P(Y|X)*PY(Y)");
         auto vx   = p.addString("vx","x variable",true);
+//        auto vxUp = p.addString("vxUp","x variable up systematic (physics-based)");
+//        auto vxDn = p.addString("vxDn","x variable down systematic (physics-based)");
         auto vy   = p.addString("vy","y variable",true);
         auto xb   = p.addVFloat("xb","x-variable binning",true);
         auto yb   = p.addVFloat("yb","y-variable binning",true);
@@ -60,6 +62,8 @@ public:
         sForm.reset(new TTreeFormula("sForm",
                 TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
         vxForm.reset(new TTreeFormula("vxForm", vx->c_str(),tree.getTree()));
+        vxUpForm.reset(new TTreeFormula("vxUpForm", vxUp->c_str(),tree.getTree()));
+        vxDnForm.reset(new TTreeFormula("vxDnForm", vxUp->c_str(),tree.getTree()));
         vyForm.reset(new TTreeFormula("vyForm", vy->c_str(),tree.getTree()));
 
         const int nEntries =  tree.getTree()->GetEntries(
@@ -67,10 +71,14 @@ public:
 
         nominalX .reset(new std::vector<double>);
         nominalY .reset(new std::vector<double>);
+//        physUpX  .reset(new std::vector<double>);
+//        physDnX  .reset(new std::vector<double>);
         weight   .reset(new std::vector<double>);
 
         nominalX ->reserve(nEntries);
         nominalY ->reserve(nEntries);
+//        physUpX  ->reserve(nEntries);
+//        physDnX  ->reserve(nEntries);
         weight   ->reserve(nEntries);
     }
 
@@ -81,9 +89,13 @@ public:
         if(s==0) return false;
 
         double vx   = vxForm->EvalInstance();
+        double vxUp   = vxUpForm->EvalInstance();
+        double vxDn   = vxDnForm->EvalInstance();
         double vy   = vyForm->EvalInstance();
         nominalX ->push_back(vx);
         nominalY ->push_back(vy);
+//        physUpX  ->push_back(vxUp);
+//        physDnX  ->push_back(vxDn);
         weight   ->push_back(s);
         return true;
     }
@@ -320,6 +332,8 @@ public:
     std::unique_ptr<TAxis> yAxis;
     std::unique_ptr<TTreeFormula> sForm;
     std::unique_ptr<TTreeFormula> vxForm;
+    std::unique_ptr<TTreeFormula> vxUpForm;
+    std::unique_ptr<TTreeFormula> vxDnForm;
     std::unique_ptr<TTreeFormula> vyForm;
 
     std::shared_ptr<double>       khxs;
@@ -336,6 +350,8 @@ public:
 
     std::unique_ptr<std::vector<double>> nominalX  ;
     std::unique_ptr<std::vector<double>> nominalY  ;
+//    std::unique_ptr<std::vector<double>> physUpX  ;
+//    std::unique_ptr<std::vector<double>> physDnX  ;
     std::unique_ptr<std::vector<double>> weight    ;
 
     HistGetter plotter;
