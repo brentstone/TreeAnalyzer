@@ -17,16 +17,16 @@ using namespace CutConstants;
 
 const float minX = 700;
 const float maxX = 3600;
-const float minY = 0.5;
+const float minY = 0.05;
 const float maxY = 10000;
 const bool doLog = true;
     std::string titleX = "#it{m}_{X} [GeV]";
     std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
 std::vector<std::string> partLabels = {"Spin-0 X","Spin-2 X"};
 std::vector<std::string> fileLabel = {"radion","blkgrav"};
-std::string lumiText = "35.9 fb^{-1} (13 TeV)";
+std::string lumiText = "137.1 fb^{-1} (13 TeV)";
 const bool prelim = false;
-const float limitScale = 1000 * HHtobbVVBF_BUGGY/HHtobbVVBF;
+const float limitFactor = 1000;
 
 //https://github.com/CrossSectionsLHC/WED
 
@@ -252,18 +252,19 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     int eventNumber = 0;
     while(t->GetEntry(eventNumber)){
         if(mh < minX || mh > maxX) continue;
+//    	printf("slurm\n");
         if(quantileExpected<0)
-            obs.emplace_back(mh,limit*limitScale);
+            obs.emplace_back(mh,limit*limitFactor);
         else if(quantileExpected>0.02 && quantileExpected<0.03)
-            m2Sigma.emplace_back(mh,limit*limitScale);
+            m2Sigma.emplace_back(mh,limit*limitFactor);
         else if(quantileExpected>0.15 && quantileExpected<0.17)
-            m1Sigma.emplace_back(mh,limit*limitScale);
+            m1Sigma.emplace_back(mh,limit*limitFactor);
         else if(quantileExpected>0.49 && quantileExpected<0.51)
-            exp.emplace_back(mh,limit*limitScale);
+            exp.emplace_back(mh,limit*limitFactor);
         else if(quantileExpected>0.974 && quantileExpected<0.976)
-            p2Sigma.emplace_back(mh,limit*limitScale);
+            p2Sigma.emplace_back(mh,limit*limitFactor);
         else if(quantileExpected>0.83  && quantileExpected<0.85)
-            p1Sigma.emplace_back(mh,limit*limitScale);
+            p1Sigma.emplace_back(mh,limit*limitFactor);
         ++eventNumber;
     }
     f->Close();
@@ -271,18 +272,22 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
 
     auto chk=[&](std::vector<std::pair<float,float>>& obj, std::string name){
         std::sort(obj.begin(),obj.end(),[](const std::pair<float,float> a, const std::pair<float,float>b){return a.first < b.first;} );
+        std::cout<<name<<std::endl;
+        for(const auto& e : obj) {
+        	std::cout<<"mh = "<<e.first<<"  lim = "<<e.second<<std::endl;
+        }
         if(exp.size() == obj.size()) return;
         std::cout << "bad file!!!"<<std::endl;
         throw std::range_error(name);
+
     };
+
     if(!blind) chk(obs ,"obs"   );
     chk(m2Sigma,"m2Sigma");
     chk(m1Sigma,"m1Sigma");
     chk(exp    ,"exp    ");
     chk(p2Sigma,"p2Sigma");
     chk(p1Sigma,"p1Sigma");
-
-
 
     auto band68= new TGraphAsymmErrors();
     auto band95= new TGraphAsymmErrors();
@@ -364,9 +369,9 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
 
     c->cd();
     frame->Draw();
-    band95->Draw("3same");
-    band68->Draw("3same");
-    sigXSec->Draw("LX");
+    band95->Draw("Same3l");
+    band68->Draw("Same3l");
+    sigXSec->Draw("LXsame");
     if(sig != RADION) sigXSec2->Draw("LX");
     bandExp->Draw("LX");
     if(!blind) bandObs->Draw("PLsame");
@@ -440,14 +445,14 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
 
 #endif
 void doLimits(bool blind, int sig = RADION, std::string inName = "higgsCombineTest.AsymptoticLimits.root", std::string outName = "limitPlot"){
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
     go(blind,sig,inName,outName +"_"+ fileLabel[sig]);
 }
