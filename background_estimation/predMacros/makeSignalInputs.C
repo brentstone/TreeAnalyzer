@@ -7,6 +7,7 @@
 #include "../predTools/InputsHelper.h"
 #include "../predTools/FunctionFitter.C"
 #include "../predTools/PDFAdder.h"
+#include "AnalysisSupport/Utilities/interface/HistGetter.h"
 
 void makeSignalPDFSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile){
     int nameIDX =  inputFile.find("XXX", 0);
@@ -78,8 +79,8 @@ void makeSignalNormSystDists(const std::string& name, const std::string& filenam
             {"elRecoDown","w_elRecoDown*xsec*trig_N*pu_N*btag_N" },
             {"elIDDown"  ,"w_elIDDown*xsec*trig_N*pu_N*btag_N"   },
 //            {"elISODown" ,"w_elISODown*xsec*trig_N*pu_N*btag_N"  },
-//            {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
-//            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  },
+            {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
+            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  },
             {"puDown"    ,"w_puDown*xsec*trig_N*btag_N*lep_N"    }
     };
 
@@ -184,6 +185,52 @@ void makeSignalFittingDistributions(const std::string& name, const std::string& 
 
     gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
     gSystem->Exec((std::string("rm ") + allFiles).c_str());
+}
+//--------------------------------------------------------------------------------------------------
+void combineSignalFittingDistributions(const std::string& filename, const std::vector<int>& signalMassBins, bool doIncl, int channel) {
+	std::string fileSuffix = (doIncl ? std::string("inclM") : std::string("exclM")) + "_distributions.root";
+	std::string outF = filename+"_"+signals[ALLSIGNAL]+"_" + fileSuffix;
+	std::vector<std::string> vars = {"hbbMass_hhMass"};
+	if(!doIncl) {
+		vars.emplace_back("hbbMass");
+		vars.emplace_back("hhMass");
+	}
+	std::vector<std::string> sels;
+
+	if(channel == 0 || channel == 1) {
+        CatIterator ci;
+        while(ci.getBin()) sels.emplace_back(ci.name());
+	}
+
+	if(channel == 0 || channel == 2) {
+        DilepCatIterator ci;
+        while(ci.getBin()) sels.emplace_back(ci.name());
+	}
+
+	auto *rF = TObjectHelper::getFile(filename+"_"+signals[RADION]+"_"+fileSuffix);
+	auto *bF = TObjectHelper::getFile(filename+"_"+signals[BLKGRAV]+"_"+fileSuffix);
+
+	HistGetter plotter;
+	for(const auto& mass : signalMassBins) for(const auto& sel : sels) for(const auto& var : vars) {
+		std::string histS = "m"+std::to_string(mass)+"_"+sel+"_"+var;
+		if(ASTypes::strFind(var,"_")) {
+			TH2 *h = (TH2*)rF->Get((signals[RADION]+"_"+histS).c_str());
+			h = (TH2*)h->Clone((signals[ALLSIGNAL]+"_"+histS).c_str());
+			h->Add( (TH2*)bF->Get((signals[BLKGRAV]+"_"+histS).c_str()) , 1);
+			plotter.add2D(h);
+		} else {
+			TH1 *h = (TH1*)rF->Get((signals[RADION]+"_"+histS).c_str());
+			h = (TH1*)h->Clone((signals[ALLSIGNAL]+"_"+histS).c_str());
+			h->Add( (TH1*)bF->Get((signals[BLKGRAV]+"_"+histS).c_str()) , 1);
+			plotter.add1D(h);
+		}
+	}
+	plotter.write(outF);
+
+	rF->Close();
+	bF->Close();
+	delete rF;
+	delete bF;
 }
 //--------------------------------------------------------------------------------------------------
 void makeSignalYields(const std::string& name, const std::string& filename,
@@ -910,7 +957,7 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
 void go(int step, int sig, int channel, std::string treeDir) {
     const std::string filename = hhFilename;
 
-    if(step == 1) sig = SIGNALS::ALLSIGNAL;
+    if(step == 1 || step == 2) sig = SIGNALS::ALLSIGNAL;
 
     const std::string baseTreeName = treeDir + "/"+signals[sig].cut+  "_mXXX";
 
@@ -925,7 +972,12 @@ void go(int step, int sig, int channel, std::string treeDir) {
         	makeSignalYields(name,filename,signalMassBins[sig],channel);
     }
 
-    if(step == 1){
+    if(step == 1) {
+    	combineSignalFittingDistributions(filename,signalMassBins[sig],true,channel);
+    	combineSignalFittingDistributions(filename,signalMassBins[sig],false,channel);
+    }
+
+    if(step == 2){
         makeSignalMJJShapes1stIt(name,filename,signalMassBins[sig],channel);
         makeSignalMJJShapes2ndIt(name,filename,signalMassBins[sig],channel);
         makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"exclM_");
@@ -933,13 +985,15 @@ void go(int step, int sig, int channel, std::string treeDir) {
 
         gSystem->Exec(std::string("mkdir temp").c_str());
         gSystem->Exec((std::string("cp *")+signals[ALLSIGNAL]+"*fit* temp/").c_str());
+        gSystem->Exec((std::string("rm *")+signals[RADION]+"*fit*").c_str());
+        gSystem->Exec((std::string("rm *")+signals[BLKGRAV]+"*fit*").c_str());
         gSystem->Exec((std::string("rename 's/")+signals[ALLSIGNAL]+"/"+signals[RADION]+"/' *"+signals[ALLSIGNAL]+"*fit*").c_str());
         gSystem->Exec((std::string("rename 's/")+signals[ALLSIGNAL]+"/"+signals[BLKGRAV]+"/' temp/*").c_str());
         gSystem->Exec((std::string("mv temp/* .")).c_str());
         gSystem->Exec((std::string("rm -r temp/")).c_str());
     }
 
-    if(step == 2){
+    if(step == 3){
         makeSignalNormSystDists(name,filename,signalMassBins[sig],signalTrees,channel);
 
         makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,signalTrees,"NOMSyst");
