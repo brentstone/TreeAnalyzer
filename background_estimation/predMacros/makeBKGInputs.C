@@ -70,6 +70,7 @@ std::string getMVVExpoMinMaxStr(std::string sample){
     return std::string(" -emin ") + flt2Str(eMin) + " -emax "+flt2Str(eMax) + " ";
 }
 
+// determined from control region
 const float hh_scaleUnc = 0.0005; // coef of 1 means that we get a 100% scale at 2 TeV;
 const float hh_resUnc   = 1400; // coef of 1 means that we get a 200% scale at 700 GeV
 
@@ -276,23 +277,34 @@ void cutMVVTemplate(const std::string& name, const std::string& filename, int ch
 
 
 void getQCDScaleFactor(const std::string& name, const std::string& filename,
-        const std::string inputFile, const std::string& cut="1.0"){
+        const std::string inputFile, const std::string& cut="1.0", bool doLargerStudy = false, bool doQuick = true){
     std::vector<PlotVar> vars;
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,inclHHMassBins);
     std::vector<PlotSamp> samps = {
-            {name+"_"+processes[TTBAR],processes[TTBAR].cut},
             {name+"_"+processes[WJETS],processes[WJETS].cut},
-            {name+"_"+processes[QCD],processes[QCD].cut},
-            {name+"_"+processes[OTHER],processes[OTHER].cut}
+            {name+"_"+processes[QCD],processes[QCD].cut}
     };
 
+    if(doLargerStudy) {
+    	samps.emplace_back(name+"_"+processes[TTBAR],name+"_"+processes[TTBAR].cut);
+    	samps.emplace_back(name+"_"+processes[OTHER],name+"_"+processes[OTHER].cut);
+    }
+
     //have to use the old iteration to get the inclusive category
-    std::vector<CutStr > srPCrBtagCats = btagCats;
+    std::vector<CutStr> srPCrBtagCats = btagCats;
     srPCrBtagCats.push_back(inclBtagCat);
 
     std::vector<PlotSel> sels;
     for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats)
         for(const auto& p :purCats)  for(const auto& h :selCuts1){
+        	if(doQuick) {
+                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                    if(h != selCuts1[SEL1_LTMB] && h != selCuts1[SEL1_FULL]) continue;
+                }
+                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                    if(h != selCuts1[SEL1_LT] &&h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_NONE]) continue;
+                }
+        	}
             sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
                     l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
         }
@@ -303,8 +315,14 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
     for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats)
         for(const auto& p :purCats)  for(const auto& h :selCuts1){
 
-        	// hack
-            if(b=="T" && p=="HP") continue;
+        	if(doQuick) {
+                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                    if(h != selCuts1[SEL1_LTMB] && h != selCuts1[SEL1_FULL]) continue;
+                }
+                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                    if(h != selCuts1[SEL1_LT] &&h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_NONE]) continue;
+                }
+        	}
 
             const std::string catName = l +"_"+b+"_"+p +"_"+h;
             std::string args = "-nF "+distName +" -nH " + catName + "_"+hhMCS
@@ -320,7 +338,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
 
 void makeFittingDistributions(const std::string& name, const std::string& filename,
         const std::string inputFile, const std::string& cut="1.0",
-        bool doIncl = true, bool addQCDSF = false,
+        bool doIncl = true, bool addQCDSF = false, bool doQuick = true,
         const std::vector<std::pair<std::string,std::string>>& samples={}){
     std::vector<PlotVar> vars;
 
@@ -344,8 +362,19 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
     }
 
     std::vector<PlotSel> sels;
+
+    // selections for 1l channel
     CatIterator ci1;
     while(ci1.getBin()){
+
+    	if(doQuick) {
+            if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                if(!ci1.is(SEL1_LTMB) && !ci1.is(SEL1_FULL)) continue;
+            }
+            if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                if(!ci1.is(SEL1_LT) && !ci1.is(SEL1_FULL) && !ci1.is(SEL1_NONE)) continue;
+            }
+    	}
 
         if(addQCDSF){
             sels.emplace_back(ci1.name(),
@@ -357,20 +386,23 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
         }
     }
 
+    // selections for 2l channel
     DilepCatIterator ci2;
     while(ci2.getBin()){
         sels.emplace_back(ci2.name(),ci2.cut());
     }
 
-    // combined 1l + 2l distributions
+    // selections for combined 1l + 2l distributions
     CatIterator cit1;
     while (cit1.getBin()) {
     	if(!cit1.is(LEP_EMU)) continue;
     	if(!cit1.is(PURE_I)) continue;
+    	if(!cit1.is(SEL1_LTMB) && !cit1.is(SEL1_NONE)) continue;
 
     	DilepCatIterator cit2;
     	while (cit2.getBin()) {
         	if(!cit2.is(LEP_INCL)) continue;
+        	if(!cit2.is(SEL2_RPhiB) && !cit2.is(SEL2_NONE)) continue;
         	if(cit1.b != cit2.b)   continue;
 
         	sels.emplace_back(cit1.name()+"_"+cit2.name(),"(("+cit1.cut()+")||("+cit2.cut()+"))");
@@ -385,7 +417,7 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
 }
 
 void fitBackgroundShapes2DConditional(std::string name, const std::string& filename,
-        bool xIsCond, int channel, const std::string& fittedName =""){
+        bool xIsCond, int channel, bool doQuick, const std::string& fittedName =""){
 
     //Different name in case we want to fit on a different selection with some template
     if(fittedName.size())name = fittedName;
@@ -394,6 +426,16 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
+
+        	if(doQuick) {
+                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+                }
+                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+                }
+        	}
+
             std::string hName = name+"_"+ci.name()+"_"+hbbMCS+"_"+hhMCS;
             std::string outName = filename + "_"+name+"_"+ci.name()+"_2D_template.root";
 
@@ -437,7 +479,7 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
     }
 
 }
-void fitBackgroundShapesMVV(std::string name, const std::string& filename, int channel = 0,
+void fitBackgroundShapesMVV(std::string name, const std::string& filename, int channel = 0, bool doQuick = true,
         const std::string& fittedName =""){
     //Different name in case we want to fit on a different selection with some template
     if(fittedName.size())name = fittedName;
@@ -446,6 +488,16 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, int c
     if(channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
+
+        	if(doQuick) {
+                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+                }
+                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+                }
+        	}
+
             std::string hName = name+"_"+ci.name()+"_"+hhMCS;
             std::string inName = filename + "_"+name+"_"
                     +lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LT]
@@ -716,7 +768,7 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
 }
 
 
-void fitMJJSF(const std::string& name, const std::string& filename, const int channel){
+void fitMJJSF(const std::string& name, const std::string& filename, const int channel, bool doQuick){
     std::string fittingFileName = filename+"_"+name+"_distributions.root";
 
     // input template
@@ -729,6 +781,15 @@ void fitMJJSF(const std::string& name, const std::string& filename, const int ch
 //            std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
 //            jsonFile += strFind(name,bkgSels[BKG_MW]) ?btagCats[BTAG_LMT]:btagCats[ci.b];
 //            jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_MJJ_fit.json";
+
+        	if(doQuick) {
+                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+                }
+                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+                }
+        	}
 
             std::string kdeFile = filename + "_"+name+"_"+ci.name()+"_MVV_template.root";
             std::string outFile = filename + "_"+name+"_"+ci.name()+"_MJJ_SFFit.json";
@@ -762,7 +823,7 @@ void fitMJJSF(const std::string& name, const std::string& filename, const int ch
 
 }
 
-void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename, const int channel,
+void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename, const int channel, bool doQuick = true,
         const std::string& funcParamPostfix=""){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
 
@@ -808,6 +869,15 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
         CatIterator ci;
         while(ci.getBin()){
             std::string jsonFile = filename + "_"+name+"_"+ci.name() +"_MJJ_SFFit.json";
+
+        	if(doQuick) {
+                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+                }
+                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+                }
+        	}
             makeTemplate(jsonFile,ci.name());
         }
     }
@@ -822,12 +892,22 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
     oF->Close();
 }
 
-void compile2DTemplatesForDebug(const std::string& name, const std::string& filename, int channel){
+void compile2DTemplatesForDebug(const std::string& name, const std::string& filename, int channel, bool doQuick){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
 
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
+
+        	if(doQuick) {
+                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+                }
+                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+                }
+        	}
+
             auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+ci.name()+"_2D_template.root");
             if(iF==0) continue;
             auto hh_H = TObjectHelper::getObject<TH2>(iF,"histo",false,false);
@@ -955,7 +1035,7 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
 
 }
 
-void go(int modelToDo, int channel, std::string treeDir) {
+void go(int modelToDo, int channel, std::string treeDir, bool doQuick) {
     std::string filename = hhFilename;
 
     if(modelToDo == -1){
@@ -977,13 +1057,15 @@ void go(int modelToDo, int channel, std::string treeDir) {
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
 
-        getQCDScaleFactor(name,filename, treeAreaIncl, bkgSels[BKG_QG].cut+"&&"+hbbRange.cut);
+        // QCD SF
+        if(channel != 2) getQCDScaleFactor(name,filename, treeAreaIncl, bkgSels[BKG_QG].cut+"&&"+hbbRange.cut,false,doQuick);
+
         makeFittingDistributions(name,filename,treeArea,
-                hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,
+                hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,doQuick,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
         );
         makeFittingDistributions(name,filename,treeArea,
-                hhRange.cut+"&&"+hbbRange.cut,false,true,
+                hhRange.cut+"&&"+hbbRange.cut,false,true,doQuick,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
         );
 
@@ -992,8 +1074,8 @@ void go(int modelToDo, int channel, std::string treeDir) {
 
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,true,1,3);
         mergeBackgroundShapes(name,filename,channel,true);
-        fitBackgroundShapes2DConditional(name,filename,true,channel);
-        compile2DTemplatesForDebug(name,filename,channel);
+        fitBackgroundShapes2DConditional(name,filename,true,channel,doQuick);
+        compile2DTemplatesForDebug(name,filename,channel,doQuick);
     }
 
     if(modelToDo == BKG_LOSTTW){
@@ -1011,9 +1093,9 @@ void go(int modelToDo, int channel, std::string treeDir) {
 
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,false,1,4);
         mergeBackgroundShapes(name,filename,channel,true);
-        fitBackgroundShapes2DConditional(name,filename,true,channel);
+        fitBackgroundShapes2DConditional(name,filename,true,channel,doQuick);
 
-        compile2DTemplatesForDebug(name,filename,channel);
+        compile2DTemplatesForDebug(name,filename,channel,doQuick);
 
     }
 
@@ -1029,12 +1111,12 @@ void go(int modelToDo, int channel, std::string treeDir) {
 
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel);
         cutMVVTemplate(name,filename,channel);
-        fitBackgroundShapesMVV(name,filename,channel);
+        fitBackgroundShapesMVV(name,filename,channel,doQuick);
 
         makeResWMJJShapes1stIt(name,filename,channel);
         makeResWMJJShapes2ndIt(name,filename,channel);
-        fitMJJSF(name,filename,channel);
-        convertFuncFitTo2DTemplate(name,filename,channel);
+        fitMJJSF(name,filename,channel,doQuick);
+        convertFuncFitTo2DTemplate(name,filename,channel,doQuick);
     }
 
     if(modelToDo == BKG_MT){
@@ -1049,11 +1131,11 @@ void go(int modelToDo, int channel, std::string treeDir) {
 
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel);
         cutMVVTemplate(name,filename,channel);
-        fitBackgroundShapesMVV(name,filename,channel);
+        fitBackgroundShapesMVV(name,filename,channel,doQuick);
         makeResTopMJJShapes1stIt(name,filename,channel);
         makeResTopMJJShapes2ndIt(name,filename,channel);
-        fitMJJSF(name,filename,channel);
-        convertFuncFitTo2DTemplate(name,filename,channel);
+        fitMJJSF(name,filename,channel,doQuick);
+        convertFuncFitTo2DTemplate(name,filename,channel,doQuick);
     }
 
     //Make pseudo data
@@ -1064,7 +1146,7 @@ void go(int modelToDo, int channel, std::string treeDir) {
 }
 #endif
 
-void makeBKGInputs(int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../bkgCompLMT/"){
+void makeBKGInputs(int bkgToDo = BKG_QG, int channel = 0, bool doQuick = true, std::string treeDir = "../bkgCompLMT/"){
 	// channel = 0 (both), 1 (single lep), 2 (dilep)
-    go(bkgToDo,channel,treeDir);
+    go(bkgToDo,channel,treeDir,doQuick);
 }
