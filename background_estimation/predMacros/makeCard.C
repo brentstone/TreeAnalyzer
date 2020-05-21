@@ -23,26 +23,45 @@ std::string getSystName (const std::string& prefix, const std::string& proc,cons
 };
 
 void go(const int insig, const std::string& filename, const std::string& mainDir, REGION reg, int channel){
-    const std::string sigInputDir =  mainDir +  "/signalInputs/";
-    const std::string sfPF = sigInputDir + filename;
-    const std::string signalName = signals[insig];
-    std::string inputDir = mainDir;
+    std::string sigInputDir =  mainDir +  "/signalInputs/";
+    std::string sfPF = sigInputDir + filename;
+    std::string signalName = signals[insig];
 
     std::string fPF;
-    switch(reg){
-    case REG_SR:
-        fPF = mainDir + "/bkgInputs/" + filename;
-        break;
-    case REG_TOPCR:
-        fPF = mainDir + "/bkgInputsTopCR/" + filename + "_TopCR";
-        break;
-    case REG_NONTOPCR:
-        fPF = mainDir + "/bkgInputsNonTopCR/" + filename + "_NonTopCR";
-        break;
-    }
+//    switch(reg){
+//    case REG_SR:
+//        fPF = mainDir + "/bkgInputs/" + filename;
+//        break;
+//    case REG_TOPCR:
+//        fPF = mainDir + "/bkgInputsTopCR/" + filename + "_TopCR";
+//        break;
+//    case REG_NONTOPCR:
+//        fPF = mainDir + "/bkgInputsNonTopCR/" + filename + "_NonTopCR";
+//        break;
+//    }
 
     std::string cmd = "combineCards.py ";
 
+    bool doCombinedRun2 = true;
+    std::vector<std::string> years = {"2016","2017","2018"};
+    if(doCombinedRun2) years = {"Run2"};
+
+    for(std::string& yr : years) {
+    	sigInputDir = mainDir + "/signalInputs/";
+    	sfPF = sigInputDir + filename;
+        switch(reg){
+        case REG_SR:
+            fPF = mainDir + "/bkgInputs/" + filename;
+            break;
+        case REG_TOPCR:
+            fPF = mainDir + "/bkgInputsTopCR/" + filename + "_TopCR";
+            break;
+        case REG_NONTOPCR:
+            fPF = mainDir + "/bkgInputsNonTopCR/" + filename + "_NonTopCR";
+            break;
+        }
+
+        yr = std::string("_")+yr;
     if(channel == 0 || channel == 1) {
         for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :selCuts1){
             if(l == lepCats[LEP_EMU] ) continue;
@@ -53,8 +72,8 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             const std::string cat = l +"_"+b+"_"+p +"_"+h;
 
 
-            auto card = DataCardMaker(cat,"13TeV",1);
-            const std::string dataCardTag = DataCardMaker::getFileNameTag(cat,"13TeV");
+            auto card = DataCardMaker(cat,"13TeV"+yr,1);
+            const std::string dataCardTag = DataCardMaker::getFileNameTag(cat,"13TeV"+yr);
             cmd += std::string(" ")+ dataCardTag+"="+DataCardMaker::getOutputCardFileName(dataCardTag);
 
             auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& p, const std::string& h, const std::string& pf) -> std::string
@@ -65,6 +84,10 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
                 return getSystName("",proc,name, sel == "-1" ? l +"_"+b+"_"+p : sel  );
             };
+
+//            auto addSignalSystematics = [&]() {
+//            	card.addSystematic("yield","lnN",{{signalName,systematics.yield}});
+//            };
 
             //Make search variables
             card.addVar(MOD_MJ,100,0,1000,false);
@@ -83,39 +106,44 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             //Add Systematics first since the param systs need to have the variables added to the workspace
             //---------------------------------------------------------------------------------------------------
             //luminosity
-            card.addSystematic("yield","lnN",{{signalName,1.0391}});//lumi = 2.5 pdf= 2, PU = 0.5, btagfake=1
+//            card.addSystematic("yield","lnN",{{signalName,1.0391}});//lumi = 2.5 pdf= 2, PU = 0.5, btagfake=1
+            card.addSystematic("yield"+yr,"lnN",{{signalName,doCombinedRun2?1.12:1.2}}); //testing
+
 
             //lepton efficiency
-            if(l==lepCats[LEP_E])
-                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0602}}); //2% trigger / 5.5% for reco  / 1.4% ID / ISO 0.2%
-            else
-                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0566}}); //2% trigger / ID 1%  /  ISO 5.2%
-            //
+//            if(l==lepCats[LEP_E])
+//                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0602}}); //2% trigger / 5.5% for reco  / 1.4% ID / ISO 0.2%
+//            else
+//                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0566}}); //2% trigger / ID 1%  /  ISO 5.2%
+
             //tau21
-            card.addParamSystematic("tau21_PtDependence",0.0,0.041);
-            if(p == purCats[PURE_HP])
-                card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1+0.14}});
-            if(p == purCats[PURE_LP])
-                card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1-0.33}});
+//            card.addParamSystematic("tau21_PtDependence",0.0,0.041);
+//            if(p == purCats[PURE_HP])
+//                card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1+0.14}});
+//            if(p == purCats[PURE_LP])
+//                card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1-0.33}});
+
+
             //Btag
-            card.addParamSystematic("btag_eff",0.0,0.1);
+//            card.addParamSystematic("btag_eff",0.0,0.1);
 
             //pruned mass scale
 
     //        card.addParamSystematic("hh_scale",0.0,0.0122); // jes 1 jer 0.5 met 0.5
     //        card.addParamSystematic("hh_res",0.0,0.045); // jes 2 jer 4 met 0.5
-            card.addParamSystematic("unclust",0.0,0.01);
-            card.addParamSystematic("jes",0.0,0.01);
-            card.addParamSystematic("jer",0.0,0.01);
+//            card.addParamSystematic("unclust"+yr,0.0,0.01);
+//            card.addParamSystematic("jes"+yr,0.0,0.01);
+//            card.addParamSystematic("jer"+yr,0.0,0.01);
 
-            card.addParamSystematic("hbb_scale",0.0,0.0094);
-            card.addParamSystematic("hbb_res",0.0,0.2);
+            card.addParamSystematic("hbb_scale"+yr,0.0,0.0094);
+            card.addParamSystematic("hbb_res"+yr,0.0,0.2);
             //KDE shape systematics
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX",b) ,0.0,0.5);
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX",b),0.0,1.0);
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY")   ,0.0,1.0);
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY")  ,0.0,1.0);
     //        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PT2Y") ,0.0,1.0);
+
             //top HH resolution and scale
             card.addParamSystematic(systName("top","res"  ) ,0.0,0.20);
             card.addParamSystematic(systName("top","scale") ,0.0,0.25);
@@ -135,22 +163,32 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
                 card.addSystematic(systName("top","wFrac",b)         ,"lnN",{{bkgSels[BKG_MW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_mw/rate_mt}});
                 card.addSystematic(systName("top","lostFrac",b)      ,"lnN",{{bkgSels[BKG_LOSTTW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_lostTW/rate_mt}});
             }
-
+printf("dbg0\n");
             //---------------------------------------------------------------------------------------------------
             //Signal
             //---------------------------------------------------------------------------------------------------
-            card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                                 {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
-            std::string tau21Form = "(1.0+tau21_PtDependence*"+ (p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))")+")";
-            std::string brealForm = "(1.0+btag_eff*";
+//            card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
+//                                 {{"hbb_scale"+yr,1}},{{"hbb_res"+yr,1}},{{"unclust"+yr,0.5},{"jes"+yr,1},{"jer"+yr,0.5}},{{"unclust"+yr,0.5},{"jes"+yr,2},{"jer"+yr,5}}, b == btagCats[BTAG_L],MOD_MS);
+
+			card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
+                     StrFlts(),StrFlts(),StrFlts(),StrFlts(), b == btagCats[BTAG_L],MOD_MS);
+
+            std::string tau21Form = "(1.0+tau21_PtDependence"+yr+"*"+ (p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))")+")";
+            std::string brealForm = "(1.0+btag_eff"+yr+"*";
             if(b == btagCats[BTAG_L]) brealForm+= "(0.22-4.7*10^(-4)*"+MOD_MS+"+9.4*10^(-8)*"+MOD_MS+"^(2)))";
             if(b == btagCats[BTAG_M]) brealForm+="(-0.27+3.3*10^(-4)*"+MOD_MS+"-3.7*10^(-8)*"+MOD_MS+"^(2)))";
             if(b == btagCats[BTAG_T]) brealForm+="(0.22+3.8*10^(-4)*"+MOD_MS+"-4.9*10^(-8)*"+MOD_MS+"^(2)))";
-            std::string jetForm = "(1.0+unclust)*(1.0+jer)*(1.0+0.5*jes)";
+            std::string jetForm = "(1.0+unclust"+yr+")*(1.0+jer"+yr+")*(1.0+0.5*jes"+yr+")";
             std::string uncForm = tau21Form+"*"+brealForm+"*"+jetForm;
             double tau21Corr = p == purCats[PURE_HP]  ? 1.03 : 0.95;
+
             card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),
-                    tau21Corr,uncForm,{"tau21_PtDependence","btag_eff","unclust","jer","jes"},MOD_MS);
+                    1.0,"1.0",{},MOD_MS);
+
+//            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),
+//                    tau21Corr,uncForm,{"tau21_PtDependence","btag_eff","unclust","jer","jes"},MOD_MS);
+            printf("dbg1\n");
+
             //---------------------------------------------------------------------------------------------------
             //QG
             //---------------------------------------------------------------------------------------------------
@@ -161,6 +199,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             qgKDESysts.addSyst("OPTY",{{systName(bkgSels[BKG_QG],"OPTY"),"1"  }});
     //        qgKDESysts.addSyst("PT2Y",{{systName(bkgSels[BKG_QG],"PT2Y"),"1"  }});
             card.addHistoShapeFromFile(bkgSels[BKG_QG],{MOD_MJ,MOD_MR}, inputName(bkgSels[BKG_QG],"2D_template.root"),"histo",qgKDESysts);
+            printf("dbg2\n");
 
             //---------------------------------------------------------------------------------------------------
             //Lost t/W
@@ -171,6 +210,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             twKDESysts.addSyst("PTY",{{systName("top","scale"),"1"},{systName("top","lostmw_rel_scale",b),"1"}});
             twKDESysts.addSyst("OPTY",{{systName("top","res"  ),"1"  }});
             card.addHistoShapeFromFile(bkgSels[BKG_LOSTTW],{MOD_MJ,MOD_MR},inputName(bkgSels[BKG_LOSTTW],"2D_template.root"),"histo",twKDESysts);
+            printf("dbg3\n");
 
             //---------------------------------------------------------------------------------------------------
             //mW
@@ -178,9 +218,10 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             PDFAdder::InterpSysts mwKDESysts;
             mwKDESysts.addSyst("PT",{{systName("top","scale"),"1"},{systName("top","lostmw_rel_scale",b),"1"}});
             mwKDESysts.addSyst("OPT",{{systName("top","res"  ),"1"  }});
-            card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"hbb_scale",1}},{{"hbb_res",1}},MOD_MR,MOD_MJ);
+            card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"hbb_scale"+yr,1}},{{"hbb_res"+yr,1}},MOD_MR,MOD_MJ);
             card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"MVV_template.root"),"histo",mwKDESysts,false,0,MOD_MR,true);
             card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MW] + "_"+MOD_MR);
+            printf("dbg4\n");
 
             //---------------------------------------------------------------------------------------------------
             //mt
@@ -188,7 +229,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             PDFAdder::InterpSysts mtKDESysts;
             mtKDESysts.addSyst("PT",{{systName("top","scale"),"1"},{systName("top","mt_rel_scale",b),"1"}});
             mtKDESysts.addSyst("OPT",{{systName("top","res"  ),"1"  }});
-            card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"hbb_scale",1}},{{"hbb_res",1}},MOD_MR,MOD_MJ);
+            card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"hbb_scale"+yr,1}},{{"hbb_res"+yr,1}},MOD_MR,MOD_MJ);
             card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"MVV_template.root"),"histo",mtKDESysts,false,0,MOD_MR,true);
             card.conditionalProduct(bkgSels[BKG_MT],bkgSels[BKG_MT] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MT]+ "_"+MOD_MR);
 
@@ -208,9 +249,9 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             if(s != selCuts2[SEL2_FULL] ) continue;
 
             const std::string cat = l +"_"+b +"_"+s;
-            auto card = DataCardMaker(cat,"13TeV",1);
+            auto card = DataCardMaker(cat,"13TeV"+yr,1);
 
-            const std::string dataCardTag = DataCardMaker::getFileNameTag(cat,"13TeV");
+            const std::string dataCardTag = DataCardMaker::getFileNameTag(cat,"13TeV"+yr);
             cmd += std::string(" ")+ dataCardTag+"="+DataCardMaker::getOutputCardFileName(dataCardTag);
 
             auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& s, const std::string& pf) -> std::string
@@ -239,27 +280,28 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             //Add Systematics first since the param systs need to have the variables added to the workspace
             //---------------------------------------------------------------------------------------------------
             //luminosity
-            card.addSystematic("yield","lnN",{{signalName,1.0391}});//lumi = 2.5 pdf= 2, PU = 0.5, btagfake=1
+//            card.addSystematic("yield","lnN",{{signalName,1.0391}});//lumi = 2.5 pdf= 2, PU = 0.5, btagfake=1
+            card.addSystematic("yield"+yr,"lnN",{{signalName,doCombinedRun2?1.12:1.2}});//lumi = 2.5 pdf= 2, PU = 0.5, btagfake=1
 
             //lepton efficiency
-            if(l==lepCats[LEP_E])
-                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0602}}); //2% trigger / 5.5% for reco  / 1.4% ID / ISO 0.2%
-            else
-                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0566}}); //2% trigger / ID 1%  /  ISO 5.2%
+//            if(l==lepCats[LEP_E])
+//                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0602}}); //2% trigger / 5.5% for reco  / 1.4% ID / ISO 0.2%
+//            else
+//                card.addSystematic("eff_"+l,"lnN",{{signalName,1.0566}}); //2% trigger / ID 1%  /  ISO 5.2%
 
             //Btag
-            card.addParamSystematic("btag_eff",0.0,0.1);
+//            card.addParamSystematic("btag_eff",0.0,0.1);
 
             //pruned mass scale
 
     //        card.addParamSystematic("hh_scale",0.0,0.0122); // jes 1 jer 0.5 met 0.5
     //        card.addParamSystematic("hh_res",0.0,0.045); // jes 2 jer 4 met 0.5
-            card.addParamSystematic("unclust",0.0,0.01);
-            card.addParamSystematic("jes",0.0,0.01);
-            card.addParamSystematic("jer",0.0,0.01);
+//            card.addParamSystematic("unclust",0.0,0.01);
+//            card.addParamSystematic("jes",0.0,0.01);
+//            card.addParamSystematic("jer",0.0,0.01);
 
-            card.addParamSystematic("hbb_scale",0.0,0.0094);
-            card.addParamSystematic("hbb_res",0.0,0.2);
+            card.addParamSystematic("hbb_scale"+yr,0.0,0.0094);
+            card.addParamSystematic("hbb_res"+yr,0.0,0.2);
             //KDE shape systematics
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX",b) ,0.0,0.5);
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX",b),0.0,1.0);
@@ -286,23 +328,31 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
                 card.addSystematic(systName("top","wFrac",b)         ,"lnN",{{bkgSels[BKG_MW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_mw/rate_mt}});
                 card.addSystematic(systName("top","lostFrac",b)      ,"lnN",{{bkgSels[BKG_LOSTTW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_mt/rate_lostTW}}); // changed to mt / tw
             }
+
             //---------------------------------------------------------------------------------------------------
             //Signal
             //---------------------------------------------------------------------------------------------------
             card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                                 {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
+                                 StrFlts(),StrFlts(),StrFlts(),StrFlts(), b == btagCats[BTAG_L],MOD_MS);
+//            card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
+//                                 {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
+
             std::string brealForm = "(1.0+btag_eff*";
             if(b == btagCats[BTAG_L]) brealForm+= "(0.22-4.7*10^(-4)*"+MOD_MS+"+9.4*10^(-8)*"+MOD_MS+"^(2)))";
             if(b == btagCats[BTAG_M]) brealForm+="(-0.27+3.3*10^(-4)*"+MOD_MS+"-3.7*10^(-8)*"+MOD_MS+"^(2)))";
             if(b == btagCats[BTAG_T]) brealForm+="(0.22+3.8*10^(-4)*"+MOD_MS+"-4.9*10^(-8)*"+MOD_MS+"^(2)))";
             std::string jetForm = "(1.0+unclust)*(1.0+jer)*(1.0+0.5*jes)";
             std::string uncForm = brealForm+"*"+jetForm;
-            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),
-                    1.0,uncForm,{"btag_eff","unclust","jer","jes"},MOD_MS);
+//            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),
+//                    1.0,uncForm,{"btag_eff","unclust","jer","jes"},MOD_MS);
 
+            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),
+                    1.0,"1.0",{},MOD_MS);
             //---------------------------------------------------------------------------------------------------
             //QG
             //---------------------------------------------------------------------------------------------------
+            printf("dbg1\n");
+
             PDFAdder::InterpSysts qgKDESysts;
             qgKDESysts.addSyst("PTX",{{systName(bkgSels[BKG_QG],"PTX",b),"1"  }});
             qgKDESysts.addSyst("OPTX",{{systName(bkgSels[BKG_QG],"OPTX",b),"1"  }});
@@ -310,6 +360,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             qgKDESysts.addSyst("OPTY",{{systName(bkgSels[BKG_QG],"OPTY"),"1"  }});
     //        qgKDESysts.addSyst("PT2Y",{{systName(bkgSels[BKG_QG],"PT2Y"),"1"  }});
             card.addHistoShapeFromFile(bkgSels[BKG_QG],{MOD_MJ,MOD_MR}, inputName(bkgSels[BKG_QG],"2D_template.root"),"histo",qgKDESysts);
+            printf("dbg2\n");
 
             //---------------------------------------------------------------------------------------------------
             //Lost t/W
@@ -320,6 +371,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             twKDESysts.addSyst("PTY",{{systName("top","scale"),"1"},{systName("top","lostmw_rel_scale",b),"1"}});
             twKDESysts.addSyst("OPTY",{{systName("top","res"  ),"1"  }});
             card.addHistoShapeFromFile(bkgSels[BKG_LOSTTW],{MOD_MJ,MOD_MR},inputName(bkgSels[BKG_LOSTTW],"2D_template.root"),"histo",twKDESysts);
+            printf("dbg3\n");
 
             //---------------------------------------------------------------------------------------------------
             //mW
@@ -327,9 +379,10 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             PDFAdder::InterpSysts mwKDESysts;
             mwKDESysts.addSyst("PT",{{systName("top","scale"),"1"},{systName("top","lostmw_rel_scale",b),"1"}});
             mwKDESysts.addSyst("OPT",{{systName("top","res"  ),"1"  }});
-            card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"hbb_scale",1}},{{"hbb_res",1}},MOD_MR,MOD_MJ);
+            card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"hbb_scale"+yr,1}},{{"hbb_res"+yr,1}},MOD_MR,MOD_MJ);
             card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"MVV_template.root"),"histo",mwKDESysts,false,0,MOD_MR,true);
             card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MW] + "_"+MOD_MR);
+            printf("dbg4\n");
 
             //---------------------------------------------------------------------------------------------------
             //mt
@@ -337,19 +390,23 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             PDFAdder::InterpSysts mtKDESysts;
             mtKDESysts.addSyst("PT",{{systName("top","scale"),"1"},{systName("top","mt_rel_scale",b),"1"}});
             mtKDESysts.addSyst("OPT",{{systName("top","res"  ),"1"  }});
-            card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"hbb_scale",1}},{{"hbb_res",1}},MOD_MR,MOD_MJ);
+            card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"hbb_scale"+yr,1}},{{"hbb_res"+yr,1}},MOD_MR,MOD_MJ);
             card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"MVV_template.root"),"histo",mtKDESysts,false,0,MOD_MR,true);
             card.conditionalProduct(bkgSels[BKG_MT],bkgSels[BKG_MT] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MT]+ "_"+MOD_MR);
+            printf("dbg5\n");
 
             //---------------------------------------------------------------------------------------------------
             //Data
             //---------------------------------------------------------------------------------------------------
             card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
 //            card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
+            printf("dbg6\n");
 
             card.makeCard();
         }
     }
+    }
+    printf("dbgSLURM\n");
 
     std::ofstream outFile("comp.sh",std::ios::out|std::ios::trunc);
 
@@ -366,7 +423,6 @@ void makeCard(int inreg = REG_SR, int insig = RADION, int channel = 1){
 		std::cout<<"channel needs to be either 1 (single lep), 2 (dilep), or 0 (both)"<<std::endl;
 		return;
 	}
-    std::cout <<" <<<<< "<< inreg <<" " <<" "<<signals[insig]<<std::endl;
     REGION reg = REGION(inreg);
     if(reg == REG_NONTOPCR) btagCats = qgBtagCats;
     std::string mainDir = "../";
