@@ -160,7 +160,7 @@ std::string mkInput(const std::string cardname) {
 void mkCard (const std::string cardname) {
     const std::string iFN = mkInput(cardname);
 
-    auto card = DataCardMaker("a","b" ,"c",1,"cardname");
+    auto card = DataCardMaker("a_b_c","cardName",1);
     // saved card will be: datacard_CARDNAME_a_b_c.txt
     card.addVar(mR,(lowM+highM)/2,lowM,highM,false);
     card.addVar(mS,(lowM+highM)/2,true);
@@ -247,7 +247,7 @@ std::string mkInput2D(const std::string cardname) {
 void mkParamCard (const std::string cardname) {
     const std::string iFN = mkInput(cardname);
 
-    auto card = DataCardMaker("a","b" ,"c",1,"cardname");
+    auto card = DataCardMaker("a_b_c","cardName",1);
     // saved card will be: datacard_CARDNAME_a_b_c.txt
     card.addVar(mR,(lowM+highM)/2,lowM,highM,false);
     card.addVar(mS,(lowM+highM)/2,true);
@@ -364,7 +364,7 @@ void mkParamCardVan () {
 void mkCard2D (const std::string cardname) {
     const std::string iFN = mkInput2D(cardname);
 
-    auto card = DataCardMaker("a","b" ,"c",1,"cardname");
+    auto card = DataCardMaker("a_b_c","cardName",1);
     // saved card will be: datacard_CARDNAME_a_b_c.txt
     card.addVar(mR,(lowM+highM)/2,lowM,highM,false);
     card.addVar(mJ,(lowM+highM)/2,lowM,highM,false);
