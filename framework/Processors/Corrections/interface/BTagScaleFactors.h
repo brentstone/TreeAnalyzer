@@ -48,6 +48,7 @@ std::unique_ptr<BTagCalibration> calib;
 std::vector< std::unique_ptr<BTagCalibrationReader> > calibReaders;
 std::vector< std::vector< std::unique_ptr<TObjectHelper::Hist2DContainer> >> efficiencies;
 const std::vector<std::string> systNames = {"none","down","central","up"};
+const std::vector<std::string> systNames_Reshaping = {"none","down_hf","central","up_hf"};
 
 //loadedParameters
 std::vector<float>   btagCorrWP;

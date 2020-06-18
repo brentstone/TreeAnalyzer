@@ -70,7 +70,7 @@ float BTagScaleFactors::getJetSF(const BTagging::FLAVOR flv, const float pt, con
     // BTagEntry::JetFlavor set to have same order as BTagging::Flavor
 	return calibReaders[wp-1]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv),eta,pt,disc);
 }
-//_____________________________________________________________________________
+//____________________________________________________________________________
 float BTagScaleFactors::getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE lightT,
         CorrHelp::CORRTYPE heavyT) const {
     const float pt = jet->pt();
@@ -85,10 +85,10 @@ float BTagScaleFactors::getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE l
     float lSF = 1;
     float hSF = 1;
 
-//    printf("\nInput Jet:\nflv = %d\npt = %f\neta = %f\ndisc = %f\n\n",flv,pt,eta,disc);
+//    printf("\nInput Jet:\nflv = %d\npt = %f\neta = %f\ndisc = %f",flv,pt,eta,disc);
 
     assignVals(flv,pt,eta,disc,corrT,lE,hE,lSF,hSF);
-//    printf("\nlE = %f\nhE = %f\nlSF = %F\nhSF = %f\n\n",lE,hE,lSF,hSF);
+//    printf("\nlE = %f\nhE = %f\nlSF = %F\nhSF = %f\n",lE,hE,lSF,hSF);
 
     const float origEff = lE - hE;
     const float newEff = lSF*lE - hSF*hE;
@@ -99,6 +99,7 @@ float BTagScaleFactors::getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE l
         throw std::invalid_argument(errStr.Data());
     }
 
+//    std::cout<<"sf = "<<newEff/origEff<<std::endl<<std::endl;
     return newEff/origEff;
 }
 //_____________________________________________________________________________
@@ -170,7 +171,7 @@ float BTagScaleFactors::getReshapingCorr(const BaseRecoJet* j, CorrHelp::CORRTYP
     const CorrHelp::CORRTYPE corrT =  flv == FLV_L ? lightT : heavyT;
 
 //    printf("Input Jet:\npt = %f\neta = %f\nflv = %d\ndisc = %f\n",pt,eta,flv,disc);
-	return calibReaders[0]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv),eta,pt,disc);
+	return calibReaders[0]->eval_auto_bounds(systNames_Reshaping[corrT],BTagEntry::JetFlavor(flv),eta,pt,disc);
 }
 //____________________________________________________________________________
 //_____________________________________________________________________________
@@ -218,11 +219,14 @@ float SubJetBTagScaleFactors::getSF(const JetParameters& parameters,
     std::vector<const BaseRecoJet*> subjets;
     for(const auto* fj : fatJets){
         if(fj){
+//        	printf("jet: pt = %f, eta = %f\n",fj->pt(),fj->eta());
             for(const auto& sj : fj->subJets()){
+//            	printf("sj (%d): pt = %f, eta = %f, dcsv = %f\n",jetFlavor(sj),sj.pt(),sj.eta(),sj.deep_csv());
                 if(sj.absEta() < parameters.maxBTagJetETA
                         && sj.pt() >= parameters.minBtagJetPT)
                     subjets.push_back(static_cast<const BaseRecoJet*>(&sj) );
             }
+//            std::cout<<std::endl;
         }
     }
 
