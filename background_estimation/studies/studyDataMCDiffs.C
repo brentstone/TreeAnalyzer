@@ -345,8 +345,13 @@ public:
                 }
 
                 plotter.getOrMake2DPre(pref+"_"+id+suf+hbbS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,fabs(eta),weight);
+                plotter.getOrMake1DPre(pref+"_"+id+hbbS,"dcsv",";deep_csv",100,0,1)->Fill(sj1.deep_csv(),weight);
+                plotter.getOrMake1DPre(pref+"_"+id+hbbS,"dcsv",";deep_csv",100,0,1)->Fill(sj2.deep_csv(),weight);
+
                 if(!isRealData()) {
                     plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS+suf+hbbS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,fabs(eta),weight);
+                    plotter.getOrMake1DPre(pref+"_"+id+"_"+flvS1+hbbS,"dcsv",";deep_csv",100,0,1)->Fill(sj1.deep_csv(),weight);
+                    plotter.getOrMake1DPre(pref+"_"+id+"_"+flvS2+hbbS,"dcsv",";deep_csv",100,0,1)->Fill(sj2.deep_csv(),weight);
                 }
             };
 
@@ -357,7 +362,7 @@ public:
 
                 if(!isRealData()) {
                     plotter.getOrMake1DPre(pref+"_"+id+"_"+flvSS+hbbS,"yield",";cat",6,0.5,6.5)->Fill(cat,weight);
-                    plotter.getOrMake2DPre(pref+"_"+id+hbbS,"mj_x_yield",";jet mass;cat",100,0,300,6,0.5,6.5)->Fill(j->sdMom().mass(),cat,weight);
+                    plotter.getOrMake2DPre(pref+"_"+id+"_"+flvSS+hbbS,"mj_x_yield",";jet mass;cat",100,0,300,6,0.5,6.5)->Fill(j->sdMom().mass(),cat,weight);
                 }
             };
 
@@ -390,7 +395,7 @@ public:
             }
 
             if(isGoodSJ1 && isGoodSJ2) {
-//            	makeSomeAK8Plots(pref+"_"+id,j,eventAlreadyPlotted);
+            	makeSomeAK8Plots(pref+"_"+id,j,eventAlreadyPlotted);
             	doFJ();
             }
         }
@@ -561,7 +566,9 @@ public:
     }
 
     void isolateJetRegion(TString prefix) {
-    	if(ht < 400) return;
+//    	if(ht < 400) return;
+    	if(ht < 800) return;
+
     	if(!reader_jet->jets.size()) return;
     	if(!reader_fatjet->jets.size()) return;
 //    	if(reader_event->met > 100) return;
