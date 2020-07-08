@@ -62,8 +62,8 @@ public:
         sForm.reset(new TTreeFormula("sForm",
                 TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
         vxForm.reset(new TTreeFormula("vxForm", vx->c_str(),tree.getTree()));
-        vxUpForm.reset(new TTreeFormula("vxUpForm", vxUp->c_str(),tree.getTree()));
-        vxDnForm.reset(new TTreeFormula("vxDnForm", vxUp->c_str(),tree.getTree()));
+//        vxUpForm.reset(new TTreeFormula("vxUpForm", vxUp->c_str(),tree.getTree()));
+//        vxDnForm.reset(new TTreeFormula("vxDnForm", vxUp->c_str(),tree.getTree()));
         vyForm.reset(new TTreeFormula("vyForm", vy->c_str(),tree.getTree()));
 
         const int nEntries =  tree.getTree()->GetEntries(
@@ -89,8 +89,8 @@ public:
         if(s==0) return false;
 
         double vx   = vxForm->EvalInstance();
-        double vxUp   = vxUpForm->EvalInstance();
-        double vxDn   = vxDnForm->EvalInstance();
+//        double vxUp   = vxUpForm->EvalInstance();
+//        double vxDn   = vxDnForm->EvalInstance();
         double vy   = vyForm->EvalInstance();
         nominalX ->push_back(vx);
         nominalY ->push_back(vy);
@@ -332,8 +332,8 @@ public:
     std::unique_ptr<TAxis> yAxis;
     std::unique_ptr<TTreeFormula> sForm;
     std::unique_ptr<TTreeFormula> vxForm;
-    std::unique_ptr<TTreeFormula> vxUpForm;
-    std::unique_ptr<TTreeFormula> vxDnForm;
+//    std::unique_ptr<TTreeFormula> vxUpForm;
+//    std::unique_ptr<TTreeFormula> vxDnForm;
     std::unique_ptr<TTreeFormula> vyForm;
 
     std::shared_ptr<double>       khxs;
