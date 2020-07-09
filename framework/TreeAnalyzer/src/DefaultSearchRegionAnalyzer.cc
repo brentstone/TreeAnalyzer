@@ -46,6 +46,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     dileptonSFProc.reset(new POGLeptonScaleFactors(dataDirectory));
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
+    fjbtagSFProc.reset(new FatJetBTagScaleFactors (dataDirectory));
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
     topPTProc   .reset(new TopPTWeighting (dataDirectory));
 
@@ -61,7 +62,8 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     turnOnCorr(CORR_TRIG);
     turnOnCorr(CORR_PU  );
     turnOnCorr(CORR_LEP );
-    turnOnCorr(CORR_SJBTAG);
+//    turnOnCorr(CORR_SJBTAG);
+    turnOnCorr(CORR_AK8BTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
 //    turnOnCorr(CORR_TOPPT);
@@ -113,6 +115,7 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_LEP) && !reader_muon) mkErr("muon","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
     if(isCorrOn(CORR_AK4BTAG) && !reader_jet) mkErr("ak4PuppiNoLepJet","CORR_AK4BTAG");
+    if(isCorrOn(CORR_AK8BTAG) && !reader_fatjet) mkErr("ak8uppiJet","CORR_AK8BTAG");
     if(isCorrOn(CORR_SJBTAG) && !reader_fatjet) mkErr("ak8PuppiNoLepJet","CORR_SJBTAG");
     if(isCorrOn(CORR_TOPPT) && !reader_event) mkErr("event","CORR_TOPPT");
     if(isCorrOn(CORR_TOPPT) && !reader_genpart) mkErr("genParticle","CORR_TOPPT");
@@ -123,6 +126,9 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_JES) && !reader_fatjet) mkErr("fatjet","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_jet) mkErr("jet","CORR_JES");
+
+    if(isCorrOn(CORR_SJBTAG) && isCorrOn(CORR_AK8BTAG)) mkErr("only SJ or AK8","fatjet SFs");
+
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupParameters(){
@@ -153,6 +159,7 @@ void DefaultSearchRegionAnalyzer::setupParametersFromEra(){
 }
 void DefaultSearchRegionAnalyzer::setupProcessorParameters(){
     if(isCorrOn(CORR_SJBTAG))  sjbtagSFProc->setParameters(parameters.jets);
+    if(isCorrOn(CORR_AK8BTAG)) fjbtagSFProc->setParameters(parameters.fatJets,*reader_event->dataEra);
     if(isCorrOn(CORR_TRIG))    trigSFProc->setParameters(parameters.event);
     if(isCorrOn(CORR_PU))      puSFProc->setParameters(parameters.event);
     if(isCorrOn(CORR_JER))     JERProc->setParameters(parameters.jets);
@@ -344,7 +351,7 @@ void DefaultSearchRegionAnalyzer::fillHbbInfo() {
     }
 
     hbbCSVCat   = BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets());
-    hbbTag      = BTagging::getFatJetTagValue(parameters.jets,*hbbCand);
+    hbbTag      = BTagging::getFatJetTagValue(parameters.fatJets,*hbbCand);
     hbbMass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
 
     jets_HbbV = PhysicsUtilities::selObjsD(jets,
@@ -428,6 +435,7 @@ void DefaultSearchRegionAnalyzer::fillEventWeight() {
     if(isCorrOn(CORR_TRIG)) weight *= getTriggerWeight();
     if(isCorrOn(CORR_PU)) weight *= getPUWeight();
     if(isCorrOn(CORR_LEP)) weight *= getLeptonWeight();
+    if(isCorrOn(CORR_AK8BTAG)) weight *= getFJBTagWeights();
     if(isCorrOn(CORR_SJBTAG)) weight *= getSJBTagWeights();
     if(isCorrOn(CORR_AK4BTAG)) weight *= getAK4BTagWeights();
     if(isCorrOn(CORR_TOPPT)) weight *= getTopPTWeight();
@@ -475,6 +483,9 @@ float DefaultSearchRegionAnalyzer::getLeptonWeight() {
     }
 
     return sfProc->getSF();
+}
+float DefaultSearchRegionAnalyzer::getFJBTagWeights() {
+    return fjbtagSFProc->getSF(parameters.fatJets,{hbbCand});
 }
 float DefaultSearchRegionAnalyzer::getSJBTagWeights() {
     return sjbtagSFProc->getSF(parameters.jets,{hbbCand});

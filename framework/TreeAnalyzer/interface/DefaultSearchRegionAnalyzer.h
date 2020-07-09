@@ -24,6 +24,7 @@ class PUScaleFactors;
 class LeptonScaleFactors;
 class JetBTagScaleFactors;
 class SubJetBTagScaleFactors;
+class FatJetBTagScaleFactors;
 class HbbFatJetScaleFactors;
 class TopPTWeighting;
 class JERCorrector;
@@ -49,12 +50,13 @@ public:
                      ,CORR_LEP
                      ,CORR_SJBTAG
                      ,CORR_AK4BTAG
+                     ,CORR_AK8BTAG
                      ,CORR_SDMASS
                      ,CORR_TOPPT
                      ,CORR_JER
                      ,CORR_JES
                      ,CORR_MET
-					 ,CORR_HEM1516
+                     ,CORR_HEM1516
     };
 
     enum LepChannels {NOCHANNEL, SINGLELEP, DILEP};
@@ -161,6 +163,7 @@ public:
     std::unique_ptr<LeptonScaleFactors>     dileptonSFProc ;
     std::unique_ptr<JetBTagScaleFactors>    ak4btagSFProc ;
     std::unique_ptr<SubJetBTagScaleFactors> sjbtagSFProc ;
+    std::unique_ptr<FatJetBTagScaleFactors> fjbtagSFProc ;
     std::unique_ptr<HbbFatJetScaleFactors>  hbbFJSFProc ;
     std::unique_ptr<TopPTWeighting>         topPTProc ;
     std::unique_ptr<JERCorrector>         JERProc ;
@@ -214,6 +217,7 @@ public:
     float getTriggerWeight();
     float getPUWeight();
     float getLeptonWeight();
+    float getFJBTagWeights();
     float getSJBTagWeights();
     float getAK4BTagWeights();
     float getTopPTWeight();
