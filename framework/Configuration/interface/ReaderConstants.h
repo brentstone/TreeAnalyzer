@@ -37,6 +37,9 @@ struct EventParameters{
 
 //--------------------------------------------------------------------------------------------------
 class FatJet;
+namespace BTagging {
+    typedef  float (FatJet::*getFatJetTagVal)() const;
+}
 namespace FatJetSelHelpers {
 typedef  bool (FatJet::*fjFunBool)() const;
 }
@@ -65,6 +68,13 @@ struct FatJetParameters{
     float hbbLL_minPT       = -1;
     float hbbLL_minSJs      = -1;
     float hbbLL_minDRbbLL   = -1;
+
+    std::string fatJetBtagSFFile;
+    std::vector<float> DeepAK8_WP;
+    float DeepAK8_LWP = -1;
+    float DeepAK8_TWP = -1;
+    BTagging::getFatJetTagVal getFatJetTagVal;
+
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -155,8 +165,6 @@ struct JetParameters {
 
     BTagging::getBTagVal getJetBTagVal;
     float jetBTagWP;
-
-    BTagging::getFatJetTagVal getFatJetTagVal;
 
     BTagging::getBTagVal getSJBTagVal;
     float sjBTagLWP;

@@ -21,7 +21,7 @@ float getSubjetBTagValue(const JetParameters& params, const Jet& subJet){
 }
 
 template<typename Jet>
-float getFatJetTagValue(const JetParameters& params, const Jet& jet){
+float getFatJetTagValue(const FatJetParameters& params, const Jet& jet){
     return (jet.*params.getFatJetTagVal)() ;
 }
 

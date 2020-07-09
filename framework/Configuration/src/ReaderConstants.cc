@@ -52,6 +52,12 @@ ParameterSet setCommonParameters() {
     paramSet.fatJets.hbbLL_minSJs      = 2;
     paramSet.fatJets.hbbLL_minDRbbLL   = 2.0;
 
+    paramSet.fatJets.fatJetBtagSFFile = "corrections/btagging/deepak8v2_bbvslight.csv";
+    paramSet.fatJets.DeepAK8_WP = {-100,0.8,0.97};
+    paramSet.fatJets.DeepAK8_LWP = paramSet.fatJets.DeepAK8_WP[1];
+    paramSet.fatJets.DeepAK8_TWP = paramSet.fatJets.DeepAK8_WP[2];
+    paramSet.fatJets.getFatJetTagVal = &FatJet::deep_MDZHbb;
+
     paramSet.leptons.el_minPT   = 30  ;
     paramSet.leptons.el_maxETA  = 1.479 ;
     paramSet.leptons.el_maxDZ   = 0.1 ;
@@ -102,7 +108,6 @@ ParameterSet setCommonParameters() {
 
     paramSet.jets.getJetBTagVal = &BaseRecoJet::deep_flavor;
     paramSet.jets.jetBTagWP     = paramSet.jets.DeepFlavor_WP [BTagging::BTAG_M];
-    paramSet.jets.getFatJetTagVal = &FatJet::deep_MDZHbb;
     paramSet.jets.getSJBTagVal = &BaseRecoJet::deep_csv;
     paramSet.jets.sjBTagLWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_L];
     paramSet.jets.sjBTagMWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_M];
