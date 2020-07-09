@@ -37,8 +37,9 @@ using namespace CorrHelp;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, bool addPDFWts = false) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
+        doPDFWeights = addPDFWts;
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC,CORRTYPE hemUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
@@ -74,6 +75,7 @@ public:
         	outTree->addSingle(lep_N_,  "",  "lep_N");
         	outTree->addSingle(btag_N_,  "",  "btag_N");
         	outTree->addSingle(sjbtag_N_, "", "sjbtag_N");
+        	outTree->addSingle(fjbtag_N_, "", "fjbtag_N");
         	outTree->addSingle(topPt_N_, "",  "topPt_N");
         	outTree->addSingle(hbbDecayType_,  "",  "hbbDecayType");
         	outTree->addSingle(eQuarksInHbb_,  "",  "eQuarksInHbb");
@@ -120,26 +122,29 @@ public:
     	outTree->addSingle(wlnuPT_,  "",  "wlnuPT");
 
     	outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
-//    	outTree->addVector(w_pdf_, "", "w_pdf_N", "w_pdf");
-//    	outTree->addVector(w_scale_, "", "w_scale_N", "w_scale");
 
         if(addUncVariables){
         	outTree->addSingle(w_muIDUp_,  "",  "w_muIDUp");
-//        	outTree->addSingle(w_muISOUp_,  "",  "w_muISOUp");
         	outTree->addSingle(w_elRecoUp_,  "",  "w_elRecoUp");
         	outTree->addSingle(w_elIDUp_,  "",  "w_elIDUp");
-//        	outTree->addSingle(w_elISOUp_,  "",  "w_elISOUp");
         	outTree->addSingle(w_b_realUp_,  "",  "w_b_realUp");
         	outTree->addSingle(w_b_fakeUp_,  "",  "w_b_fakeUp");
+        	outTree->addSingle(w_b_realDown_,  "",  "w_b_realDown");
+        	outTree->addSingle(w_b_fakeDown_,  "",  "w_b_fakeDown");
         	outTree->addSingle(w_puUp_,  "",  "w_puUp");
         	outTree->addSingle(w_puDown_,  "",  "w_puDown");
         	outTree->addSingle(w_muIDDown_,  "",  "w_muIDDown");
-//        	outTree->addSingle(w_muISODown_,  "",  "w_muISODown");
         	outTree->addSingle(w_elRecoDown_,  "",  "w_elRecoDown");
         	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
+//        	outTree->addSingle(w_muISOUp_,  "",  "w_muISOUp");
+//        	outTree->addSingle(w_elISOUp_,  "",  "w_elISOUp");
+//        	outTree->addSingle(w_muISODown_,  "",  "w_muISODown");
 //        	outTree->addSingle(w_elISODown_,  "",  "w_elISODown");
-//        	outTree->addVector(w_pdf_, "", "jerroldPDF", "w_pdf");
-//        	outTree->addVector(w_scale_, "", "jerroldSCA", "w_scale");
+
+        	if(doPDFWeights) {
+            	outTree->addVector(w_pdf_, "", "w_pdf_N", "w_pdf");
+            	outTree->addVector(w_scale_, "", "w_scale_N", "w_scale");
+        	}
         }
 
     }
@@ -158,7 +163,7 @@ public:
         else if (passPre1) lepChan_ = SINGLELEP;
         else               lepChan_ = NOCHANNEL;
 
-        if(!addUncVariables && lepChan_ == NOCHANNEL) return false;
+        if(!doPDFWeights && lepChan_ == NOCHANNEL) return false;
 
         switch(FillerConstants::DataEra(*reader_event->dataEra)){
         case FillerConstants::ERA_2018:
@@ -230,19 +235,19 @@ public:
             llMetDphi_ = 0;
 
         } else if (lepChan == DILEP) {
-        	isMuon1_ = dilep1->isMuon();
-        	isMuon2_ = dilep2->isMuon();
-        	lep1PT_  = dilep1->pt();
-        	lep2PT_  = dilep2->pt();
+            isMuon1_ = dilep1->isMuon();
+            isMuon2_ = dilep2->isMuon();
+            lep1PT_  = dilep1->pt();
+            lep2PT_  = dilep2->pt();
             lep1ETA_  = dilep1->eta();
             lep2ETA_  = dilep2->eta();
             lep1Phi_  = dilep1->phi();
             lep2Phi_  = dilep2->phi();
 
-        	dilepPT_   = (dilep1->p4()+dilep2->p4()).pt();
-        	dilepMass_ = llMass;
-        	dilepDR_   = llDR;
-        	llMetDphi_ = llMetDphi;
+            dilepPT_   = (dilep1->p4()+dilep2->p4()).pt();
+            dilepMass_ = llMass;
+            dilepDR_   = llDR;
+            llMetDphi_ = llMetDphi;
             hwwPT_ = hWW.pt();
 
             if(hbbCand) {
@@ -285,21 +290,14 @@ public:
             hbbCSVCat_ = 0;
             hbbTag_ = 0;
         }
-        nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+        nAK4Btags_ = std::min(nMedBTags_HbbV,250);
 
         if(!isRealData()) {
             fillWeights();
             fillGenVariables();
         }
-        if(addUncVariables) fillUncertaintyVariables();
 
-//        for(unsigned int i = 1; i < 9; ++i){
-////            if(i == 5 || i ==7)continue; //told to ignore
-//            w_scale_->push_back(reader_event->genWeights[i]);
-//        }
-//        for(unsigned int i = 473; i < 574; ++i) {//Number 473 is the nominal
-//            w_pdf_->push_back(reader_event->genWeights[i]);
-//        }
+        if(addUncVariables) fillUncertaintyVariables(doPDFWeights);
 
         return true;
     }
@@ -310,6 +308,7 @@ public:
         lep_N_   = getLeptonWeight();
         btag_N_  = getAK4BTagWeights();
         sjbtag_N_= getSJBTagWeights();
+        fjbtag_N_= getFJBTagWeights();
         topPt_N_ = getTopPTWeight();
         trig_N_  = getTriggerWeight();
     }
@@ -399,7 +398,7 @@ public:
         if (smDecayEvt.nLepsTT != -1) nLepsTT_ = smDecayEvt.nLepsTT;
     }
 
-    void fillUncertaintyVariables() {
+    void fillUncertaintyVariables(bool doPDFWeights) {
         auto lepProc = &*(lepChan==DILEP ? dileptonSFProc : leptonSFProc);
         const float nomMu = lepProc->getMuonSF();
         const float nomEl = lepProc->getElectronSF();
@@ -421,14 +420,16 @@ public:
         w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
         w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
         w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
-/*
-        for(unsigned int i = 1; i < 9; ++i){
-//            if(i == 5 || i ==7)continue; //told to ignore
-            w_scale_->push_back(reader_event->genWeights[i]);
+
+        if(doPDFWeights) {
+            for(unsigned int i = 1; i < 9; ++i){
+    //            if(i == 5 || i ==7)continue; //told to ignore
+                w_scale_->push_back(reader_event->genWeights[i]);
+            }
+            for(unsigned int i = 473; i < 574; ++i) //Number 473 is the nominal
+                w_pdf_->push_back(reader_event->genWeights[i]);
         }
-        for(unsigned int i = 473; i < 574; ++i) //Number 473 is the nominal
-            w_pdf_->push_back(reader_event->genWeights[i]);
-*/
+
     }
 
     //Event information and weights
@@ -442,6 +443,7 @@ public:
     float lep_N_      = 0;
     float btag_N_     = 0;
     float sjbtag_N_   = 0;
+    float fjbtag_N_   = 0;
     float topPt_N_    = 0;
 
     size8 lepChan_    = 0;
@@ -497,33 +499,34 @@ public:
 
     //systematic variables
     float w_muIDUp_      = 0;
-//    float w_muISOUp_     = 0;
     float w_elRecoUp_    = 0;
     float w_elIDUp_      = 0;
-//    float w_elISOUp_     = 0;
     float w_b_realUp_    = 0;
     float w_b_fakeUp_    = 0;
     float w_puUp_        = 0;
     float w_muIDDown_    = 0;
-//    float w_muISODown_   = 0;
     float w_elRecoDown_  = 0;
     float w_elIDDown_    = 0;
-//    float w_elISODown_   = 0;
     float w_b_realDown_  = 0;
     float w_b_fakeDown_  = 0;
     float w_puDown_      = 0;
+//    float w_muISOUp_     = 0;
+//    float w_elISOUp_     = 0;
+//    float w_muISODown_   = 0;
+//    float w_elISODown_   = 0;
 
-//    ASTypes::spv_float w_pdf_     = ASTypes::make_spv_float();
-//    ASTypes::spv_float w_scale_     = ASTypes::make_spv_float();
+    ASTypes::spv_float w_pdf_     = ASTypes::make_spv_float();
+    ASTypes::spv_float w_scale_     = ASTypes::make_spv_float();
 
     bool addUncVariables = false;
+    bool doPDFWeights = false;
 
 };
 
 
 
 
-void doOne(const std::string& fileName, const int treeInt,int randSeed,  const std::string& outFileName, float xSec = -1, float numEvent = -1){
+void doOne(const std::string& fileName, const int treeInt,int randSeed, const std::string& outFileName, float xSec = -1, float numEvent = -1){
     Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     if(xSec > 0) a.setSampleInfo(xSec,numEvent);
     a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
@@ -544,13 +547,13 @@ void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string ou
     if(treeInt==2){
         size_t lastindex = outFileName.find_last_of(".");
         std::string extLessName = outFileName.substr(0, lastindex);
-        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+7,extLessName+"_HEM.root"    ,NOMINAL,NONE,NONE,DOWN,xSec,numEvent);
+//        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,NONE,xSec,numEvent);
+//        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,NONE,xSec,numEvent);
+//        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE,NONE,xSec,numEvent);
+//        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,NONE,xSec,numEvent);
+//        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN,NONE,xSec,numEvent);
+//        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,NONE,xSec,numEvent);
+//        doOneVar(fileName,treeInt,randSeed+7,extLessName+"_HEM.root"    ,NOMINAL,NONE,NONE,DOWN,xSec,numEvent);
     }
 
 }
