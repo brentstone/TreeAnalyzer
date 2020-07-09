@@ -54,6 +54,15 @@ void doAK8YieldComp(TFile *f) {
 
 	TH2 *hdd = (TH2*)f->Get("data_ak8_mj_x_yield");
 
+	auto setSJBinLabels = [&](Plotter *p) {
+		p->xAxis()->SetBinLabel(1,"NN");
+		p->xAxis()->SetBinLabel(2,"LN");
+		p->xAxis()->SetBinLabel(3,"LL");
+		p->xAxis()->SetBinLabel(4,"MN");
+		p->xAxis()->SetBinLabel(5,"ML");
+		p->xAxis()->SetBinLabel(6,"MM");
+	};
+
 //	printf("slurm\n");
 //	Plotter *p = new Plotter();
 //	TH1 *hd = (TH1*)f->Get("data_ak8_yield");
@@ -71,9 +80,27 @@ void doAK8YieldComp(TFile *f) {
 
 	Plotter *pr = new Plotter();
 	for(const auto& bin : bins) {
+//		if(bin.first != 30) continue;
+//		if(bin.second != 210) continue;
+		std::cout<<"bin "<<bin.first<<" to "<<bin.second<<std::endl;
+		std::cout<<std::endl<<"Data:"<<std::endl;
+
 		Plotter *pp = new Plotter();
 		TH1 *d = (TH1*)hdd->ProjectionY("data",hdd->GetXaxis()->FindFixBin(bin.first+0.01),
 				hdd->GetXaxis()->FindFixBin(bin.second-0.01));
+		float loo_d = d->GetBinContent(4);
+		float med_d = d->GetBinContent(5);
+		float tgt_d = d->GetBinContent(6);
+		float nt_d = d->GetBinContent(1);
+		float sr_d = d->Integral(4,6);
+		float tot_d = d->Integral(1,6);
+
+		std::cout<<"Loose = "<<loo_d<<std::endl;
+		std::cout<<"Med = "<<med_d<<std::endl;
+		std::cout<<"Tight = "<<tgt_d<<std::endl;
+		std::cout<<"SR = "<<sr_d<<std::endl;
+		std::cout<<"NonTopCR = "<<nt_d<<std::endl;
+
 		pp->addHist(d,"data");
 //		std::cout<<"data bins = "<<d->GetNbinsX()<<std::endl;
 		for(const auto& tf : tfs) {
@@ -84,11 +111,36 @@ void doAK8YieldComp(TFile *f) {
 			pp->addStackHist(hb,tf);
 		}
 		TH1 *b = getTotBkg(f,"ak8_mj_x_yield",true,true,bin.first,bin.second);
+		std::cout<<std::endl<<"MC:"<<std::endl;
+		float loo_b = b->GetBinContent(4);
+		float med_b = b->GetBinContent(5);
+		float tgt_b = b->GetBinContent(6);
+		float nt_b = b->GetBinContent(1);
+
+		float sr_b = b->Integral(4,6);
+		float tot_b = b->Integral(1,6);
+
+		std::cout<<"Loose = "<<loo_b<<std::endl;
+		std::cout<<"Med = "<<med_b<<std::endl;
+		std::cout<<"Tight = "<<tgt_b<<std::endl;
+		std::cout<<"SR = "<<sr_b<<std::endl;
+		std::cout<<"NonTopCR = "<<nt_b<<std::endl;
+
+		std::cout<<std::endl<<"SR data/MC = "<<((sr_d)/(sr_b))<<std::endl;
+		std::cout<<"NonTopCR data/MC = "<<(nt_d/(nt_b))<<std::endl;
+		std::cout<<"Norm CORR:"<<std::endl;
+		std::cout<<"SR data/MC = "<<((sr_d/tot_d)/(sr_b/tot_b))<<std::endl;
+		std::cout<<"NonTopCR data/MC = "<<((nt_d/tot_d)/(nt_b/tot_b))<<std::endl;
 
 //		std::cout<<"jerrold"<<std::endl;
-//		pp->normalize();
+		pp->normalize();
+		pp->setYTitle("a.u.");
+		pp->setXTitle("sj b-tagging category");
+		pp->setYTitleBot("data/bkg");
 		pp->drawSplitRatio(-1,TString::Format("ak8_%.0fto%.0f",bin.first,bin.second),false,false,
 				TString::Format("ak8_%.0fto%.0f",bin.first,bin.second));
+//		setSJBinLabels(pp);
+
 		d->Scale(1./d->Integral(0,10000));
 		b->Scale(1./b->Integral(0,10000));
 		d->Divide(b);
@@ -113,9 +165,10 @@ void doAK4YieldComp(TFile *f) {
 	p->drawSplitRatio(-1,"ak4",false,false,"ak4");
 }
 
-void drawDataMCJetDiffs() {
+void drawDataMCJetDiffs(int yr) {
 
-	TFile *f = new TFile("/Users/brentstone/Dropbox/Physics/HHbbWW/plots/studyDataMCDiffs/dataMCDiffs18.root");
+	TString ys = TString::Format("%d",yr); ys.ReplaceAll("20","");
+	TFile *f = new TFile("/Users/brentstone/Dropbox/Physics/HHbbWW/plots/studyDataMCDiffs/dataMCDiffs"+ys+".root");
 	doAK8YieldComp(f);
 	doAK4YieldComp(f);
 }
