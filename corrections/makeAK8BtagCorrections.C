@@ -28,43 +28,43 @@ void makeAK8BtagCorrections(int year) {
 
     auto getHist = [&](TString id, TString wp, TString name) {
     	TH2 *h = (TH2*)fin->Get(id+"_sj1_"+wp);
-    	if(!h) throw std::invalid_argument("no hist found");
+    	if(!h) {cout<<id+"_sj1_"+wp<<endl;throw std::invalid_argument("no hist found");}
     	h->Add((TH2*)fin->Get(id+"_sj2_"+wp),1);
     	return PlotTools::rebin2D(h,name,titleS,nPT,&ptbins[0],nETA,&etabins[0]);
     };
 
     for(const auto& fl : flvs) {
-    	TH2 *hd = getHist("bkg_noQCD_"+idS+"_"+fl,"incl","den");
-    	TH2 *hd1 = getHist("radion_m1000_"+idS+"_"+fl,"incl","den_rad1000");
-    	TH2 *hd3 = getHist("radion_m3000_"+idS+"_"+fl,"incl","den_rad3000");
+//    	TH2 *hd = getHist("bkg_noQCD_"+idS+"_"+fl,"incl","den");
+//    	TH2 *hd1 = getHist("radion_m1000_"+idS+"_"+fl,"incl","den_rad1000");
+//    	TH2 *hd3 = getHist("radion_m3000_"+idS+"_"+fl,"incl","den_rad3000");
 
-//    	TH2 *hd = (TH2*)fin->Get("bkg_noQCD_ak8_"+idS+"_"+fl+"_incl_sj1");
-//    	if(!hd) throw std::invalid_argument("no den found");
-//    	hd->Add((TH2*)fin->Get("bkg_noQCD_ak8_"+idS+"_"+fl+"_incl_sj2"),1);
-//    	hd = PlotTools::rebin2D(hd,"den",titleS,nPT,&ptbins[0],nETA,&etabins[0]);
+    	TH2 *hd = (TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_sj1_incl");
+    	if(!hd) throw std::invalid_argument("no den found");
+    	hd->Add((TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_sj2_incl"),1);
+    	hd = PlotTools::rebin2D(hd,"den",titleS,nPT,&ptbins[0],nETA,&etabins[0]);
 
     	for(const auto& num : numNs) {
-    		TH2 *hn = getHist("bkg_noQCD_"+idS+"_"+fl,num,fl+"_"+num);
-    		TH2 *hn1 = getHist("radion_m1000_"+idS+"_"+fl,num,fl+"_"+num+"_rad1000");
-    		TH2 *hn3 = getHist("radion_m3000_"+idS+"_"+fl,num,fl+"_"+num+"_rad3000");
+//    		TH2 *hn = getHist("bkg_noQCD_"+idS+"_"+fl,num,fl+"_"+num);
+//    		TH2 *hn1 = getHist("radion_m1000_"+idS+"_"+fl,num,fl+"_"+num+"_rad1000");
+//    		TH2 *hn3 = getHist("radion_m3000_"+idS+"_"+fl,num,fl+"_"+num+"_rad3000");
 
-//        	TH2 *hn = (TH2*)fin->Get("bkg_noQCD_ak8_"+idS+"_"+fl+"_"+num+"_sj1");
-//        	if(!hn) throw std::invalid_argument("no num found");
-//        	hn->Add((TH2*)fin->Get("bkg_noQCD_ak8_"+idS+"_"+fl+"_"+num+"_sj2"),1);
-//        	hn = PlotTools::rebin2D(hn,fl+"_"+num,titleS,nPT,&ptbins[0],nETA,&etabins[0]);
+        	TH2 *hn = (TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_sj1_"+num);
+        	if(!hn) throw std::invalid_argument("no num found");
+        	hn->Add((TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_sj2_"+num),1);
+        	hn = PlotTools::rebin2D(hn,fl+"_"+num,titleS,nPT,&ptbins[0],nETA,&etabins[0]);
 
         	hn->Divide(hn,hd,1,1,"b");
-        	hn1->Divide(hn1,hd1,1,1,"b");
-        	hn3->Divide(hn3,hd3,1,1,"b");
+//        	hn1->Divide(hn1,hd1,1,1,"b");
+//        	hn3->Divide(hn3,hd3,1,1,"b");
 
         	effs.push_back(hn);
-        	effs.push_back(hn1);
-        	effs.push_back(hn3);
+//        	effs.push_back(hn1);
+//        	effs.push_back(hn3);
 
     	}
     	delete hd;
-    	delete hd1;
-    	delete hd3;
+//    	delete hd1;
+//    	delete hd3;
     }
 
     TFile *fout = new TFile(TString::Format("%s/ak8_deepcsvEff_%d.root",path.Data(),year),"recreate");

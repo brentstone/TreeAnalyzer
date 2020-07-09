@@ -17,6 +17,7 @@ public:
 	void doKinComparison(int year, TString idS);
 	void doTaggerComparison(TString idS);
 	void doComparisonWithSignal(int year, TString idS);
+	void doWPComparison(int year, TString idS);
 	bool doSlices = true;
 
 private:
@@ -24,7 +25,7 @@ private:
 	TString titleS = ";jet p_{T}[GeV];jet |#eta|";
 	TString denN = "incl";
 	vector<TString> numNs {"loose","med","tight"};
-	vector<TString> flvs {"l"};
+	vector<TString> flvs {"b","l"};
 	vector<double> etabins = {0,0.2,0.4,0.6,0.8,1.2,1.6,2.4};
     vector<double> ptbins  = {20,25,30,35,40,50,60,75,100,125,150,175,200,250,300,350,400,500,600,800,1000};
 	int nETA;
@@ -258,6 +259,55 @@ void BtagPlotter::doComparisonWithSignal(int year, TString idS) {
     }
 }
 
+void BtagPlotter::doWPComparison(int year, TString idS) {
+	TFile *fin = TFile::Open(path+TString::Format("btagEffs%d.root",year));
+	TString smp = "bkg_noQCD";
+
+    for(const auto& fl : flvs) {
+
+    	// get slices in eta
+    	if(doSlices) {
+        	for(int ieta=1; ieta<=nETA; ++ieta) {
+        		TString etaS = TString::Format("eta%.1fto%.1f",etabins[ieta-1],etabins[ieta]);
+        		etaS.ReplaceAll(".","p");
+
+        		Plotter *p = new Plotter();
+        		for(const auto& num : numNs) {
+        	    	TH2 *hd = (TH2*)fin->Get(smp+"_"+idS+"_"+fl+"_incl");
+        	    	TH2 *hn = (TH2*)fin->Get(smp+"_"+idS+"_"+fl+"_"+num);
+        	    	if(!hd || !hn) throw std::invalid_argument("missing hist");
+
+        	    	TH1 *eff = getProjectionEff(hn,hd,fl+"_"+num+"_"+etaS,ieta,ieta,true);
+        	    	p->addHist(eff,num);
+
+        		}
+        		p->draw(false,fl+" "+etaS);
+        	}
+    	}
+
+    	// 1d full projections
+		Plotter *p = new Plotter();
+		Plotter *pe = new Plotter();
+		for(const auto& num : numNs) {
+	    	TH2 *hd = (TH2*)fin->Get(smp+"_"+idS+"_"+fl+"_incl");
+	    	TH2 *hn = (TH2*)fin->Get(smp+"_"+idS+"_"+fl+"_"+num);
+	    	if(!hd || !hn) throw std::invalid_argument("missing hist");
+
+	    	TH1 *effPT = getProjectionEff(hn,hd,fl+"_pt_"+num,1,nETA,true);
+	    	TH1 *effETA = getProjectionEff(hn,hd,fl+"_eta_"+num,1,nPT,false);
+
+	    	delete hd;
+	    	delete hn;
+	    	printf("slurm\n");
+
+	    	p->addHist(effPT,num);
+	    	pe->addHist(effETA,num);
+		}
+		p->draw(false,fl+" pt");
+		pe->draw(false,fl+" eta");
+    }
+}
+
 #endif
 
 void drawAK4BtagCorrections(int option, int year=0, bool doSlices = false) {
@@ -271,5 +321,6 @@ void drawAK4BtagCorrections(int option, int year=0, bool doSlices = false) {
 	else if(option == 2) plotter->doKinComparison(year,idS);
 	else if(option == 3) plotter->doTaggerComparison(idS);
 	else if(option == 4) plotter->doComparisonWithSignal(year,idS);
+	else if(option == 5) plotter->doWPComparison(year,idS);
 
 }

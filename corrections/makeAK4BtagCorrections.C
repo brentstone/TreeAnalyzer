@@ -15,9 +15,9 @@ void makeAK4BtagCorrections(int year) {
     int nPT = ptbins.size()-1;
 
 	TString path = "/Users/brentstone/Dropbox/Physics/HHbbWW/btagging/";
-	TFile *fin = TFile::Open(path+TString::Format("btagEffs_%d.root",year));
+	TFile *fin = TFile::Open(path+TString::Format("btagEffs%d.root",year));
 
-	TString idS = "reqHbb";
+	TString idS = "ak4_reqHbb";
 	TString titleS = ";jet p_{T}[GeV];jet |#eta|";
 
     TString denN = "incl";
@@ -27,7 +27,7 @@ void makeAK4BtagCorrections(int year) {
     vector<TH2*> effs;
     for(const auto& fl : flvs) {
     	TH2 *hd = (TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_incl");
-    	if(!hd) throw std::invalid_argument("no den found");
+    	if(!hd) {cout<<"bkg_noQCD_"+idS+"_"+fl+"_incl"<<endl;throw std::invalid_argument("no den found");}
     	hd = PlotTools::rebin2D(hd,"den",titleS,nPT,&ptbins[0],nETA,&etabins[0]);
 
     	for(const auto& num : numNs) {

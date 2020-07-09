@@ -13,6 +13,7 @@ class BtagPlotter {
 public:
 	BtagPlotter();
 	void doYearComparison(TString idS);
+	void doOtherComparison(TString idS);
 	void doSelComparison(int year);
 	void doKinComparison(int year, TString idS);
 	void doComparisonWithSignal(int year, TString idS);
@@ -254,6 +255,51 @@ void BtagPlotter::doComparisonWithSignal(int year, TString idS) {
     }
 }
 
+void BtagPlotter::doOtherComparison(TString idS) {
+
+	std::vector<std::pair<TString,TString>> files = {{"btagEffs2018.root","new"},{"btagEffs2018_old.root","old"}};
+    for(const auto& fl : flvs) for(const auto& num : numNs) {
+    	// get slices in eta
+    	if(doSlices) {
+        	for(int ieta=1; ieta<=nETA; ++ieta) {
+        		TString etaS = TString::Format("eta%.1fto%.1f",etabins[ieta-1],etabins[ieta]);
+        		etaS.ReplaceAll(".","p");
+
+        		Plotter *p = new Plotter();
+        		for(const auto& f : files) {
+        			TFile *fin = TFile::Open(path+f.first);
+        	    	TH2 *hd = getTotHist(fin,"bkg_noQCD_"+idS+"_"+fl,"incl");
+        	    	TH2 *hn = getTotHist(fin,"bkg_noQCD_"+idS+"_"+fl,num);
+        	    	if(!hd || !hn) throw std::invalid_argument("missing hist");
+
+        	    	TH1 *eff = getProjectionEff(hn,hd,fl+"_"+num,ieta,ieta,true);
+        	    	p->addHist(eff,f.second);
+
+        		}
+        		p->draw(false,fl+" "+num+" "+etaS);
+        	}
+    	}
+
+    	// 1d full projections
+		Plotter *p = new Plotter();
+		Plotter *pe = new Plotter();
+		for(const auto& f : files) {
+			TFile *fin = TFile::Open(path+f.first);
+	    	TH2 *hd = getTotHist(fin,"bkg_noQCD_"+idS+"_"+fl,"incl");
+	    	TH2 *hn = getTotHist(fin,"bkg_noQCD_"+idS+"_"+fl,num);
+	    	if(!hd || !hn) throw std::invalid_argument("missing hist");
+
+	    	TH1 *effPT = getProjectionEff(hn,hd,fl+"_pt_"+num,1,nETA,true);
+	    	TH1 *effETA = getProjectionEff(hn,hd,fl+"_eta_"+num,1,nPT,false);
+
+	    	p->addHist(effPT,f.second);
+	    	pe->addHist(effETA,f.second);
+		}
+		p->draw(false,fl+" "+num+" pt");
+		pe->draw(false,fl+" "+num+" eta");
+    }
+}
+
 #endif
 
 void drawAK8BtagCorrections(int option, int year=0, bool doSlices = false) {
@@ -266,5 +312,6 @@ void drawAK8BtagCorrections(int option, int year=0, bool doSlices = false) {
 	else if(option == 1) plotter->doSelComparison(year);
 	else if(option == 2) plotter->doKinComparison(year,idS);
 	else if(option == 3) plotter->doComparisonWithSignal(year,idS);
+	else if(option == 4) plotter->doOtherComparison(idS);
 
 }
