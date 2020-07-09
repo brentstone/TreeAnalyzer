@@ -34,7 +34,7 @@ ParameterSet setCommonParameters() {
     paramSet.event.ttbarXSecSF_700to1000_nLep0 = -1;
     paramSet.event.ttbarXSecSF_700to1000_nLep1 = -1;
     paramSet.event.ttbarXSecSF_700to1000_nLep2 = -1;
-    paramSet.event.doTTBarStitching = true;
+    paramSet.event.doTTBarStitching = false;
 
     paramSet.fatJets.cand_minPT     = 50                   ;
     paramSet.fatJets.cand_maxETA    = 2.4                  ;
