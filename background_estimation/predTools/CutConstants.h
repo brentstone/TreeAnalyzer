@@ -29,7 +29,10 @@ std::vector<CutStr > processes = {
 enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
 
 CutStr hemW ("hemW" , "(lepChan==2&&era==2018?(!isMuon1&&lep1ETA<=-1.479&&lep1Phi>=-1.55&&lep1Phi<=-0.9?(21.08/59.74):1.0)*(!isMuon2&&lep2ETA<=-1.479&&lep2Phi>=-1.55&&lep2Phi<=-0.9?(21.08/59.74):1.0):1.0)");
-CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N*sjbtag_N*"+hemW.cut);
+CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N*fjbtag_N*"+hemW.cut);
+
+//CutStr qgWt_SR ("qgWt_SR" , "((process==3||process==8)?(era==2018?1.278:(era==2017?1.236:(era==2016?1.12:1.0))):1.0)");
+//CutStr qgWt_NT ("qgWt_NT" , "((process==3||process==8)?(era==2018?0.924:(era==2017?0.955:(era==2016?0.981:1.0))):1.0)");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
@@ -51,7 +54,6 @@ CutStr drCrC  ("drCrC"   , "dilepDR>=0.4");
 CutStr aHEM ("aHEM","((era==2018&&run>=319077)?(isMuon1==0?(lep1ETA>-1.479||lep1Phi<-1.55||lep1Phi>-0.9):1.0)&&(isMuon2==0?(lep2ETA>-1.479||lep2Phi<-1.55||lep2Phi>-0.9):1.0):1.0)");
 
 CutStr preSel1("preSel1"  , "lepChan==1");
-//CutStr preSel2("preSel2"  , "lepChan==2");
 CutStr preSel2("preSel2"  , "(lepChan==2&&"+aHEM.cut+")");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
@@ -141,21 +143,23 @@ std::vector<CutStr> dilepCats = {
         CutStr("OF","(isMuon1!=isMuon2)","opposite flavor"),
 };
 
-enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
+enum BTAGCats  {BTAG_LMT, BTAG_L, /*BTAG_M,*/ BTAG_T};
 std::vector<CutStr > btagCats = {
-        CutStr("LMT","(hbbCSVCat>=4)","bLMT"),
-        CutStr("L"  ,"(hbbCSVCat==4)","bL"),
-        CutStr("M"  ,"(hbbCSVCat==5)","bM"),
-        CutStr("T"  ,"(hbbCSVCat==6)","bT")
-//        CutStr("LMT","hbbTag>=0.5","bLMT"),
-//        CutStr("L"  ,"(hbbTag>=0.5&&hbbTag<0.9)","bL"),
+//        CutStr("LMT","(hbbCSVCat>=4)","bLMT"),
+//        CutStr("L"  ,"(hbbCSVCat==4)","bL"),
+//        CutStr("M"  ,"(hbbCSVCat==5)","bM"),
+//        CutStr("T"  ,"(hbbCSVCat==6)","bT")
+        CutStr("LMT","hbbTag>=0.8","bLMT"),
+        CutStr("L"  ,"(hbbTag>=0.8&&hbbTag<0.97)","bL"),
 //        CutStr("M"  ,"(hbbTag>=0.9&&hbbTag<0.98)","bM"),
-//        CutStr("T"  ,"hbbTag>=0.98","bT")
+        CutStr("T"  ,"hbbTag>=0.97","bT")
 };
 
 std::vector<CutStr > qgBtagCats = {
-        CutStr("LMT","(hbbCSVCat==1)",""),
-        CutStr("L"  ,"(hbbCSVCat==1)","")
+//        CutStr("LMT","(hbbCSVCat==1)",""),
+//        CutStr("L"  ,"(hbbCSVCat==1)","")
+        CutStr("LMT","(hbbTag<=0.05)",""),
+        CutStr("L"  ,"(hbbTag<=0.05)","")
 };
 CutStr inclBtagCat("I","(hbbCSVCat>=0)");
 
