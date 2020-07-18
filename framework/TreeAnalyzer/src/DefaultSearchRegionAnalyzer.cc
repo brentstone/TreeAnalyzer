@@ -19,6 +19,8 @@
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/BTagScaleFactors.h"
+#include "Processors/Corrections/interface/FatJetBTagScaleFactors.h"
+
 #include "Processors/Corrections/interface/FatJetScaleFactors.h"
 #include "Processors/Corrections/interface/JetAndMETCorrections.h"
 #include "TPRegexp.h"
@@ -122,13 +124,9 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_JER) && !reader_fatjet) mkErr("fatjet","CORR_JER");
     if(isCorrOn(CORR_JER) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JER");
     if(isCorrOn(CORR_JER) && !reader_jet) mkErr("jet","CORR_JER");
-
     if(isCorrOn(CORR_JES) && !reader_fatjet) mkErr("fatjet","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_jet) mkErr("jet","CORR_JES");
-
-    if(isCorrOn(CORR_SJBTAG) && isCorrOn(CORR_AK8BTAG)) mkErr("only SJ or AK8","fatjet SFs");
-
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupParameters(){
@@ -159,7 +157,7 @@ void DefaultSearchRegionAnalyzer::setupParametersFromEra(){
 }
 void DefaultSearchRegionAnalyzer::setupProcessorParameters(){
     if(isCorrOn(CORR_SJBTAG))  sjbtagSFProc->setParameters(parameters.jets);
-    if(isCorrOn(CORR_AK8BTAG)) fjbtagSFProc->setParameters(parameters.fatJets,*reader_event->dataEra);
+    if(isCorrOn(CORR_AK8BTAG)) fjbtagSFProc->setParameters(parameters.fatJets,int(*reader_event->dataEra));
     if(isCorrOn(CORR_TRIG))    trigSFProc->setParameters(parameters.event);
     if(isCorrOn(CORR_PU))      puSFProc->setParameters(parameters.event);
     if(isCorrOn(CORR_JER))     JERProc->setParameters(parameters.jets);
@@ -435,10 +433,11 @@ void DefaultSearchRegionAnalyzer::fillEventWeight() {
     if(isCorrOn(CORR_TRIG)) weight *= getTriggerWeight();
     if(isCorrOn(CORR_PU)) weight *= getPUWeight();
     if(isCorrOn(CORR_LEP)) weight *= getLeptonWeight();
-    if(isCorrOn(CORR_AK8BTAG)) weight *= getFJBTagWeights();
     if(isCorrOn(CORR_SJBTAG)) weight *= getSJBTagWeights();
     if(isCorrOn(CORR_AK4BTAG)) weight *= getAK4BTagWeights();
     if(isCorrOn(CORR_TOPPT)) weight *= getTopPTWeight();
+    if(isCorrOn(CORR_AK8BTAG)) weight *= getFJBTagWeights();
+
 }
 float DefaultSearchRegionAnalyzer::getXSecWeight() {
     return EventWeights::getNormalizedEventWeight(
@@ -461,9 +460,11 @@ float DefaultSearchRegionAnalyzer::getTriggerWeight() {
     }
     return triggerWeight;
 }
+
 float DefaultSearchRegionAnalyzer::getPUWeight() {
     return puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
 }
+
 float DefaultSearchRegionAnalyzer::getLeptonWeight() {
     LeptonScaleFactors * sfProc = 0;
     const std::vector<const Lepton*> * leptonCollection;
@@ -484,12 +485,15 @@ float DefaultSearchRegionAnalyzer::getLeptonWeight() {
 
     return sfProc->getSF();
 }
+
 float DefaultSearchRegionAnalyzer::getFJBTagWeights() {
-    return fjbtagSFProc->getSF(parameters.fatJets,{hbbCand});
+	return fjbtagSFProc->getSF(parameters.fatJets,{hbbCand});
 }
+
 float DefaultSearchRegionAnalyzer::getSJBTagWeights() {
     return sjbtagSFProc->getSF(parameters.jets,{hbbCand});
 }
+
 float DefaultSearchRegionAnalyzer::getAK4BTagWeights() {
     float norm = 1.0;
     if(isTuneCP5 && *reader_event->dataEra == FillerConstants::ERA_2016) {
@@ -498,6 +502,7 @@ float DefaultSearchRegionAnalyzer::getAK4BTagWeights() {
     }
     return norm*ak4btagSFProc->getSF(jets_HbbV);
 }
+
 float DefaultSearchRegionAnalyzer::getTopPTWeight() {
     return topPTProc->getCorrection(mcProc,smDecayEvt);
 }
@@ -507,6 +512,7 @@ bool DefaultSearchRegionAnalyzer::isHEMandNot2018() {
 	if(FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018) return false;
 	return true;
 }
+
 }
 //--------------------------------------------------------------------------------------------------
 
