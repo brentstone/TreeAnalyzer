@@ -17,9 +17,9 @@ void fitTTBarSF(std::string inputMC,std::string inputData, std::string selection
     double bins[]={0,500,600,700,800,900,1000,1100,1200,1400,1600,2000,2500,3000,4000,5050};
     int nBins = 15;
     HistGetter plotter;
-    std::string func = "pol0";
+    std::string func = "pol2";
     double minFit = 700;
-    double maxFit = 2500;
+    double maxFit = 3000;
 
     TFile * fM =  TObjectHelper::getFile(inputMC);
     TFile * fD =  TObjectHelper::getFile(inputData);
