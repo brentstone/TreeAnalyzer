@@ -29,25 +29,22 @@ std::vector<CutStr > processes = {
 enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
 
 CutStr hemW ("hemW" , "(lepChan==2&&era==2018?(!isMuon1&&lep1ETA<=-1.479&&lep1Phi>=-1.55&&lep1Phi<=-0.9?(21.08/59.74):1.0)*(!isMuon2&&lep2ETA<=-1.479&&lep2Phi>=-1.55&&lep2Phi<=-0.9?(21.08/59.74):1.0):1.0)");
-CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N*fjbtag_N*"+hemW.cut);
+CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N*fjbtag_N*(era==2018?1.0:prefire_N)*"+hemW.cut);
 
 //CutStr qgWt_SR ("qgWt_SR" , "((process==3||process==8)?(era==2018?1.278:(era==2017?1.236:(era==2016?1.12:1.0))):1.0)");
 //CutStr qgWt_NT ("qgWt_NT" , "((process==3||process==8)?(era==2018?0.924:(era==2017?0.955:(era==2016?0.981:1.0))):1.0)");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
-CutStr wjjBC("wjjBC" , "((wjjTau2o1<=0.75)&&(hwwLi<=11.0))");
-
-CutStr exA  ("exA"   , "(hwwPT/hhMass>=0.3)");
-
+CutStr wjjSC("wjjBC" , "(wjjTau2o1<=0.75)");
+CutStr hwwLC("hwwLC" , "(hwwLi<=11.0)");
+CutStr ptomC  ("ptomC"   , "(hwwPT/hhMass>=0.3)");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
 
 CutStr dPhiC ("dPhiC"  , "(abs(llMetDphi)<(3.14159/2))");
 CutStr mllV ("mllV"  , "(dilepMass>=6&&dilepMass<=75)");
-
 CutStr metC ("metC"  , "met>=85");
-
 CutStr dRC   ("dRC"    , "dilepDR<=1.0");
 CutStr drCrC  ("drCrC"   , "dilepDR>=0.4");
 
@@ -139,8 +136,8 @@ std::vector<CutStr> lepCats = {
 enum DILEPCats  {LEP_INCL, LEP_SF, LEP_OF};
 std::vector<CutStr> dilepCats = {
         CutStr("IF","(1.0)","incl flavor"),
-        CutStr("SF","(isMuon1==isMuon2)","same flavor"),
-        CutStr("OF","(isMuon1!=isMuon2)","opposite flavor"),
+        CutStr("SF","(isMuon1==isMuon2)","SF"),
+        CutStr("OF","(isMuon1!=isMuon2)","OF"),
 };
 
 enum BTAGCats  {BTAG_LMT, BTAG_L, /*BTAG_M,*/ BTAG_T};
@@ -161,32 +158,35 @@ std::vector<CutStr > qgBtagCats = {
         CutStr("LMT","(hbbTag<=0.05)",""),
         CutStr("L"  ,"(hbbTag<=0.05)","")
 };
-CutStr inclBtagCat("I","(hbbCSVCat>=0)");
+CutStr inclBtagCat("I","(hbbTag>=0.0)");
 
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
-        CutStr("I","(1.0)","LHP"),
-        CutStr("LP" ,"(hwwLi>=2.5||(era==2016?wjjTau2o1>=0.55:wjjTau2o1>=0.45))","LP"),
-        CutStr("HP" ,"(hwwLi<2.5&&(era==2016?wjjTau2o1<0.55:wjjTau2o1<0.45))"  ,"HP")
+        CutStr("I","(1.0)","IP"),
+        CutStr("LP" ,"(hwwLi>=2.5||(wjjTau2o1>=(era==2016?0.55:0.45)))","LP"),
+        CutStr("HP" ,"(hwwLi<2.5&&(wjjTau2o1<(era==2016?0.55:0.45)))"  ,"HP")
 
 };
 
-enum SELCuts1  {SEL1_NONE,/*SEL1_LB,*/SEL1_LT,SEL1_LTMB,SEL1_FULL};
+enum SELCuts1  {SEL1_NONE,SEL1_LB,SEL1_LP,SEL1_LPB,SEL1_LTH,SEL1_LTMB,SEL1_FULL};
 std::vector<CutStr > selCuts1 = {
-        CutStr("none",preSel1.cut,"-ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75}"),
-//        CutStr("lb"  ,preSel1.cut+"&&"+exA.cut+"&&"+wjjBC.cut,"-ExB"),
-        CutStr("lt"  ,preSel1.cut+"&&"+exA.cut+"&&"+bV.cut,"-#tau_{0.75}"),
-        CutStr("ltmb",preSel1.cut+"&&"+exA.cut,"-ExB -#tau_{0.75}"),
-        CutStr("full",preSel1.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut,"")
+        CutStr("none",preSel1.cut,"-ExB -#it{p}_{T}/#it{m} -#tau_{21} -hwwLi"),
+        CutStr("lb"  ,preSel1.cut+"&&"+ptomC.cut+"&&"+wjjSC.cut+"&&"+hwwLC.cut,"-ExB"),
+        CutStr("lp"  ,preSel1.cut+"&&"+wjjSC.cut+"&&"+hwwLC.cut+"&&"+bV.cut,"-#it{p}_{T}/#it{m}"),
+        CutStr("lpb"  ,preSel1.cut+"&&"+wjjSC.cut+"&&"+hwwLC.cut,"-ExB -#it{p}_{T}/#it{m}"),
+        CutStr("lth"  ,preSel1.cut+"&&"+ptomC.cut+"&&"+bV.cut,"-#tau_{21} -hwwLi"),
+        CutStr("ltmb",preSel1.cut+"&&"+ptomC.cut,"-ExB -#tau_{21} -hwwLi"),
+        CutStr("full",preSel1.cut+"&&"+ptomC.cut+"&&"+wjjSC.cut+"&&"+hwwLC.cut+"&&"+bV.cut,"")
 
 };
 
-enum SELCuts2  {SEL2_NONE,SEL2_RPhiB,SEL2_FULL};
+enum SELCuts2  {SEL2_NONE,SEL2_MLL,SEL2_LRPB,SEL2_RPhiB,SEL2_FULL};
 std::vector<CutStr > selCuts2 = {
         CutStr("none"   ,preSel2.cut,"-ExB -#it{#DeltaR}_{ll} -#it{M}_{ll} -#it{MET} -#it{#Delta#Phi}_{met,ll}"),
-		CutStr("R_phi_b",preSel2.cut+"&&"+dRC.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
+		CutStr("mll"    ,preSel2.cut+"&&"+mllV.cut,"-dR -ExB -Met -dphi"),
+		CutStr("lrpb"   ,preSel2.cut+"&&"+mllV.cut+"&&"+metC.cut,"-dR -ExB -dphi"),
+		CutStr("R_phi_b",preSel2.cut+"&&"+dRC.cut+"&&"+mllV.cut+"&&"+metC.cut,"-dphi -ExB"),
         CutStr("full"   ,preSel2.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
-
 };
 
 struct CatIterator{
@@ -344,9 +344,9 @@ std::vector<CutStr > signals = {
         CutStr("allHH"     ,"spinE","combined radion and bulk graviton")
 };
 std::vector<std::vector<int> > signalMassBins = {
-		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500/*,4000,4500*/},
-		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500/*,4000,4500*/},
-		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500/*,4000,4500*/}
+		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
+		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
+		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
 };
 
 //Constants for models when building limits
