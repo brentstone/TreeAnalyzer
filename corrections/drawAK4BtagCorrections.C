@@ -74,7 +74,7 @@ void BtagPlotter::doYearComparison(TString idS) {
 
         		Plotter *p = new Plotter();
         		for(const auto& yr : years) {
-        			TFile *fin = TFile::Open(path+TString::Format("btagEffs_%s.root",yr.Data()));
+        			TFile *fin = TFile::Open(path+TString::Format("btagEffs%s.root",yr.Data()));
         	    	TH2 *hd = (TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_incl");
         	    	TH2 *hn = (TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_"+num);
         	    	if(!hd || !hn) throw std::invalid_argument("missing hist");
@@ -91,7 +91,7 @@ void BtagPlotter::doYearComparison(TString idS) {
 		Plotter *p = new Plotter();
 		Plotter *pe = new Plotter();
 		for(const auto& yr : years) {
-			TFile *fin = TFile::Open(path+TString::Format("btagEffs_%s.root",yr.Data()));
+			TFile *fin = TFile::Open(path+TString::Format("btagEffs%s.root",yr.Data()));
 	    	TH2 *hd = (TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_incl");
 	    	TH2 *hn = (TH2*)fin->Get("bkg_noQCD_"+idS+"_"+fl+"_"+num);
 	    	if(!hd || !hn) throw std::invalid_argument("missing hist");
@@ -109,7 +109,7 @@ void BtagPlotter::doYearComparison(TString idS) {
 
 void BtagPlotter::doSelComparison(int year) {
 
-	TFile *fin = TFile::Open(path+TString::Format("btagEffs_%d.root",year));
+	TFile *fin = TFile::Open(path+TString::Format("btagEffs%d.root",year));
 
     for(const auto& fl : flvs) for(const auto& num : numNs) {
 
@@ -155,7 +155,7 @@ void BtagPlotter::doSelComparison(int year) {
 
 void BtagPlotter::doKinComparison(int year, TString idS) {
 
-	TFile *fin = TFile::Open(path+TString::Format("btagEffs_%d.root",year));
+	TFile *fin = TFile::Open(path+TString::Format("btagEffs%d.root",year));
 
 	for(const auto& fl : flvs) for(const auto& num : numNs) {
 
