@@ -116,11 +116,14 @@ void testQCDSF(std::string name, std::string filename, const std::vector<std::st
 
 
 void testRatioFits(std::string name, std::string filename,  std::string fitName, const std::vector<std::string>& sels,std::vector<TObject*>& writeables) {
-    Plotter * p = new Plotter; //stupid CINT bugfix.....
+    Plotter * p = new Plotter(); //stupid CINT bugfix.....
 
     std::vector<TObject*> paramPads;
 //    gROOT->SetBatch(true);
+    printf("dbg0\n");
     for(const auto& s : sels){
+        printf("dbg1\n");
+
         TFile *ff = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
         auto addGraph = [&](const std::string& name,std::vector<TObject*>& list){
             TGraphErrors * can= 0;
@@ -141,6 +144,8 @@ void testRatioFits(std::string name, std::string filename,  std::string fitName,
 
         addGraph("RATIO", paramPads);
     }
+    printf("dbg2\n");
+
 //    gROOT->SetBatch(false);
 
 
@@ -225,13 +230,13 @@ public:
 void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool do1lep = true, std::string outName = ""){
     REGION reg = REGION(inreg);
 
-    std:: string inName =  "bkgInputs" ;
+    std:: string inName =  "distributions2" ;
     if(reg == REG_TOPCR){
-        inName =  "bkgInputsTopCR";
+        inName =  "test_TopCR";
         hhFilename +="_TopCR";
     }
     else if(reg == REG_NONTOPCR){
-        inName =  "bkgInputsNonTopCR";
+        inName =  "test_NonTopCR";
         hhFilename +="_NonTopCR";
     }
     std::string filename = inName +"/"+hhFilename;
@@ -276,16 +281,16 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool 
         break;
     case 2:
         if(outName.size()) outName += "_2DCondTemp";
-        test2DCondTemplate(mod,filename,"emu_LMT_I_ltmb_IF_LMT_R_phi_b");
+        test2DCondTemplate(mod,filename,doTW?"emu_LMT_I_ltmb_IF_LMT_mll":"emu_LMT_I_ltmb_IF_LMT_lrpb");
         break;
     case 3:
         if(outName.size()) outName += "_MVVKern";
         if(doTW) {
         	if (do1lep) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
-        	else        stepSels = {"IF_LMT_R_phi_b"};
+        	else        stepSels = {"IF_LMT_mll"};
         } else {
-        	if (do1lep) stepSels = {"e_LMT_HP_ltmb","mu_LMT_HP_ltmb","e_LMT_LP_ltmb","mu_LMT_LP_ltmb"};
-        	else        stepSels = {"OF_LMT_R_phi_b","SF_LMT_R_phi_b","IF_LMT_R_phi_b"};
+        	if (do1lep) stepSels = {"emu_L_HP_ltmb","emu_T_HP_ltmb","emu_L_LP_ltmb","emu_T_LP_ltmb"};
+        	else        stepSels = {"IF_LMT_lrpb"};
         }
         writeables = test1DKern(mod,filename,"MVV",stepSels);
         break;
@@ -293,7 +298,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool 
         if(outName.size()) outName += "_2DTemp";
         if(doTW) {
         	if (do1lep) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
-        	else        stepSels = {"IF_LMT_R_phi_b"};
+        	else        stepSels = {"IF_LMT_mll"};
         } else {
         	if (do1lep) stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
         	else        stepSels = {"OF_LMT_R_phi_b","SF_LMT_R_phi_b","IF_LMT_R_phi_b"};

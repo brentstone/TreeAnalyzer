@@ -13,6 +13,7 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
         TH1 * hd = 0;
         fd->GetObject(  (name+"_"+s+"_hhMass").c_str(),hd);
         if(hd==0) continue;
+        renormalizeBinsForSmoothness(hd,false);
         std::vector<TH1*> hs;
         std::vector<TString> hNs;
 
@@ -29,12 +30,13 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
             TH1 * h1D = hs[iH];
             for(int iX = 1; iX <= h1D->GetNbinsX(); ++iX)h1D->SetBinError(iX,0);
+            renormalizeBinsForSmoothness(h1D,false);
             p->addHist(h1D,hNs[iH],-1,1,4,20,1,false,true,false,"E");
         }
         p->setMinMax(.01,hs[0]->Integral());
         p->setUnderflow(false);
         p->setOverflow(false);
-        p->rebin(8);
+        p->rebin(2);
         p->setXTitle(hhMCS.title);
         p->setYTitle("N. of events");
         p->addText(getCategoryLabel(s).c_str(),0.15,0.88,0.03);
@@ -91,13 +93,13 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
     auto srList = getSRList(reg);
     if (!do1lep) srList = getDilepSRList(reg);
 
-    std:: string inName =  "bkgInputs" ;
+    std::string inName =  "distributions2" ;
     if(reg == REG_TOPCR){
-        inName =  "bkgInputsTopCR";
+        inName =  "test_TopCR";
         hhFilename +="_TopCR";
     }
     else if(reg == REG_NONTOPCR){
-        inName =  "bkgInputsNonTopCR";
+        inName =  "test_NonTopCR";
         hhFilename +="_NonTopCR";
     }
     std::string filename = inName +"/"+hhFilename;
@@ -109,19 +111,30 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
         else if(reg == REG_NONTOPCR) outName +=  "_NonTopCR";
     }
 
-    std::vector<std::string> mtMJJBinning = {"emu_LMT_I_none"};
-    if(reg != REG_NONTOPCR && doMT) mtMJJBinning ={"emu_L_I_none","emu_M_I_none","emu_T_I_none"};
+    std::vector<std::string> mtMJJBinning = {"emu_LMT_I_lth"};
+    if(reg != REG_NONTOPCR && doMT) mtMJJBinning ={"emu_LMT_I_lth","emu_L_I_lth","emu_T_I_lth"};
 
     if (!do1lep) {
-    	if(reg != REG_NONTOPCR && doMT) mtMJJBinning = {"IF_L_none","IF_M_none","IF_T_none"};
+    	if(reg != REG_NONTOPCR && doMT) mtMJJBinning = {"IF_LMT_none","IF_L_none","IF_T_none"};
     	else mtMJJBinning = {"IF_LMT_none"};
     }
+
+	std::vector<std::string> bins1l = {"e_L_LP_full","mu_L_LP_full",
+			"e_L_HP_full","mu_L_HP_full","e_T_LP_full","mu_T_LP_full","e_T_HP_full","mu_T_HP_full"};
+	std::vector<std::string> bins2l = {"OF_L_full","SF_L_full","OF_T_full","SF_T_full"};
+
+	if(reg == REG_NONTOPCR) {
+		bins1l = {"e_L_LP_full","mu_L_LP_full","e_L_HP_full","mu_L_HP_full"};
+		bins2l = {"OF_L_full","SF_L_full"};
+	}
+
+	mtMJJBinning = {"emu_LMT_I_lth_IF_LMT_none","emu_L_I_lth_IF_L_none","emu_T_I_lth_IF_T_none"};
 
     switch(step){
     case 0:
         if(outName.size()) outName += "_MVV_temp";
-        if(do1lep) writeables = test1DKern(mod,filename,"MVV",{"emu_LMT_I_lt"});
-        else       writeables = test1DKern(mod,filename,"MVV",{"IF_LMT_R_phi_b"});
+        if(do1lep) writeables = test1DKern(mod,filename,"MVV",{"emu_LMT_I_lth","emu_L_I_lth","emu_T_I_lth"});
+        else       writeables = test1DKern(mod,filename,"MVV",{"IF_LMT_none","IF_L_none","IF_T_none"});
         break;
     case 1:
         if(outName.size()) outName += "_MVV_fit";
@@ -136,6 +149,7 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
         writeables = testBKG1DFits(mod,filename,"","MJJ_fit",mtMJJBinning);
         break;
     case 4:
+    	// !! there is a bug in here that just makes the plotting kinda screwy !!
         if(outName.size()) outName += "_MJJ_SFFit";
         writeables = test2DFits(mod,filename,srList,{700,4000},true,2,"MJJ_SFFit.json.root");
         break;
@@ -144,10 +158,7 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
         writeables = test2DModel({mod},filename,srList,{700,4000});
         break;
     case 6:
-    	std::vector<std::string> bins = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full"};
-    	if (!do1lep) bins = {"IF_LMT_full","OF_LMT_full","SF_LMT_full","OF_L_full","SF_L_full",
-        		"OF_M_full","SF_M_full","OF_T_full","SF_T_full"};
-
+    	auto bins = do1lep ? bins1l : bins2l;
         if(outName.size()) outName += "_all_2DComp";
         writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
               filename,bins,{700,4000});

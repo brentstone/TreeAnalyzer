@@ -1,4 +1,3 @@
-
 #include "plotTestHelper.h"
 #include "TH1.h"
 #include "TH2.h"
@@ -212,6 +211,9 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
     case 2018:
     	inclusiveN *= 59.7;
     	break;
+    case 0:
+    	inclusiveN *= 137.1;
+    	break;
     default:
     	throw std::invalid_argument("year needs to be set properly");
     }
@@ -225,6 +227,7 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
                 if(h != selCuts1[SEL1_FULL]) continue;
                 Plotter * plot = new Plotter();
                 for(auto& b : btagCats){
+                	std::cout<<b<<std::endl;
                     if(b == btagCats[BTAG_LMT]) continue;
                     std::string s = l+"_"+b+"_"+p+"_"+h;
                     TFile * fo = new TFile(
@@ -287,7 +290,7 @@ void plotNormSysts(std::string name, std::string filename,const std::vector<int>
     sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
     sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+//    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
 //    for(auto& l : lepCats)for(auto& b : btagCats)for(auto& p : purCats)for(auto& h : hadCuts){
 //        if(l == lepCats[LEP_EMU]) continue;
@@ -465,7 +468,7 @@ void plotShapeSystNorms(std::string name, std::string filename,const std::vector
     sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
     sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+//    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
 
     TF1 *f1 = new TF1("f1","pol0",750,3600);
@@ -655,33 +658,32 @@ void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, int year 
     std::string name = signals[sig];
     if(outName.size()) outName +=  std::string("/") + name;
 
-    if (year != 2016 && year != 2017 && year != 2018) {
-    	throw std::invalid_argument("year must be either 2016, 2017, or 2018");
+    if (year != 2016 && year != 2017 && year != 2018 && year != 0) {
+    	throw std::invalid_argument("year must be either 2016, 2017, or 2018, or 0 (Run2)");
     }
+
     std::vector<std::string> sels = {};
     switch(cat) {
     case 0:
         if(outName.size()) outName += "_yield";
-        if(do1lep) sels = {"e_L_LP_full","e_M_LP_full","e_T_LP_full",
-                "e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full",
-                "mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"};
-        else sels = {"SF_L_full","SF_M_full","SF_T_full",
-                "OF_L_full","OF_M_full","OF_T_full"};
+        if(do1lep) sels = {"e_L_LP_full","e_T_LP_full","e_L_HP_full","e_T_HP_full",
+        		"mu_L_LP_full","mu_T_LP_full","mu_L_HP_full","mu_T_HP_full"};
+        else sels = {"SF_L_full","SF_T_full","OF_L_full","OF_T_full"};
 
         plotYields(name,filename,"yield",sels);
         plotEfficiencies(name,filename,"yield" ,sig,year);
         break;
     case 1:
         if(outName.size()) outName += "_MJJ_fit1stIt";
-        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"};
-        else       sels = {"IF_LMT_full","IF_L_full","IF_M_full","IF_T_full"};
+        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_T_I_ltmb"};
+        else       sels = {"IF_LMT_full","IF_L_full","IF_T_full"};
 
         writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit1stIt",sels);
         break;
     case 2:
         if(outName.size()) outName += "_MJJ_fit";
-        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb"/*,"emu_M_I_ltmb","emu_T_I_ltmb"*/};
-        else       sels = {"IF_LMT_full","IF_L_full","IF_M_full","IF_T_full"};
+        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_T_I_ltmb"};
+        else       sels = {"IF_LMT_full","IF_L_full","IF_T_full"};
 
         writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit",sels);
         break;
@@ -694,10 +696,9 @@ void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, int year 
         break;
     case 4:
         if(outName.size()) outName += "_2D_fit";
-        if(do1lep) sels = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full",
-        		"mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full",
-				"mu_T_HP_full"};
-        else sels = {"SF_L_full","OF_L_full","SF_M_full","OF_M_full","SF_T_full","OF_T_full"};
+        if(do1lep) sels = {"e_L_LP_full","mu_L_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full",
+        		"mu_L_HP_full","e_T_HP_full","mu_T_HP_full"};
+        else sels = {"SF_L_full","OF_L_full","SF_T_full","OF_T_full"};
         test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,sels);
         //run below for an
 //        test2DFits(name,filename,{1600},"2D_fit",false,{"mu_M_LP_full"}); outName +=+"_forAN";

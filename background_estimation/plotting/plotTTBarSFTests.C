@@ -11,7 +11,7 @@ hadd  -f HHlnujj_ttbarSF_all_inputPlots.root HHlnujj_ttbarSF_data_inputPlots.roo
 
 {
 
-  TFile * f = new TFile("HHlnujj_ttbarSF_all_testPlots.root","read");
+  TFile * f = new TFile("HHbb1o2l_ttbarSF_all_testPlots.root","read");
   TH1* hd;
   TH1*ho;
   TH1*ht;
