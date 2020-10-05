@@ -177,6 +177,8 @@ public:
         	if(!isRealData()) {
             	plotter.getOrMake2DPre(pre,"hbbCatxNumB",";hbbCat;numB",6,0.5,6.5,6,-0.5,5.5)->Fill(hbbCSVCat,numB,weight);
             	plotter.getOrMake2DPre(pre,"hbbCatxsjFlav",";hbbCat;sjFlav",6,0.5,6.5,6,-0.5,5.5)->Fill(hbbCSVCat,trueFlav,weight);
+            	plotter.getOrMake2DPre(pre,"hbbTagxNumB",";hbbTag;numB",100,0,1,6,-0.5,5.5)->Fill(hbbTag,numB,weight);
+            	plotter.getOrMake2DPre(pre,"hbbTagxsjFlav",";hbbTag;sjFlav",100,0,1,6,-0.5,5.5)->Fill(hbbTag,trueFlav,weight);
             	plotter.getOrMake2DPre(pre,"mbbxsjFlav",";mbb;sjFlav",30,30,210,6,-0.5,5.5)->Fill(hbbMass,trueFlav,weight);
 
             	std::vector<TString> sjFlavSs = {"ll","lc","lb","cc","cb","bb"};
@@ -347,6 +349,7 @@ public:
                 plotter.getOrMake2DPre(pref+"_"+id+suf+hbbS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,fabs(eta),weight);
                 plotter.getOrMake1DPre(pref+"_"+id+hbbS,"dcsv",";deep_csv",100,0,1)->Fill(sj1.deep_csv(),weight);
                 plotter.getOrMake1DPre(pref+"_"+id+hbbS,"dcsv",";deep_csv",100,0,1)->Fill(sj2.deep_csv(),weight);
+                plotter.getOrMake1DPre(pref+"_"+id+hbbS,"dak8",";dak8",100,0,1)->Fill(j->deep_MDZHbb(),weight);
 
                 if(!isRealData()) {
                     plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS+suf+hbbS, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(pt,fabs(eta),weight);
@@ -357,12 +360,16 @@ public:
 
             auto fillFJ = [&](const TString& hbbS) {
             	int cat = BTagging::getCSVSJCat(parameters.jets,j->subJets());
-                plotter.getOrMake1DPre(pref+"_"+id+hbbS,"yield",";cat",6,0.5,6.5)->Fill(cat,weight);
-                plotter.getOrMake2DPre(pref+"_"+id+hbbS,"mj_x_yield",";jet mass;cat",100,0,300,6,0.5,6.5)->Fill(j->sdMom().mass(),cat,weight);
+                plotter.getOrMake1DPre(pref+"_"+id+hbbS,"hbbCat",";cat",6,0.5,6.5)->Fill(cat,weight);
+                plotter.getOrMake2DPre(pref+"_"+id+hbbS,"mj_x_hbbCat",";jet mass;cat",100,0,300,6,0.5,6.5)->Fill(j->sdMom().mass(),cat,weight);
+                plotter.getOrMake1DPre(pref+"_"+id+hbbS,"hbbTag",";hbbTag",100,0,1)->Fill(j->deep_MDZHbb(),weight);
+                plotter.getOrMake2DPre(pref+"_"+id+hbbS,"mj_x_hbbTag",";jet mass;hbbTag",100,0,300,100,0,1)->Fill(j->sdMom().mass(),j->deep_MDZHbb(),weight);
 
                 if(!isRealData()) {
-                    plotter.getOrMake1DPre(pref+"_"+id+"_"+flvSS+hbbS,"yield",";cat",6,0.5,6.5)->Fill(cat,weight);
-                    plotter.getOrMake2DPre(pref+"_"+id+"_"+flvSS+hbbS,"mj_x_yield",";jet mass;cat",100,0,300,6,0.5,6.5)->Fill(j->sdMom().mass(),cat,weight);
+                    plotter.getOrMake1DPre(pref+"_"+id+"_"+flvSS+hbbS,"hbbCat",";cat",6,0.5,6.5)->Fill(cat,weight);
+                    plotter.getOrMake2DPre(pref+"_"+id+"_"+flvSS+hbbS,"mj_x_hbbCat",";jet mass;cat",100,0,300,6,0.5,6.5)->Fill(j->sdMom().mass(),cat,weight);
+                    plotter.getOrMake1DPre(pref+"_"+id+"_"+flvSS+hbbS,"hbbTag",";hbbTag",100,0,1)->Fill(j->deep_MDZHbb(),weight);
+                    plotter.getOrMake2DPre(pref+"_"+id+"_"+flvSS+hbbS,"mj_x_hbbTag",";jet mass;hbbTag",100,0,300,100,0,1)->Fill(j->sdMom().mass(),j->deep_MDZHbb(),weight);
                 }
             };
 
@@ -566,7 +573,6 @@ public:
     }
 
     void isolateJetRegion(TString prefix) {
-//    	if(ht < 400) return;
     	if(ht < 800) return;
 
     	if(!reader_jet->jets.size()) return;
@@ -605,7 +611,7 @@ public:
         TString prefix = smpName;
         if (mcProc == FillerConstants::TTBAR && smDecayEvt.nLepsTT >= 0 && smDecayEvt.nLepsTT <= 2) {
         	prefix += TString::Format("%d",smDecayEvt.nLepsTT);
-        	weight *= 0.870428;
+        	weight *= 0.75;
         }
 
 //        studyTrueHbbProperties(prefix);
