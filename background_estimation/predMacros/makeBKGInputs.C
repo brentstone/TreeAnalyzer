@@ -33,6 +33,7 @@ std::string getTTBarSF(const std::string& filename){
     return std::string("(")+processes[TTBAR].cut+"?("+qToW+"):1.0)";
 }
 
+// fetches the QCDSF for inclusive b-tagging
 std::string getQCDSF(const std::string& name, const std::string& filename,
         const LEPCats l,const PURCats p,const SELCuts1 h, double sf=1.0 ){
     CJSON json(filename+"_"+name+"_"
@@ -52,21 +53,38 @@ std::string getQCDSF(const std::string& name, const std::string& filename,
     return std::string("(")+processes[WJETS].cut+"?(1+("+flt2Str(sf)+")*(" +qToW+")):1.0)";
 }
 
-std::string getMVVExpoMinMaxStr(std::string sample){
+std::string getMVVExpoMinMaxStr(std::string sample, bool is1l){
     float eMin, eMax;
-    if(strFind(sample,bkgSels[BKG_QG])){
-        eMin = 2500;
-        eMax = 4500;
-    } else if(strFind(sample,bkgSels[BKG_LOSTTW])){
-        eMin = 2000;
-        eMax = 3000;
-    } else if(strFind(sample,bkgSels[BKG_MW])){
-        eMin = 1500;
-        eMax = 2500;
-    } else{
-        eMin = 2000 ;
-        eMax = 3500 ;
+    if(is1l) {
+        if(strFind(sample,bkgSels[BKG_QG])){
+            eMin = 2500;
+            eMax = 4500;
+        } else if(strFind(sample,bkgSels[BKG_LOSTTW])){
+            eMin = 2000;
+            eMax = 3000;
+        } else if(strFind(sample,bkgSels[BKG_MW])){
+            eMin = 1500;
+            eMax = 2500;
+        } else{
+            eMin = 2000 ;
+            eMax = 3500 ;
+        }
+    } else {
+        if(strFind(sample,bkgSels[BKG_QG])){
+            eMin = 1000;
+            eMax = 2500;
+        } else if(strFind(sample,bkgSels[BKG_LOSTTW])){
+            eMin = 1000;
+            eMax = 2000;
+        } else if(strFind(sample,bkgSels[BKG_MW])){
+            eMin = 1000;
+            eMax = 2000;
+        } else{
+            eMin = 1000 ;
+            eMax = 2500 ;
+        }
     }
+
     return std::string(" -emin ") + flt2Str(eMin) + " -emax "+flt2Str(eMax) + " ";
 }
 
@@ -84,26 +102,33 @@ const float hbb_resUnc   = 30;   // coef of 1 means that we get a 100% scale at 
 
 void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string& filename,
         const std::string inputFile, const std::string& baseSel="1.0", int channel = 0, bool addQCDSF = false,
-        float khxs = 1,float khxc = 5){
+        float khxs = 1,float khxc = 5, bool doQuick = true){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
+
+    int stp = strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW]) ? 2 : 3;
+    printf("%s step %d - make 1D P(mhh) shapes\n",name.c_str(),stp);
 
 	if(channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+        		if(ci.is(SEL1_LB) || ci.is(SEL1_LP) || ci.is(SEL1_LPB) || ci.is(SEL1_NONE))
+        			continue;
+        	}
+
             if(strFind(name,bkgSels[BKG_QG])){
-                if(!ci.is(BTAG_LMT)) continue;
+//                if(ci.is(BTAG_LMT)) continue;
+                if(!ci.is(LEP_EMU)) continue;
                 if(!ci.is(SEL1_LTMB)) continue;
-            }
-            if(strFind(name,bkgSels[BKG_LOSTTW])){
+            } else if(strFind(name,bkgSels[BKG_LOSTTW])){
+//                if(ci.is(BTAG_LMT)) continue;
                 if(!ci.is(LEP_EMU )) continue;
-                if(!ci.is(BTAG_LMT)) continue;
                 if(!ci.is(SEL1_LTMB)) continue;
-            }
-            if(strFind(name,bkgSels[BKG_MT])||strFind(name,bkgSels[BKG_MW])){
+            } else if(strFind(name,bkgSels[BKG_MT])||strFind(name,bkgSels[BKG_MW])){
                 if(!ci.is(LEP_EMU )) continue;
-                if(!ci.is(BTAG_LMT)) continue;
+//                if(!ci.is(BTAG_LMT)) continue;
                 if(!ci.is(PURE_I  )) continue;
-                if(!ci.is(SEL1_LT  )) continue;
+                if(!ci.is(SEL1_LTH)) continue;
             }
             std::string tempFile=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
             std::string cut =  std::string("(")+baseSel+"&&"+ci.cut()+")";
@@ -115,7 +140,7 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
                     " -xb "+getHHBinningString(true)+" -s "+cut+" -w "+weight + " -khs "+ flt2Str(khxs)
                     +" -khc "+ flt2Str(khxc);
             args += " -ks 1.5 -kr 1.5 -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
-            args += std::string(" -doS ") + getMVVExpoMinMaxStr(name);
+            args += std::string(" -doS ") + getMVVExpoMinMaxStr(name,true);
             args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
             make1DTemplateWithAdaKern(inputFile,tempFile, args);
         }
@@ -123,19 +148,23 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
 	if (channel == 0 || channel == 2) {
     	DilepCatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+        		if(ci.is(SEL2_RPhiB)) continue;
+        	}
             if(strFind(name,bkgSels[BKG_QG])){
-                if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL2_RPhiB)) continue;
+//                if(ci.is(BTAG_LMT)) continue;
+            	if(!ci.is(LEP_INCL )) continue;
+                if(!ci.is(SEL2_LRPB)) continue;
             }
             if(strFind(name,bkgSels[BKG_LOSTTW])){
-                if(!ci.is(LEP_INCL )) continue;
-                if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL2_RPhiB)) continue;
+//                if(ci.is(BTAG_LMT)) continue;
+            	if(!ci.is(LEP_INCL )) continue;
+                if(!ci.is(SEL2_MLL)) continue;
             }
             if(strFind(name,bkgSels[BKG_MT])||strFind(name,bkgSels[BKG_MW])){
                 if(!ci.is(LEP_INCL )) continue;
-                if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL2_RPhiB  )) continue;
+//                if(!ci.is(BTAG_LMT)) continue;
+                if(!ci.is(SEL2_NONE  )) continue;
             }
 
             std::string tempFile=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
@@ -146,7 +175,7 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
                     " -xb "+getHHBinningString(true)+" -s "+cut+" -w "+weight + " -khs "+ flt2Str(khxs)
                     +" -khc "+ flt2Str(khxc);
             args += " -ks 1.5 -kr 1.5 -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
-            args += std::string(" -doS ") + getMVVExpoMinMaxStr(name);
+            args += std::string(" -doS ") + getMVVExpoMinMaxStr(name,false);
             args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
             make1DTemplateWithAdaKern(inputFile,tempFile, args);
         }
@@ -158,55 +187,70 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
         const std::string inputFile, const std::string baseSel="1.0", bool addQCDSF = false,
         bool xIsCond = false, float khxs = 1,float khxc = 5,float khys = 1,float khyc = 5) {
 
-	// make 2D templates using a combined and relaxed 1l and 2l selection
-    std::string tempFile=filename+"_"+name+"_";
-    std::string inclName = lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]+"_"+
-    		dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB];
-    tempFile += inclName+"_2D_cond_template.root";
+	printf("%s step 2 - make 2D conditional shapes\n",name.c_str());
+	SELCuts2 sel2l = strFind(name,bkgSels[BKG_QG]) ? SEL2_LRPB : SEL2_MLL;
 
-    // may need to fix a bug here in the string defining the cut
-    std::string inclCut = std::string("(")+baseSel+")&&((("+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut
-    		+"&&"+selCuts1[SEL1_LTMB].cut+")";
-    if(addQCDSF) inclCut += "*"+getQCDSF(name,filename,LEP_EMU,PURE_I,SEL1_LTMB);
-    inclCut += ")";
-    inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_RPhiB].cut+"))";
+	// make 2D templates using a combined and relaxed 1l and 2l selection - for each b-tagging category
+    for(const auto& b : btagCats) {
+//    	if(b == btagCats[BTAG_LMT]) continue;
 
+        std::string tempFile=filename+"_"+name+"_";
+        std::string inclName = lepCats[LEP_EMU]+"_"+b+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]+"_"+
+        		dilepCats[LEP_INCL]+"_"+b+"_"+selCuts2[sel2l];
+        tempFile += inclName+"_2D_cond_template.root";
 
-    std::string args = std::string("-v -n histo ") + " -vx "+ hbbMCS.cut+ " -vy "+hhMCS.cut
-            + " -xb "+getHbbBinningString(true)+" -yb "+getHHBinningString(true)
-            +  " -s "+ inclCut +" -w "+nomW.cut+" ";
-    args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc)
-                    +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " ";
-    args += "-eopt y  "+ getMVVExpoMinMaxStr(name);
-    if(xIsCond){
-        args+=" -hs "+ flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_resUnc) + " ";
-        args+=" -xIsCond ";
-    } else {
-        args+=" -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
+        std::string inclCut = std::string("(")+baseSel+")&&((("+lepCats[LEP_EMU].cut+"&&"+b.cut+"&&"+purCats[PURE_I].cut
+        		+"&&"+selCuts1[SEL1_LTMB].cut+")";
+        if(addQCDSF) inclCut += "*"+getQCDSF(name,filename,LEP_EMU,PURE_I,SEL1_LTMB);
+        inclCut += ")";
+        inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+b.cut+"&&"+selCuts2[sel2l].cut+"))";
+
+        std::string args = std::string("-v -n histo ") + " -vx "+ hbbMCS.cut+ " -vy "+hhMCS.cut
+                + " -xb "+getHbbBinningString(true)+" -yb "+getHHBinningString(true)
+                +  " -s "+ inclCut +" -w "+nomW.cut+" ";
+        args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc)
+                        +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " ";
+        args += "-eopt y  "+ getMVVExpoMinMaxStr(name,true);
+        if(xIsCond){
+            args+=" -hs "+ flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_resUnc) + " ";
+            args+=" -xIsCond ";
+        } else {
+            args+=" -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
+        }
+
+        make2DTemplateWithAdaKern(inputFile,tempFile, args);
     }
-
-    make2DTemplateWithAdaKern(inputFile,tempFile, args);
 
 }
 
 
-void mergeBackgroundShapes(const std::string& name, const std::string& filename, int channel, bool xIsCond){
+void mergeBackgroundShapes(const std::string& name, const std::string& filename, int channel, bool xIsCond, bool doQuick){
 
-	// use the combined 1+2 lep channel 2D templates
-    std::string inFile2D=filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]
-    		+"_"+dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]+"_2D_cond_template.root";
+	printf("%s step 4 - combine 2D and 1D templates to get P(mbb,mhh)\n",name.c_str());
 
+	SELCuts2 sel2 = strFind(name,bkgSels[BKG_QG]) ? SEL2_LRPB : SEL2_MLL;
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+        		if(ci.is(SEL1_LB) || ci.is(SEL1_LP) || ci.is(SEL1_LPB) || ci.is(SEL1_LTH))
+        			continue;
+        	}
             if(strFind(name,bkgSels[BKG_QG])){
-                if(!ci.is(BTAG_LMT)) continue;
+//                if(ci.is(BTAG_LMT)) continue;
+                if(!ci.is(LEP_EMU)) continue;
                 if(!ci.is(SEL1_LTMB)) continue;
             } else {
-                if(!ci.is(LEP_EMU)) continue;
                 if(!ci.is(BTAG_LMT)) continue;
+                if(!ci.is(LEP_EMU)) continue;
                 if(!ci.is(SEL1_LTMB)) continue;
             }
+
+        	// get the combined 1+2 lep channel 2D templates
+            std::string inFile2D=filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]
+            		+"_"+dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[sel2]+"_2D_cond_template.root";
+
+            // get the 1d template
             std::string inFile1D=filename+"_"+name+"_"+ ci.name()+"_"+(xIsCond? "MVV":"MJJ") +"_incl_template.root";
 
             std::string mergedTemp=filename+"_"+name+"_"+ci.name()+"_2D_merged_template.root";
@@ -221,14 +265,23 @@ void mergeBackgroundShapes(const std::string& name, const std::string& filename,
     if (channel == 0 || channel == 2){
         DilepCatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+        		if(ci.is(SEL2_RPhiB)) continue;
+        	}
             if(strFind(name,bkgSels[BKG_QG])){
-                if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL2_RPhiB)) continue;
-            } else {
+//                if(ci.is(BTAG_LMT)) continue;
                 if(!ci.is(LEP_INCL)) continue;
-                if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL2_RPhiB)) continue;
+                if(!ci.is(SEL2_LRPB)) continue;
+            } else {
+//                if(!ci.is(BTAG_LMT)) continue;
+                if(!ci.is(LEP_INCL)) continue;
+                if(!ci.is(SEL2_MLL)) continue;
             }
+        	// use the combined 1+2 lep channel 2D templates
+            std::string inFile2D=filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]
+            		+"_"+dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[sel2]+"_2D_cond_template.root";
+
+            // get the 1d template
             std::string inFile1D=filename+"_"+name+"_"+ ci.name()+"_"+(xIsCond? "MVV":"MJJ") +"_incl_template.root";
 
             std::string mergedTemp=filename+"_"+name+"_"+ci.name()+"_2D_merged_template.root";
@@ -245,13 +298,16 @@ void mergeBackgroundShapes(const std::string& name, const std::string& filename,
 
 void cutMVVTemplate(const std::string& name, const std::string& filename, int channel){
 
+    printf("%s step 3 - cut P(mhh) templates\n",name.c_str());
+
 	if (channel == 0 || channel == 1) {
 	    CatIterator ci;
 	    while(ci.getBin()){
+
 	        if(!ci.is(LEP_EMU))continue;
-	        if(!ci.is(BTAG_LMT))continue;
+//	        if(!ci.is(BTAG_LMT))continue;
 	        if(!ci.is(PURE_I))continue;
-	        if(!ci.is(SEL1_LT))continue;
+	        if(!ci.is(SEL1_LTH))continue;
 	        std::string inFileX=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
 	        std::string outFileX=filename+"_"+name+"_"+ci.name()+"_MVV_cut_template.root";
 	        std::string args = std::string("-v -n histo ") + " -i "+  inFileX
@@ -262,9 +318,11 @@ void cutMVVTemplate(const std::string& name, const std::string& filename, int ch
 	if (channel == 0 || channel == 2){
 	    DilepCatIterator ci;
 	    while(ci.getBin()){
-	        if(!ci.is(LEP_INCL))continue;
-	        if(!ci.is(BTAG_LMT))continue;
-	        if(!ci.is(SEL2_RPhiB))continue;
+
+            if(!ci.is(LEP_INCL )) continue;
+//            if(!ci.is(BTAG_LMT)) continue;
+            if(!ci.is(SEL2_NONE  )) continue;
+
 	        std::string inFileX=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
 	        std::string outFileX=filename+"_"+name+"_"+ci.name()+"_MVV_cut_template.root";
 	        std::string args = std::string("-v -n histo ") + " -i "+  inFileX
@@ -290,8 +348,8 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
     	samps.emplace_back(name+"_"+processes[OTHER],name+"_"+processes[OTHER].cut);
     }
 
-    //have to use the old iteration to get the inclusive category
-    std::vector<CutStr> srPCrBtagCats = btagCats;
+    std::vector<CutStr> srPCrBtagCats;
+    if(!doQuick) srPCrBtagCats = btagCats;
     srPCrBtagCats.push_back(inclBtagCat);
 
     std::vector<PlotSel> sels;
@@ -302,7 +360,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
                     if(h != selCuts1[SEL1_LTMB] && h != selCuts1[SEL1_FULL]) continue;
                 }
                 if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                    if(h != selCuts1[SEL1_LT] &&h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_NONE]) continue;
+                    if(h != selCuts1[SEL1_LTH] &&h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_NONE]) continue;
                 }
         	}
             sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
@@ -320,7 +378,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
                     if(h != selCuts1[SEL1_LTMB] && h != selCuts1[SEL1_FULL]) continue;
                 }
                 if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                    if(h != selCuts1[SEL1_LT] &&h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_NONE]) continue;
+                    if(h != selCuts1[SEL1_LTH] &&h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_NONE]) continue;
                 }
         	}
 
@@ -331,7 +389,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
                     +" -g mix -fVar "+ MOD_MS + " -fMin "  +flt2Str(minHHMass)
                     + " -fMax "  +flt2Str(maxHHMass);
             fitBKGRatio((filename+"_"+name+"_" +catName +"_QCDSF.json").c_str(),args);
-        }
+    }
 }
 
 
@@ -372,7 +430,7 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
                 if(!ci1.is(SEL1_LTMB) && !ci1.is(SEL1_FULL)) continue;
             }
             if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                if(!ci1.is(SEL1_LT) && !ci1.is(SEL1_FULL) && !ci1.is(SEL1_NONE)) continue;
+                if(!ci1.is(SEL1_LTH) && !ci1.is(SEL1_FULL) && !ci1.is(SEL1_NONE)) continue;
             }
     	}
 
@@ -397,13 +455,17 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
     while (cit1.getBin()) {
     	if(!cit1.is(LEP_EMU)) continue;
     	if(!cit1.is(PURE_I)) continue;
-    	if(!cit1.is(SEL1_LTMB) && !cit1.is(SEL1_NONE)) continue;
-
+        if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+            if(!ci1.is(SEL1_LTMB) && !ci1.is(SEL1_FULL)) continue;
+        }
+        if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+            if(!ci1.is(SEL1_LTH) && !ci1.is(SEL1_FULL) && !ci1.is(SEL1_NONE)) continue;
+        }
     	DilepCatIterator cit2;
     	while (cit2.getBin()) {
         	if(!cit2.is(LEP_INCL)) continue;
-        	if(!cit2.is(SEL2_RPhiB) && !cit2.is(SEL2_NONE)) continue;
         	if(cit1.b != cit2.b)   continue;
+//        	if(doQuick && !cit2.is(SEL2_RPhiB) && !cit2.is(SEL2_NONE)) continue;
 
         	sels.emplace_back(cit1.name()+"_"+cit2.name(),"(("+cit1.cut()+")||("+cit2.cut()+"))");
     	}
@@ -419,8 +481,10 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
 void fitBackgroundShapes2DConditional(std::string name, const std::string& filename,
         bool xIsCond, int channel, bool doQuick, const std::string& fittedName =""){
 
+	printf("%s step 5 - fit templates to MC in each search bin\n",name.c_str());
+
     //Different name in case we want to fit on a different selection with some template
-    if(fittedName.size())name = fittedName;
+    if(fittedName.size()) name = fittedName;
     std::string distFileName=filename+"_"+name+"_distributions.root";
 
     if (channel == 0 || channel == 1) {
@@ -428,25 +492,35 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
         while(ci.getBin()){
 
         	if(doQuick) {
-                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
-                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
-                }
-                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
-                }
+            	if(ci.is(BTAG_LMT)) continue;
+            	if(ci.is(LEP_EMU)) continue;
+            	if(ci.is(PURE_I)) continue;
+        		if(!ci.is(SEL1_FULL)) continue;
+//                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+//                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+//                }
+//                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+//                    if(!ci.is(SEL1_LTH) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+//                }
         	}
 
             std::string hName = name+"_"+ci.name()+"_"+hbbMCS+"_"+hhMCS;
             std::string outName = filename + "_"+name+"_"+ci.name()+"_2D_template.root";
 
-            std::string tempFile= filename+"_"+name+"_"
-                    +lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[ci.p]+"_"+selCuts1[SEL1_LTMB]
-                    +"_2D_merged_template.root";
-            if(strFind(name,bkgSels[BKG_QG])){
-                tempFile=filename+"_"+name+"_"
-                        +lepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"+purCats[ci.p]+"_"+selCuts1[SEL1_LTMB]
-                        +"_2D_merged_template.root";
+            std::string tempFile;
+            if(strFind(name,bkgSels[BKG_QG])) {
+            	tempFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[ci.p]+"_"+selCuts1[SEL1_LTMB]
+            	                    +"_2D_merged_template.root";
+            } else {
+            	tempFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[ci.p]+"_"+selCuts1[SEL1_LTMB]
+            	                    +"_2D_merged_template.root";
             }
+
+//            if(strFind(name,bkgSels[BKG_QG])){
+//                tempFile = filename+"_"+name+"_"
+//                        +lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[ci.p]+"_"+selCuts1[SEL1_LTMB]
+//                        +"_2D_merged_template.root";
+//            }
 
             std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY "
                     +" -sA PT2Y " + " -fH " + distFileName + " -nH "+ hName;
@@ -461,14 +535,27 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
             std::string hName = name+"_"+ci.name()+"_"+hbbMCS+"_"+hhMCS;
             std::string outName = filename + "_"+name+"_"+ci.name()+"_2D_template.root";
 
-            std::string tempFile= filename+"_"+name+"_"
-                    +dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]
-                    +"_2D_merged_template.root";
-            if(strFind(name,bkgSels[BKG_QG])){
-                tempFile=filename+"_"+name+"_"
-                        +dilepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]
+            if(doQuick) {
+            	if(ci.is(BTAG_LMT)) continue;
+            	if(ci.is(LEP_INCL)) continue;
+            	if(!ci.is(SEL2_FULL)) continue;
+            }
+
+            SELCuts2 sel2 = strFind(name,bkgSels[BKG_QG]) ? SEL2_LRPB : SEL2_MLL;
+            std::string tempFile;
+            if(strFind(name,bkgSels[BKG_QG])) {
+            	tempFile = filename+"_"+name+"_"+dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[sel2]
+                        +"_2D_merged_template.root";
+            } else {
+            	tempFile = filename+"_"+name+"_"+dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[sel2]
                         +"_2D_merged_template.root";
             }
+
+//            if(strFind(name,bkgSels[BKG_QG])){
+//                tempFile=filename+"_"+name+"_"
+//                        +dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[SEL2_NONE]
+//                        +"_2D_merged_template.root";
+//            }
 
             std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY "
                     +" -sA PT2Y " + " -fH " + distFileName + " -nH "+ hName;
@@ -485,22 +572,24 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, int c
     if(fittedName.size())name = fittedName;
     std::string distFileName=filename+"_"+name+"_distributions.root";
 
+    printf("%s step 4 - fit mhh shapes to the MC\n",name.c_str());
+
     if(channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
-
         	if(doQuick) {
-                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
-                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
-                }
-                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
-                }
+            	if(!ci.is(SEL1_FULL)) continue;
+//                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+//                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+//                }
+//                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+//                    if(!ci.is(SEL1_LTH) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+//                }
         	}
 
             std::string hName = name+"_"+ci.name()+"_"+hhMCS;
             std::string inName = filename + "_"+name+"_"
-                    +lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LT]
+                    +lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTH]
                     +"_MVV_cut_template.root";
             std::string outName = filename + "_"+name+"_"+ci.name()+"_MVV_template.root";
             std::string args = std::string("-v ") + "-fT "+ inName+" -nT histo -s PT,OPT "
@@ -511,9 +600,12 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, int c
     if (channel == 0 || channel == 2){
         DilepCatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+        		if(!ci.is(SEL2_FULL)) continue;
+        	}
             std::string hName = name+"_"+ci.name()+"_"+hhMCS;
             std::string inName = filename + "_"+name+"_"
-                    +dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]
+                    +dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[SEL2_NONE]
                     +"_MVV_cut_template.root";
             std::string outName = filename + "_"+name+"_"+ci.name()+"_MVV_template.root";
             std::string args = std::string("-v ") + "-fT "+ inName+" -nT histo -s PT,OPT "
@@ -530,6 +622,7 @@ void makeBKG1DShapes(const std::string& name, const std::string& filename,
 
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
+
     auto setup1DFit = [&](const TH1* hbbH, double HHMass)->FunctionFitter*{
         auto vN=[&](std::string var)->std::string{return var;};
         fitters.emplace_back(new CBFunctionFitter(hbbH,{},false,"",{MOD_MJ}));
@@ -570,7 +663,10 @@ void makeBKG1DShapes(const std::string& name, const std::string& filename,
 
     std::string hName = name+"_"+catName;
     auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
-    if(hbb_hh_H==0) return;
+    if(hbb_hh_H==0) {
+    	std::cout<<"Cannot find hist "<<hName+"_"+hbbMCS+"_"+hhMCS<<std::endl;
+    	return;
+    }
     auto hhH  = projY(&*hbb_hh_H,hName+"_"+hhMCS);
 
     for(unsigned int iP = 0; iP < resPTBins.size() -1; ++iP){
@@ -583,12 +679,17 @@ void makeBKG1DShapes(const std::string& name, const std::string& filename,
 }
 
 
-void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename, int channel){
+void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename, int channel, bool doQuick){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit1stIt";
 
+    printf("%s step 5 - make Mjj shapes 1st it\n",name.c_str());
+
     auto mkShapes = [&](std::string catName) {
+        printf("dbgS\n");
+
         makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
+        printf("dbgM\n");
 
         std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root"
                 +" -var "+MOD_MR+" ";
@@ -596,39 +697,48 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         std::string jsonArgsStd =
                 " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+        printf("dbgF\n");
+
     };
 
-    if (channel == 0 || channel == 1) {
-        CatIterator ci;
-        while(ci.getBin()){
-            if(!ci.is(LEP_EMU)) continue;
-            if(!ci.is(PURE_I)) continue;
-            if(!ci.is(SEL1_NONE)) continue;
-            mkShapes(ci.name());
+    printf("dbg0\n");
+    if(!doQuick) {
+        if (channel == 0 || channel == 1) {
+            CatIterator ci;
+            while(ci.getBin()){
+                if(!ci.is(LEP_EMU)) continue;
+                if(!ci.is(PURE_I)) continue;
+                if(!ci.is(SEL1_LTH)) continue;
+                mkShapes(ci.name());
+            }
+        }
+        if (channel == 0 || channel == 2){
+            DilepCatIterator ci;
+            while(ci.getBin()){
+                if(!ci.is(LEP_INCL)) continue;
+                if(!ci.is(SEL2_NONE)) continue;
+                mkShapes(ci.name());
+            }
         }
     }
-    if (channel == 0 || channel == 2){
-        DilepCatIterator ci;
-        while(ci.getBin()){
-            if(!ci.is(LEP_INCL)) continue;
-            if(!ci.is(SEL2_NONE)) continue;
-            mkShapes(ci.name());
-        }
-    }
+    printf("dbg1\n");
 
     // do the inclusive 1l + 2l category
     for (const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_LTH]
         				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
+    printf("dbg2\n");
 
 
 }
 
-void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename, int channel){
+void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename, int channel, bool doQuick){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit";
+
+    printf("%s step 6 - make Mjj shapes 1st it\n",name.c_str());
 
     auto mkShapes = [&](std::string catName) {
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
@@ -648,27 +758,29 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     };
 
-    if (channel == 0 || channel == 1) {
-        CatIterator ci;
-        while(ci.getBin()){
-            if(!ci.is(LEP_EMU)) continue;
-            if(!ci.is(PURE_I)) continue;
-            if(!ci.is(SEL1_NONE)) continue;
-            mkShapes(ci.name());
+    if(!doQuick) {
+        if (channel == 0 || channel == 1) {
+            CatIterator ci;
+            while(ci.getBin()){
+                if(!ci.is(LEP_EMU)) continue;
+                if(!ci.is(PURE_I)) continue;
+                if(!ci.is(SEL1_NONE)) continue;
+                mkShapes(ci.name());
+            }
         }
-    }
-    if (channel == 0 || channel == 2){
-        DilepCatIterator ci;
-        while(ci.getBin()){
-            if(!ci.is(LEP_INCL)) continue;
-            if(!ci.is(SEL2_NONE)) continue;
-            mkShapes(ci.name());
+        if (channel == 0 || channel == 2){
+            DilepCatIterator ci;
+            while(ci.getBin()){
+                if(!ci.is(LEP_INCL)) continue;
+                if(!ci.is(SEL2_NONE)) continue;
+                mkShapes(ci.name());
+            }
         }
     }
 
     // do the inclusive 1l + 2l category (do each btagging cat)
     for (const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_LTH]
         				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
@@ -679,6 +791,8 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
 void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filename, int channel){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit1stIt";
+
+    printf("%s step 5 - make Mjj shapes 1st it\n",name.c_str());
 
     auto mkShapes = [&](std::string catName) {
         makeBKG1DShapes(name,filename,catName,fitName,false,0,iF);
@@ -696,7 +810,7 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_EMU)) continue;
             if(!ci.is(PURE_I)) continue;
-            if(!ci.is(SEL1_NONE)) continue;
+            if(!ci.is(SEL1_LTH)) continue;
             mkShapes(ci.name());
         }
     }
@@ -711,7 +825,7 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
 
     // do the inclusive 1l + 2l category
     for(const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_LTH]
         				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
@@ -721,6 +835,8 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
 void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filename, int channel){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit";
+
+    printf("%s step 6 - make Mjj shapes 2nd it\n",name.c_str());
 
     auto mkShapes = [&](std::string catName) {
         CJSON oldJSON(filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
@@ -745,7 +861,7 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_EMU )) continue;
             if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(SEL1_NONE)) continue;
+            if(!ci.is(SEL1_LTH)) continue;
             mkShapes(ci.name());
         }
     }
@@ -760,7 +876,7 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
 
     // do the inclusive 1l + 2l category (do each btagging cat)
     for (const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_LTH]
         			+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
@@ -770,27 +886,32 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
 
 void fitMJJSF(const std::string& name, const std::string& filename, const int channel, bool doQuick){
     std::string fittingFileName = filename+"_"+name+"_distributions.root";
+    printf("%s step 7 - fit Mjj shapes\n",name.c_str());
 
     // input template
-    std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_NONE];
-    jsonFile += std::string("_")+dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_NONE] +"_MJJ_fit.json";
 
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
+
+            std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTH];
+            jsonFile += std::string("_")+dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[SEL2_NONE] +"_MJJ_fit.json";
+
 //            std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
 //            jsonFile += strFind(name,bkgSels[BKG_MW]) ?btagCats[BTAG_LMT]:btagCats[ci.b];
 //            jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_MJJ_fit.json";
 
         	if(doQuick) {
-                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
-                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
-                }
-                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
-                }
+        		if(!ci.is(SEL1_FULL)) continue;
+//                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+//                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+//                }
+//                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+//                    if(!ci.is(SEL1_LTH) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+//                }
         	}
 
+//            std::string kdename = lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTH];
             std::string kdeFile = filename + "_"+name+"_"+ci.name()+"_MVV_template.root";
             std::string outFile = filename + "_"+name+"_"+ci.name()+"_MJJ_SFFit.json";
 
@@ -805,10 +926,17 @@ void fitMJJSF(const std::string& name, const std::string& filename, const int ch
     if (channel == 0 || channel == 2){
         DilepCatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+        		if(!ci.is(SEL2_FULL)) continue;
+        	}
 //            std::string jsonFile = filename+"_"+name+"_"+dilepCats[LEP_INCL]+"_";
 //            jsonFile += strFind(name,bkgSels[BKG_MW]) ? btagCats[BTAG_LMT]:btagCats[ci.b];
 //            jsonFile+=std::string("_")+selCuts[SEL_NONE] +"_MJJ_fit.json";
 
+            std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[ci.b]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTH];
+            jsonFile += std::string("_")+dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[SEL2_NONE] +"_MJJ_fit.json";
+
+//            std::string kdename = dilepCats[LEP_INCL]+"_"+btagCats[ci.b]+"_"+selCuts2[SEL2_NONE];
             std::string kdeFile = filename + "_"+name+"_"+ci.name()+"_MVV_template.root";
             std::string outFile = filename + "_"+name+"_"+ci.name()+"_MJJ_SFFit.json";
 
@@ -826,6 +954,8 @@ void fitMJJSF(const std::string& name, const std::string& filename, const int ch
 void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename, const int channel, bool doQuick = true,
         const std::string& funcParamPostfix=""){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
+
+    printf("%s step 8 - convert fit func to 2d template\n",name.c_str());
 
     auto makeTemplate = [&](std::string jsonFile, std::string catName) {
         std::unique_ptr<TAxis> xAx(new TAxis(nHbbMassBins*10,minHbbMass,maxHbbMass));
@@ -868,22 +998,21 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+                if(!ci.is(SEL1_FULL)) continue;
+        	}
+
             std::string jsonFile = filename + "_"+name+"_"+ci.name() +"_MJJ_SFFit.json";
 
-        	if(doQuick) {
-                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
-                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
-                }
-                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
-                }
-        	}
             makeTemplate(jsonFile,ci.name());
         }
     }
     if (channel == 0 || channel == 2){
     	DilepCatIterator ci;
         while(ci.getBin()){
+        	if(doQuick) {
+                if(!ci.is(SEL2_FULL)) continue;
+        	}
             std::string jsonFile = filename + "_"+name+"_"+ci.name() +"_MJJ_SFFit.json";
             makeTemplate(jsonFile,ci.name());
         }
@@ -900,12 +1029,16 @@ void compile2DTemplatesForDebug(const std::string& name, const std::string& file
         while(ci.getBin()){
 
         	if(doQuick) {
-                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
-                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
-                }
-                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
-                    if(!ci.is(SEL1_LT) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
-                }
+            	if(ci.is(BTAG_LMT)) continue;
+            	if(ci.is(LEP_EMU)) continue;
+            	if(ci.is(PURE_I)) continue;
+        		if(!ci.is(SEL1_FULL)) continue;
+//                if(strFind(name,bkgSels[BKG_QG]) || strFind(name,bkgSels[BKG_LOSTTW])){
+//                    if(!ci.is(SEL1_LTMB) && !ci.is(SEL1_FULL)) continue;
+//                }
+//                if(strFind(name,bkgSels[BKG_MT]) || strFind(name,bkgSels[BKG_MW])){
+//                    if(!ci.is(SEL1_LTH) && !ci.is(SEL1_FULL) && !ci.is(SEL1_NONE)) continue;
+//                }
         	}
 
             auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+ci.name()+"_2D_template.root");
@@ -922,6 +1055,13 @@ void compile2DTemplatesForDebug(const std::string& name, const std::string& file
     if (channel == 0 || channel == 2){
         DilepCatIterator ci;
         while(ci.getBin()){
+
+        	if(doQuick) {
+            	if(ci.is(BTAG_LMT)) continue;
+            	if(ci.is(LEP_INCL)) continue;
+        		if(!ci.is(SEL2_FULL)) continue;
+        	}
+
             auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+ci.name()+"_2D_template.root");
             if(iF==0) continue;
             auto hh_H = TObjectHelper::getObject<TH2>(iF,"histo",false,false);
@@ -1060,21 +1200,30 @@ void go(int modelToDo, int channel, std::string treeDir, bool doQuick) {
         // QCD SF
         if(channel != 2) getQCDScaleFactor(name,filename, treeAreaIncl, bkgSels[BKG_QG].cut+"&&"+hbbRange.cut,false,doQuick);
 
-        makeFittingDistributions(name,filename,treeArea,
-                hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,doQuick,
-                {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
-        );
+        // collect and make distributions which will be used in next steps
         makeFittingDistributions(name,filename,treeArea,
                 hhRange.cut+"&&"+hbbRange.cut,false,true,doQuick,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
         );
+        makeFittingDistributions(name,filename,treeArea,
+                hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,doQuick,
+                {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
+        );
 
+        // make 2D conditional template P(mbb|mhh)
         makeBackgroundShapes2DConditional(name,filename,treeArea,
-                genSel,false,true,0.4,1,0.75,3);//P(hbb|hh)
+                genSel,true,true,0.4,1,0.75,3);
 
-        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,true,1,3);
-        mergeBackgroundShapes(name,filename,channel,true);
+        // make 1D KDEs P(mhh)
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,true,1,3,doQuick);
+
+        // make final 2D pdf P(mbb,mhh) by merging the conditional and 1D
+        mergeBackgroundShapes(name,filename,channel,true,doQuick);
+
+        // fit some more inclusive templates to the MC in each search category
         fitBackgroundShapes2DConditional(name,filename,true,channel,doQuick);
+
+        // put some plots in a file to look at
         compile2DTemplatesForDebug(name,filename,channel,doQuick);
     }
 
@@ -1083,20 +1232,28 @@ void go(int modelToDo, int channel, std::string treeDir, bool doQuick) {
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_LOSTTW].cut;
 
+        // collect and make distributions which will be used in next steps
         makeFittingDistributions(name,filename,treeArea,
-                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-        makeFittingDistributions(name,filename,treeArea,
-                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false,false,doQuick);
 
+        makeFittingDistributions(name,filename,treeArea,
+                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true,false,doQuick);
+
+        // make 2D conditional template P(mbb|mhh)
         makeBackgroundShapes2DConditional(name,filename,treeArea,
                 genSel,false,true,0.5,3,0.75,5);//P(hbb|hh) 0.5,2,0.75,8 old values
 
-        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,false,1,4);
-        mergeBackgroundShapes(name,filename,channel,true);
+        // make 1D KDEs P(mhh)
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,false,1,4,doQuick);
+
+        // make final 2D pdf P(mbb,mhh) by merging the conditional and 1D
+        mergeBackgroundShapes(name,filename,channel,true,doQuick);
+
+        // fit some more inclusive templates to the MC in each search category
         fitBackgroundShapes2DConditional(name,filename,true,channel,doQuick);
 
+        // put some plots in a file to look at
         compile2DTemplatesForDebug(name,filename,channel,doQuick);
-
     }
 
     if(modelToDo == BKG_MW){
@@ -1104,18 +1261,31 @@ void go(int modelToDo, int channel, std::string treeDir, bool doQuick) {
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MW].cut;
 
+        // get all distributions
         makeFittingDistributions(name,filename,treeArea,
-                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false,false,doQuick);
         makeFittingDistributions(name,filename,treeArea,
-                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true,false,doQuick);
 
+        // make 1D KDEs P(mhh) in the inclusive range of mHH
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel);
+
+        // cut templates with bounds on mHH used in analysis
         cutMVVTemplate(name,filename,channel);
+
+        // fit the P(mhh) templates to mhh distribution in each search region category
         fitBackgroundShapesMVV(name,filename,channel,doQuick);
 
-        makeResWMJJShapes1stIt(name,filename,channel);
-        makeResWMJJShapes2ndIt(name,filename,channel);
+        // 2D crystal ball fit to mbb in bins of mhh, then interpolate fit parameters as function of mhh
+        makeResWMJJShapes1stIt(name,filename,channel,doQuick);
+
+        // same as 1st it, but now fit only for mu and sigma, fixing alphas to their initial fitted vals
+        makeResWMJJShapes2ndIt(name,filename,channel,doQuick);
+
+        // fit templates to each search bin
         fitMJJSF(name,filename,channel,doQuick);
+
+        // make a file with all the templates
         convertFuncFitTo2DTemplate(name,filename,channel,doQuick);
     }
 
@@ -1124,17 +1294,31 @@ void go(int modelToDo, int channel, std::string treeDir, bool doQuick) {
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MT].cut;
 
+        // get all distributions
         makeFittingDistributions(name,filename,treeArea,
-                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false,false,doQuick);
         makeFittingDistributions(name,filename,treeArea,
-                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true,false,doQuick);
 
+        // make 1D KDEs P(mhh) in the inclusive range of mHH
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel);
+
+        // cut templates with bounds on mHH used in analysis
         cutMVVTemplate(name,filename,channel);
+
+        // fit the P(mhh) templates to mhh distribution in each search region category
         fitBackgroundShapesMVV(name,filename,channel,doQuick);
+
+        // 2D crystal ball fit to mbb in bins of mhh, then interpolate fit parameters as function of mhh
         makeResTopMJJShapes1stIt(name,filename,channel);
+
+        // same as 1st it, but now fit only for mu and sigma, fixing alphas to their initial fitted vals
         makeResTopMJJShapes2ndIt(name,filename,channel);
+
+        // fit templates to each search bin
         fitMJJSF(name,filename,channel,doQuick);
+
+        // make a file with all the templates
         convertFuncFitTo2DTemplate(name,filename,channel,doQuick);
     }
 
@@ -1147,6 +1331,9 @@ void go(int modelToDo, int channel, std::string treeDir, bool doQuick) {
 #endif
 
 void makeBKGInputs(int bkgToDo = BKG_QG, int channel = 0, bool doQuick = true, std::string treeDir = "../bkgCompLMT/"){
+	// QG scaling for SR
+//	nomW.cut = nomW.cut+"*"+qgWt_SR.cut;
+
 	// channel = 0 (both), 1 (single lep), 2 (dilep)
     go(bkgToDo,channel,treeDir,doQuick);
 }
