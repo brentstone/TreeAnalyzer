@@ -1,9 +1,9 @@
 #!/bin/bash
-# ./compile.sh jobs/4_30_beTreees/ compiled/
+# Usage: ./compile.sh jobs/4_30_beTreees/ compiled/
 inputdir=$1
 outputdir=$2
 
-mkdir -p ${outputDir}
+mkdir -p ${outputdir}
 
 # BKG
 hadd ${outputdir}/wjets.root ${inputdir}/out_WJetsToLNu_HT*.root
@@ -11,8 +11,8 @@ hadd ${outputdir}/zjets_m50.root ${inputdir}/out_DYJetsToLL_M-50_HT*.root
 hadd ${outputdir}/ttbar_0l.root ${inputdir}/out_TTToHadronic*.root
 hadd ${outputdir}/ttbar_1l.root ${inputdir}/out_TTToSemiLeptonic*.root
 hadd ${outputdir}/ttbar_2l.root ${inputdir}/out_TTTo2L2Nu*.root
-hadd ${outputdir}/ttbar_m700.root ${inputdir}/out_TT_Mtt-700to1000*.root
-hadd ${outputdir}/ttbar_m1000.root ${inputdir}/out_TT_Mtt-1000toInf*.root
+#hadd ${outputdir}/ttbar_m700.root ${inputdir}/out_TT_Mtt-700to1000*.root
+#hadd ${outputdir}/ttbar_m1000.root ${inputdir}/out_TT_Mtt-1000toInf*.root
 hadd ${outputdir}/qcd.root ${inputdir}/out_QCD_HT*.root
 hadd ${outputdir}/st.root ${inputdir}/out_ST_*.root
 hadd ${outputdir}/ww.root ${inputdir}/out_WW*.root
@@ -25,10 +25,18 @@ hadd ${outputdir}/tth.root ${inputdir}/out_ttH*.root
 # SIGNAL
 for mx in 800 900 1000 1200 1400 1600 1800 2000 2500 3000 3500 4000 4500
 do
-	hadd ${outputdir}/radion_bbVV_m${mx}.root       ${inputdir}/out_Radion_hh_hVV*M-${mx}*.root
-	hadd ${outputdir}/radion_bbtautau_m${mx}.root   ${inputdir}/out_Radion_hh_htata*M${mx}*.root
-	hadd ${outputdir}/bulkgrav_bbVV_m${mx}.root     ${inputdir}/out_BulkGravTohhTohVV*M-${mx}*.root
-	hadd ${outputdir}/bulkgrav_bbtautau_m${mx}.root ${inputdir}/out_BulkGrav_hh_htata*M${mx}*.root
+  hadd ${outputdir}/radion_bbVV_m${mx}.root       ${inputdir}/out_Radion_hh_hVV*M-${mx}*[0-9].root
+  hadd ${outputdir}/radion_bbtautau_m${mx}.root   ${inputdir}/out_Radion_hh_htata*M${mx}*[0-9].root
+  hadd ${outputdir}/bulkgrav_bbVV_m${mx}.root     ${inputdir}/out_BulkGravTohhTohVV*M-${mx}*[0-9].root
+  hadd ${outputdir}/bulkgrav_bbtautau_m${mx}.root ${inputdir}/out_BulkGrav_hh_htata*M${mx}*[0-9].root
+
+  for sys in HEM JESUp JESDOWN JERUp JERDown METUp METDOWN
+  do
+    hadd ${outputdir}/radion_bbVV_m${mx}_${sys}.root       ${inputdir}/out_Radion_hh_hVV*M-${mx}*_${sys}.root
+    hadd ${outputdir}/radion_bbtautau_m${mx}_${sys}.root   ${inputdir}/out_Radion_hh_htata*M${mx}*_${sys}.root
+    hadd ${outputdir}/bulkgrav_bbVV_m${mx}_${sys}.root     ${inputdir}/out_BulkGravTohhTohVV*M-${mx}*_${sys}.root
+    hadd ${outputdir}/bulkgrav_bbtautau_m${mx}_${sys}.root ${inputdir}/out_BulkGrav_hh_htata*M${mx}*_${sys}.root
+  done
 done
 
 yr=$(echo ${inputdir} | tr -dc '1,6-8')
