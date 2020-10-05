@@ -97,46 +97,49 @@ struct HistContainer {
 };
 
 
-void doComp(REGION region, const unsigned int nToys, const std::string& postFitFilename,const std::string& postFitCompFilename, const std::vector<std::string>& signals ){
+void doComp(REGION region, const unsigned int nToys, const std::string& postFitFilename,const std::string& postFitCompFilename, const std::vector<std::string>& signals, const bool do1l ){
     TFile * inFile  = new TFile(postFitFilename.c_str(),"read");
     TFile * fo      = new TFile(postFitCompFilename.c_str(),"recreate");
 
     auto sels = getSRList(region);
-    std::string compName = "emu_LMT_I_full";
+    if(!do1l) sels = getDilepSRList(region);
+
+    std::string compName = do1l ? "emu_LMT_I_full" : "IF_LMT_full";
     for(unsigned int iT = 1; iT <= nToys; ++iT ){
         TH2 * h = 0;
-        for(const auto& s: sels){
 
+        for(const auto& s: sels){
             TH2 * th = 0;
-            inFile->GetObject((std::string("toyModel_")+ASTypes::int2Str(iT)+"_"+ s+"__"+MOD_MJ+"_"+MOD_MR).c_str(),th);
+            inFile->GetObject((std::string("toyModel_")+ASTypes::int2Str(iT)+"_"+ s).c_str(),th);
             if(!th) continue;
             if(h)h->Add(th);
             else h = (TH2*)th->Clone();
         }
         fo->cd();
-        h->Write((std::string("toyModel_")+ASTypes::int2Str(iT)+"_"+ compName+"__"+MOD_MJ+"_"+MOD_MR).c_str());
+        h->Write((std::string("toyModel_")+ASTypes::int2Str(iT)+"_"+ compName).c_str());
     }
     for(unsigned int iT = 0; iT < bkgSels.size(); ++iT){
         TH2 * h = 0;
+
         for(const auto& s: sels){
             TH2 * th = 0;
-            inFile->GetObject((std::string("postfit_")+ bkgSels[iT]+"_"+s+"__"+MOD_MJ+"_"+MOD_MR).c_str(),th);
+            inFile->GetObject((std::string("postfit_")+ bkgSels[iT]+"_"+s).c_str(),th);
             if(!th) continue;
             if(h)h->Add(th);
             else h = (TH2*)th->Clone();
         }
         fo->cd();
-        h->Write((std::string("postfit_")+ bkgSels[iT]+"_"+compName+"__"+MOD_MJ+"_"+MOD_MR).c_str());
+        h->Write((std::string("postfit_")+ bkgSels[iT]+"_"+compName).c_str());
     }
 
     fo->Close();
 
-    TFile * fos      = new TFile(("signalInputs/HHlnujj_radHH_" + compName +"_2D_fit.root").c_str(),"recreate");
+    TFile * fos      = new TFile(("signalInputs/HHbb1o2l_radHH_" + compName +"_2D_fit.root").c_str(),"recreate");
     for(unsigned int iSig = 0; iSig < signals.size(); ++iSig){
         TH2 * h = 0;
         for(const auto& s: sels){
-            TFile * f = new TFile(("signalInputs/HHlnujj_radHH_" + s +"_2D_fit.root").c_str() ,"READ");
-            TFile * fy = new TFile(("signalInputs/HHlnujj_radHH_" + s +"_yield.json.root").c_str() ,"READ");
+            TFile * f = new TFile(("signalInputs/HHbb1o2l_radHH_" + s +"_2D_fit.root").c_str() ,"READ");
+            TFile * fy = new TFile(("signalInputs/HHbb1o2l_radHH_" + s +"_yield.json.root").c_str() ,"READ");
             TF1 * yFunc = 0;
             TH2 * hP = 0;
             fy->GetObject("yield_func",yFunc);
@@ -179,7 +182,6 @@ public:
         if(prefs.addData) dataFile  = new TFile((inputPrefix+"_data_distributions.root").c_str(),"read");
         if(prefs.modelType == MOD_POST || prefs.addType == MOD_POST || prefs.addErrorBars )
             postfitFile  = new TFile(postFitFilename.c_str(),"read");
-
 
 
         if(prefs.modelType == MOD_MC || prefs.addType == MOD_MC || prefs.modelType == MOD_PRE || prefs.addType == MOD_PRE ){
@@ -346,20 +348,39 @@ public:
             return makeProjection(h,title,s,iB,bins.first,bins.second);
         };
 
+        auto renormalizeBins = [&](TH1* h, bool isPoisson) {
+            double binWidth = h->GetBinWidth(1);
+            for(int i=2; i<=h->GetNbinsX(); ++i) {
+                if(h->GetBinContent(i) <= 0) continue;
+                if(h->GetBinWidth(i) <= binWidth) continue;
+                double sf = binWidth / h->GetBinWidth(i);
+//                std::cout<<"bw and sf = "<<h->GetBinWidth(i)<<" and "<<sf<<std::endl;
+                h->SetBinContent(i,h->GetBinContent(i)*sf);
+                if(h->GetBinError(i) == 0) continue;
+                if(isPoisson)
+                    h->SetBinError(i,h->GetBinError(i)*std::sqrt(sf));
+                else
+                    h->SetBinError(i,h->GetBinError(i)*sf);
+             }
+         };
+
         for(unsigned int iH = 0; iH < cont.bkg2D.size(); ++iH){
             if(cont.bkg2D[iH]==0) continue;
             TH1 * h = processH2(cont.bkg2D[iH],bkgSels[iH]);
             for(int iX = 1; iX <= h->GetNbinsX(); ++iX)h->SetBinError(iX,0);
+            if(!prefs.binInY) renormalizeBins(h,false);
             cont.bkg[iH] = h;
         }
 
         //add additional
         if(cont.tot2D){
             auto h = processH2(cont.tot2D,modTitles[prefs.modelType]);
+            if(!prefs.binInY) renormalizeBins(h,false);
             cont.tot = h;
         }
         if(cont.add2D){
             auto h = processH2(cont.add2D,modTitles[prefs.addType]);
+            if(!prefs.binInY) renormalizeBins(h,false);
             cont.add = h;
         }
 
@@ -376,6 +397,7 @@ public:
                     }
                 }
             }
+            if(!prefs.binInY) renormalizeBins(h,true);
             cont.data = h;
         }
 
@@ -387,7 +409,7 @@ public:
 
             const int nEntries =  toyProj.size();
             std::vector<double> toyVs(nEntries);
-            auto getErrorBands = [&](const int iB,double&mean, double&  eL, double& eH, const double alpha = (1 - 0.6827)){
+            auto getErrorBands = [&](const int iB,double&mean, double&  eL, double& eH, const double alpha = (1 - 0.6827), double thisBW = 50){
                 double t= 0;
                 for(unsigned int i = 0; i < toyProj.size(); ++i){
                     toyVs[i] = toyProj[i]->GetBinContent(iB);
@@ -397,6 +419,12 @@ public:
                 eL = toyVs[int( double(nEntries)*alpha/2  )];
                 eH = toyVs[int( double(nEntries)* (1 - alpha/2)  )];
                 mean = t/double(toyProj.size());
+
+                if(!prefs.binInY && thisBW > cont.tot->GetBinWidth(1)) {
+                	eL *= (cont.tot->GetBinWidth(1) / thisBW);
+                	eH *= (cont.tot->GetBinWidth(1) / thisBW);
+                	mean *= (cont.tot->GetBinWidth(1) / thisBW);
+                }
             };
 
             cont.toyErr = new TGraphAsymmErrors();
@@ -405,7 +433,7 @@ public:
                 double x = cont.tot->GetBinCenter(iB);
                 double y = cont.tot->GetBinContent(iB);
                 double m,eL,eH;
-                getErrorBands(iB,m,eL,eH);
+                getErrorBands(iB,m,eL,eH,(1 - 0.6827),cont.tot->GetBinWidth(iB));
                 auto setPt = [&](const int bin, float x){
                     cont.toyErr->SetPoint(bin,x,y);
                     cont.toyErr->SetPointError(bin,cont.tot->GetBinWidth(iB)/2.,cont.tot->GetBinWidth(iB)/2.,std::max(m -eL,0.),std::max(eH-m,0.));
@@ -1185,7 +1213,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
     }
 
     fitter.doDataFit();
-    fitter.doToys(1);
+    fitter.doToys(100);
     fitter.write(outName);
 
 }
@@ -1239,8 +1267,9 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         hhPlot.titles = srListTitles;
         hhPlot.rebinFactor = 2;
         if(inreg == REG_SR) hhPlot.bins = {30,100,100,150,210};
-        if(do1lep) hhPlot.sels = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full"};
-        else       hhPlot.sels = {"IF_LMT_full"};
+        else hhPlot.bins = {30,210};
+//        if(do1lep) hhPlot.sels = {"emu_LMT_I_full"};
+//        else       hhPlot.sels = {"IF_LMT_full"};
 
         writeables = doDataPlot(hhPlot,filename,postFitFilename,year);
         DataPlotPrefs hbbPlot = hhPlot;
@@ -1256,9 +1285,9 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
     }
 
-    if(step== 2){ //postfit for AN
+    if(step==2){ //postfit for AN
 
-        bool blind=false;
+        bool blind=true;
         bool doRebin = true;
 
         if(outName.size())         {
@@ -1271,7 +1300,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_POST;
-        hhPlot.addType = MOD_PRE;
+//        hhPlot.addType = MOD_PRE;
 //        if(doRebin) hhPlot.rebinFactor = 4;
         if(doRebin) hhPlot.rebinFactor = 2;
         if(inreg == REG_SR){
@@ -1297,12 +1326,13 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
+//        if(do1lep) hhPlot.sels = {"emu_LMT_I_full"};
         //        hhPlot.addData = false;
         writeables = doDataPlot(hhPlot,filename,postFitFilename,year);
 
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
-        if(doRebin) hbbPlot.rebinFactor = 3;
+        if(doRebin) hbbPlot.rebinFactor = 1;
         hbbPlot.binInY = true;
         hbbPlot.doLog = false;
         hbbPlot.minTop =400;
@@ -1358,13 +1388,15 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         Dummy d(outName);
     }
 
-    if(step== 6){ //postfit CR for Paper
+    if(step==6){ //postfit CR for Paper
         //        if(reg == REG_SR) return;
         if(outName.size())         outName += "postfitPaper_dataComp";
         DataPlotPrefs hhPlot;
         //Horrible
-        doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root",{});
-        srList ={"emu_LMT_I_full"};
+        doComp(reg,hhPlot.nToys,postFitFilename,limitBaseName +"/postFit_comp.root",{},do1lep);
+
+        if(do1lep) srList ={"emu_LMT_I_full"};
+        else srList = {"IF_LMT_full"};
         srListTitles ={ "All categories"};
 
 
@@ -1373,26 +1405,26 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
-        hhPlot.topTitle = reg == REG_TOPCR ? "t#bar{t} CR" : "q/g CR";
+        hhPlot.topTitle = reg == REG_TOPCR ? "Top CR" : "NonTop CR";
 
         hhPlot.minTop =0.5;
         hhPlot.maxTop =100000;
-        hhPlot.rebinFactor=4;
+        hhPlot.rebinFactor=2;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
         hhPlot.doLog = true;
-        hhPlot.rebinFactor = 4;
+        hhPlot.rebinFactor = 2;
         hhPlot.removeTrailingZeros = true;
-        writeables = doDataPlot(hhPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
+        writeables = doDataPlot(hhPlot,filename,limitBaseName +"/postFit_comp.root",year);
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.binInY = true;
         hbbPlot.bins = {700,4000};
         hbbPlot.doLog = false;
         hbbPlot.minTop =0;
-        hbbPlot.maxTop =reg==REG_TOPCR ?  1100 :2000;
-        hbbPlot.rebinFactor = 3;
+        hbbPlot.maxTop =reg==REG_TOPCR ?  2000 : 8000;
+        hbbPlot.rebinFactor = 1;
         hbbPlot.removeTrailingZeros = false;
-        auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
+        auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root",year);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
     }
@@ -1456,7 +1488,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
         //Horrible
         doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root"
-                ,{"800","1000","1200","2500"});
+                ,{"800","1000","1200","2500"},do1lep);
         srList ={"emu_LMT_I_full"};
         srListTitles ={ "All categories"};
 

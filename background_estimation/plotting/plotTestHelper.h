@@ -1,4 +1,3 @@
-#include "../predTools/CutConstants.h"
 #include <vector>
 #include "TFile.h"
 #include "TGraphErrors.h"
@@ -67,6 +66,22 @@ std::vector<std::string> getDilepSRListTitles(REGION reg){
     return sels;
 }
 
+void renormalizeBinsForSmoothness(TH1* h, bool isPoisson) {
+	std::cout<<"renormalizing"<<std::endl;
+    double binWidth = h->GetBinWidth(1);
+    for(int i=2; i<=h->GetNbinsX(); ++i) {
+        if(h->GetBinContent(i) <= 0) continue;
+        if(h->GetBinWidth(i) <= binWidth) continue;
+        double sf = binWidth / h->GetBinWidth(i);
+//                std::cout<<"bw and sf = "<<h->GetBinWidth(i)<<" and "<<sf<<std::endl;
+        h->SetBinContent(i,h->GetBinContent(i)*sf);
+        if(h->GetBinError(i) == 0) continue;
+        if(isPoisson)
+            h->SetBinError(i,h->GetBinError(i)*std::sqrt(sf));
+        else
+            h->SetBinError(i,h->GetBinError(i)*sf);
+     }
+ };
 
 std::vector<TObject*> test1DKern(std::string name, std::string filename,std::string var,const std::vector<std::string>& sels) {
     std::vector<TObject*> writeables;
@@ -76,7 +91,10 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
         std::vector<TH1*> hs;
         std::vector<std::string> hNs;
         TH1* h = 0;
-        f->GetObject("histo_data",h);    hs.push_back(h);hNs.push_back("MC");
+        f->GetObject("histo_data",h);
+        renormalizeBinsForSmoothness(h,false);
+        hs.push_back(h);
+        hNs.push_back("MC");
         h = 0;
         f->GetObject("histo",h);
         if(h){
@@ -92,10 +110,14 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
 
         int binL = hs[0]->FindFixBin(strFind(var,"JJ") ? minHbbMass: minHHMass);
         int binH = hs[0]->FindFixBin(strFind(var,"JJ") ? maxHbbMass: maxHHMass);
-        for(unsigned int iH = 1; iH < hs.size(); ++iH) hs[iH]->Scale(hs[0]->Integral(binL,binH)/hs[iH]->Integral(binL,binH));
+        for(unsigned int iH = 1; iH < hs.size(); ++iH) {
+            hs[iH]->Scale(hs[0]->Integral(binL,binH)/hs[iH]->Integral(binL,binH));
+            renormalizeBinsForSmoothness(hs[iH],false);
+        }
 
         Plotter * p = new Plotter();
         Plotter * pf = new Plotter();
+        float binwidth = hs[0]->GetBinWidth(1);
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
             hs[iH]->SetYTitle("N. of events");
             hs[iH]->SetXTitle(hbbMCS.title.c_str());
@@ -132,7 +154,7 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
             }
         };
 
-        setupPlotter(p,name+"_"+s + "_"+var+"_KDE_C",5);
+        setupPlotter(p,name+"_"+s + "_"+var+"_KDE_C",8);
         setupPlotter(pf,name+"_"+s + "_"+var+"_KDE_F");
     }
     return writeables;
@@ -407,6 +429,7 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
         Plotter * p = new Plotter();
         if(dataHist){
             auto dataHist1 = proj(dataHist,"data");
+            if(!binInY) renormalizeBinsForSmoothness(dataHist1,true);
             p->addHist(dataHist1,"data");
             double max = 0;
             for(int iB = 1; iB <= dataHist1->GetNbinsX();++iB)
@@ -416,17 +439,19 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
 
         } else {
             auto dh1 = proj(dh,"MC");
+            if(!binInY) renormalizeBinsForSmoothness(dh1,false);
             p->addHist(dh1,"MC");
         }
 
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
             TH1 * h = proj(hs[iH],hNs[iH]);
             for(int iX = 1; iX <= h->GetNbinsX(); ++iX)h->SetBinError(iX,0);
+            if(!binInY) renormalizeBinsForSmoothness(h,false);
             p->addStackHist(h,hNs[iH].c_str());
         }
         p->setUnderflow(false);
         p->setOverflow(false);
-//        p->rebin(3);
+        if(!binInY) p->rebin(2);
 
         p->setXTitle( (binInY ? hbbMCS : hhMCS) .title.c_str());
         p->setYTitle("N. of events");
