@@ -4,7 +4,7 @@
 
 Make and run the condor job on all MC and data:  
 
-    ./running/runBatchJobs.py  -m TreeAnalyzer/background_estimation/predMacros/makeBETrees.C -b -i procdatasets.conf  -j jobs/4_30_beTreees -o out 
+    ./running/runBatchJobs.py -m TreeAnalyzer/background_estimation/predMacros/makeBETrees.C -b -i procdatasets.conf -j jobs/4_30_beTreees -o out
 
 Compile the outputs into a single file per process:  
 
@@ -146,7 +146,7 @@ This macro makes the search region variable plots for the paper. You can turn of
 ## Running limits and statistical tests  
 
 ### Asymptotic limits  
-    nohup combine -m 800   -M AsymptoticLimits --run expected  --rMax 0.5 -v 2 combinedCard.txt &  
+    nohup combine -m 800 -M AsymptoticLimits --run expected --rMax 0.5 -v2 combinedCard.txt &  
 __Parameters__  
 
 * __`nohup` and `&`__ Good to run in the background
@@ -160,7 +160,7 @@ The macro `limit_plotting/doLXPLimits.py` is used to do the limits as batch jobs
 
 ### Asymptotic observation significance
 
-    combine -M Significance  -m 2300 ./combined.root
+    combine -M Significance -m 2300 ./combined.root
 
 ### Observation significance with toys  
 This takes some time, so it we use crab and the combine tool to do it:  
@@ -203,7 +203,7 @@ These are a part of the "standard tests." You will need to make sure that you ha
 
 Do a fit to the data with some mass hypothesis:  
 
-    combine -M MaxLikelihoodFit -m 1000 combined.root  
+    combine -M FitDiagnostics -m 1000 combined.root  
 
 Get the fit diagnostics (e.g. NP pulls):  
 
@@ -212,19 +212,19 @@ Get the fit diagnostics (e.g. NP pulls):
 ### Goodness of fit tests  
 Run first, to get the observed value:
 
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq
 
 Then run your toys:
 
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 1 &
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 2 &
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 3 &
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 4 &
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 5 &
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 6 &
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 7 &
-    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 8 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 1 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 2 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 3 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 4 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 5 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 6 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 7 &
+    combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 -m 1000 --toysFreq -t 100 -s 8 &
     hadd  higgsCombineTest.GoodnessOfFit.mH2000.toys.root  higgsCombineTest.GoodnessOfFit.mH2000.*.root
 
 ### Calculate the systematic impacts  
