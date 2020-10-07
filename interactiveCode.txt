@@ -1,0 +1,226 @@
+### Interactive Plotting Code
+
+### List of Contents
+# ttSF plots for AN
+# comparing limits from different files
+# run expected limits on LPC
+# make QCDSF plots for AN from betrees_mc.root
+# compare pre-fit and post-fit bkg component in any region
+# get MC yields for all bkg processes
+# get signal MC yields for all masses
+#
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## tt SF AN plots
+## ----------------------------------------------------------------------------------------------------------------------------------------
+TString pre = "/Users/brentstone/Dropbox/Physics/HHbbWW/betreesNEW/Run2/supportInputs/";
+TFile *fm = new TFile(pre+"HHbb1o2l_ttbarSF_mc_inputPlots.root");
+TFile *fd = new TFile(pre+"HHbb1o2l_ttbarSF_data_inputPlots.root");
+
+Plotter *p = new Plotter();
+p->addStackHist((TH1*)fm->Get("ttbar_noHbb_hbbMass"),"t#bar{t} MC");
+p->addStackHist((TH1*)fm->Get("other_noHbb_hbbMass"),"non-t#bar{t} MC");
+p->addHist((TH1*)fd->Get("data_noHbb_hbbMass"),"data");
+p->draw(false,"s");
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Compare limits from different file
+## ----------------------------------------------------------------------------------------------------------------------------------------
+double limit, mx;
+float quant;
+Plotter *p = new Plotter();
+float limfactor = 1000;
+
+std::vector<TString> fnames = {
+	"~/Dropbox/Physics/HHbbWW/betrees/Run2/expLimits_092920_blk.root",
+	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_072420_comb_blk.root",
+	"~/Dropbox/Physics/HHbbWW/betrees/Run2/expLimits_092920_rad.root",
+	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_072420_comb_rad.root",
+	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_b2g18008_blkgrav.root",
+	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_b2g18008_radion.root",
+};
+
+std::vector<TString> ids = {"spin-2 new","spin-2 old","spin-0 new","spin-0 old","spin-2 B2G-18-008","spin-0 B2G-18-008"};
+
+for(unsigned iF=0; iF<fnames.size(); ++iF){
+if(iF < 2) {
+float num = 0.5824*2*(0.2137+.02619);
+float den = 2*0.5824*(.2137+.002619);
+limfactor *= (num/den);
+}
+TFile *f = TFile::Open(fnames[iF]);
+TTree *t = (TTree*)f->Get("limit");
+t->SetBranchAddress("quantileExpected",&quant);
+t->SetBranchAddress("limit",&limit);
+t->SetBranchAddress("mh",&mx);
+
+std::vector<std::pair<double,double>> pts;
+for(unsigned i=0; i<t->GetEntries(); ++i) {
+t->GetEntry(i);
+if(quant != 0.5) continue;
+pts.emplace_back(mx,limfactor*limit);
+}
+delete f;
+std::sort(pts.begin(),pts.end(),[](std::pair<double,double> a, std::pair<double,double> b) {return a.first < b.first;});
+std::vector<double> lims, masses;
+for(const auto& pt : pts) {
+masses.push_back(pt.first);
+lims.push_back(pt.second);
+}
+TGraph *g = new TGraph(pts.size(),&masses[0],&lims[0]);
+p->addGraph(g,ids[iF],-1,1,4,20,0.8);
+limfactor = 1000;
+}
+p->setXTitle("#it{m}_{X} [GeV]");
+p->setYTitle("#sigma#it{B}(X#rightarrowHH) [fb^{-1}]");
+p->draw(false,"gs");
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Run some expected limits
+## ----------------------------------------------------------------------------------------------------------------------------------------
+for mx in 800 900 1000 2000 3000
+do
+  nohup combine -m ${mx} -M AsymptoticLimits --run expected -v 2 --rAbsAcc=0.00001 combinedCard.txt &
+done
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## QCDSF plots from betrees_mc.root
+## ----------------------------------------------------------------------------------------------------------------------------------------
+treeMaker->cd()
+Events->Draw("hbbMass>>wjets(30,30,210)","xsec*btag_N*pu_N*trig_N*lep_N*fjbtag_N*(process==4&&hbbMass>=30&&hbbMass<=210&&hhMass>=700)")
+Events->Draw("hbbMass>>qcd(30,30,210)","xsec*btag_N*pu_N*trig_N*lep_N*fjbtag_N*(process==8&&hbbMass>=30&&hbbMass<=210&&hhMass>=700)")
+Plotter *p = new Plotter();
+p->addHist(wjets,"W+jets");
+p->addHist(qcd,"QCD multi-jet");
+p->normalize();
+p->setYTitle("a.u.");
+p->setXTitle("m_{bb} [GeV]")
+p->draw(false,"s");
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Compare pre- and post-fit bkg components
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+std::vector<TString> bkgs = {"mw"};
+std::vector<TString> bins = {"OF_L"};
+TString reg = "SR";
+TFile *fpreInt = 0, *fpre = 0;
+
+TFile *fpst = TFile::Open("092120_comb_NonTopCR_rad_sepHbbScale/postFit.root");
+
+for(const auto& bkg : bkgs){
+if(reg.Contains("CR")) {
+fpreInt = TFile::Open("bkgInputs"+reg+"/HHbb1o2l_"+reg+_"+bkg+"_distributions.root")
+fpre    = TFile::Open("bkgInputs"+reg+"/HHbb1o2l_"+reg+"_"+bkg+"_2D_template_debug.root");
+}else
+fpreInt = TFile::Open("bkgInputs/HHbb1o2l_"+bkg+"_distributions.root")
+fpre    = TFile::Open("bkgInputs/HHbb1o2l_"+bkg+"_2D_template_debug.root");
+}
+
+for(const auto& bin : bins){
+TH2 *hpst = (TH2*)fpst->Get("postfit_"+bkg+"_"+bin+"_full");
+TH2 *mc = (TH2*)fpreInt->Get(bkg+"_"+bin+"_full_hbbMass_hhMass");
+TH2 *hpre = (TH2*)fpre->Get(bkg+"_"+bin+"_full");
+hpre->Scale(mc->Integral()/hpre->Integral());
+
+TH1 *hpstX = (TH1*)hpst->ProjectionX("pstX",1,hpst->GetNbinsY());
+TH1 *hpstY = (TH1*)hpst->ProjectionY("pstY",1,hpst->GetNbinsX())
+TH1 *hpreX = (TH1*)hpre->ProjectionX("preX",1,hpre->GetNbinsY());
+TH1 *hpreY = (TH1*)hpre->ProjectionY("preY",1,hpre->GetNbinsX());
+
+Plotter *pX = new Plotter();
+Plotter *pY = new Plotter();
+
+pX->addHistLine(hpreX,"prefit");
+pX->addHistLine(hpstX,"postfit");
+pY->addHistLine(hpreY,"prefit");
+pY->addHistLine(hpstY,"postfit");
+
+pX->drawSplitRatio(0,"mbb",false,false,"mbb");
+pY->drawSplitRatio(0,"mhh",false,false,"mhh");
+}
+}
+
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Electron eta sel in 1l channel for B2G
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+TString var = "mhh";
+TString smp = "qcd";
+TFile *f = TFile::Open(smp+"_etaSel.root");
+std::vector<TString> etas = {"2p5","2p1","1p479"};
+
+Plotter *p = new Plotter();
+for(const auto& eta : etas){
+TH1 *h = (TH1*)f->Get(smp+"_eta"+eta+"_"+var);
+TString lab = "|#eta_{e}| < "+eta;
+lab.ReplaceAll("p",".");
+p->addHist(h,lab);
+}
+p->rebin(10);
+p->drawSplitRatio(0,smp,false,false,smp);
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Print Bkg MC yields for all regions
+## ----------------------------------------------------------------------------------------------------------------------------------------
+TFile *f = TFile::Open("debugRun2.root");
+std::vector<TString> procs = {"ttbar0","ttbar1","ttbar2","singlet","wjets","zjets","diboson","qcd","ttx","hx","qg","tw","mw","mt"};
+std::vector<TString> regs= {"SR1","SR2","TopCR1","TopCR2","NonTopCR1","NonTopCR2"};
+
+std::cout<<"{";
+for(const auto& p : procs) std::cout<<p<<", ";
+std::cout<<std::endl;
+
+for(const TString r : regs){
+std::cout<<r<<std::endl;
+
+float bkgN = 0.0;
+TH1 *hb = (TH1*)f->Get("bkg_"+r+"__mbb");
+bkgN = hb->Integral(); std::cout<<std::endl; delete hb;
+
+std::cout<<"bkg = "<<bkgN<<std::endl;
+
+for(TString p : procs){
+TString s = p+"_"+r+"__mbb";
+TH1 *h = (TH1*)f->Get(p+"_"+r+"__mbb"); float procN = 0.0;
+if(h) {
+procN = h->Integral();
+}
+std::cout<<procN/bkgN<<std::endl;
+}
+std::cout<<std::endl;
+
+}
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Print signal yields for all masses and spins
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+std::vector<TString> sigs = {"radHH","blkHH"};
+std::vector<TString> sels = {"emu_LMT_I","IF_LMT"};
+std::vector<TString> masses = {"800","900","1000","1200","1400","1600","1800","2000","2500","3000","3500","4000","4500"};
+
+for(const auto& sig : sigs) {
+TFile *f = TFile::Open("signalInputs/HHbb1o2l_"+sig+"_exclM_distributions.root");
+std::cout<<sig<<std::endl;
+for(const auto& sel : sels) {
+std::cout<<sel<<std::endl;
+for(const auto& m : masses) {
+TH2 *h = (TH2*)f->Get(sig+"_m"+m+"_"+sel+"_full_hbbMass_hhMass");
+std::cout<<h->Integral()<<std::endl;
+}
+}
+
+}
+std::cout<<std::endl;
+
+## ------------------------------------------------------------------------------------------------------------------------------------
+
