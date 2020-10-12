@@ -291,8 +291,12 @@ std::string getCategoryLabel(const LEPCats lep, const BTAGCats btag, const PURCa
     return lepCats[lep].title+", "+btagCats[btag].title+", "+purCats[pur].title;
 }
 
+std::string getCategoryLabel(const DILEPCats lep, const BTAGCats btag){
+    return dilepCats[lep].title+", "+btagCats[btag].title;
+}
 
-std::string getCategoryLabel(const std::string& inStr){
+std::string getCategoryLabel(const std::string& inStr, bool do1lep){
+
 
     std::vector<std::string> tokens;
     std::string token;
@@ -305,10 +309,17 @@ std::string getCategoryLabel(const std::string& inStr){
         return "";
     };
     std::string lep,btag,pur,ex;
-    if(tokens.size()){lep = getTitle(tokens[0],lepCats);}
-    if(tokens.size()>1){btag = getTitle(tokens[1],btagCats);}
-    if(tokens.size()>2){pur = getTitle(tokens[2],purCats);}
-    if(tokens.size()>3){ex = getTitle(tokens[3],selCuts1);}
+    if(do1lep) {
+        if(tokens.size()){lep = getTitle(tokens[0],lepCats);}
+        if(tokens.size()>1){btag = getTitle(tokens[1],btagCats);}
+        if(tokens.size()>2){pur = getTitle(tokens[2],purCats);}
+        if(tokens.size()>3){ex = getTitle(tokens[3],selCuts1);}
+    } else {
+        if(tokens.size()){lep = getTitle(tokens[0],dilepCats);}
+        if(tokens.size()>1){btag = getTitle(tokens[1],btagCats);}
+        if(tokens.size()>2){ex = getTitle(tokens[2],selCuts2);}
+    }
+
     if(lep.size()){
         title += lep;
         if(btag.size() || pur.size()) title+=", ";

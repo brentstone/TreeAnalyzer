@@ -60,6 +60,7 @@ struct DataPlotPrefs {
     bool doLog = false;
     bool addRatio = false;
     bool addErrorBars = false;
+    bool addMCErrorBars = false;
     bool removeTrailingZeros = false;
 
     unsigned int nToys = 100;
@@ -94,6 +95,8 @@ struct HistContainer {
     TH1* add=0;
     TH1* data=0;
     TGraphAsymmErrors* toyErr=0;
+    TGraphAsymmErrors* mcErr=0;
+
 };
 
 
@@ -353,9 +356,10 @@ public:
             for(int i=2; i<=h->GetNbinsX(); ++i) {
                 if(h->GetBinContent(i) <= 0) continue;
                 if(h->GetBinWidth(i) <= binWidth) continue;
+
                 double sf = binWidth / h->GetBinWidth(i);
-//                std::cout<<"bw and sf = "<<h->GetBinWidth(i)<<" and "<<sf<<std::endl;
                 h->SetBinContent(i,h->GetBinContent(i)*sf);
+
                 if(h->GetBinError(i) == 0) continue;
                 if(isPoisson)
                     h->SetBinError(i,h->GetBinError(i)*std::sqrt(sf));
@@ -377,6 +381,24 @@ public:
             auto h = processH2(cont.tot2D,modTitles[prefs.modelType]);
             if(!prefs.binInY) renormalizeBins(h,false);
             cont.tot = h;
+
+            if(prefs.addMCErrorBars) {
+                cont.mcErr = new TGraphAsymmErrors();
+                for(int i=1; i<=cont.tot->GetNbinsX(); ++i) {
+                    double x = cont.tot->GetBinCenter(i);
+                    double y = cont.tot->GetBinContent(i);
+                    double binerror = cont.tot->GetBinError(i);
+
+                    auto setPt = [&](const int bin, float xval){
+                        cont.mcErr->SetPoint(bin,xval,y);
+                        cont.mcErr->SetPointError(bin,cont.tot->GetBinWidth(bin)/2.,cont.tot->GetBinWidth(iB)/2.,binerror,binerror);
+                    };
+
+                    if(i == 1) setPt(i-1,x-cont.tot->GetBinWidth(i)/2.);
+                    setPt(i,x);
+                    if(i == cont.tot->GetNbinsX()) setPt(i+1,x+cont.tot->GetBinWidth(iB)/2.);
+                }
+            }
         }
         if(cont.add2D){
             auto h = processH2(cont.add2D,modTitles[prefs.addType]);
@@ -496,6 +518,18 @@ public:
 
                     auto * g = p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,0,20,1,false,true,false,"2");
                     legEntries.push_back(std::make_tuple(2,g,"Fit unc.","F"));
+                }
+
+                if(cont.mcErr){
+                    int fillColor = kMagenta+4;
+                    cont.mcErr->SetFillColor(fillColor);
+                    cont.mcErr->SetFillStyle(3352);
+                    gStyle->SetHatchesLineWidth(1);
+                    gStyle->SetHatchesSpacing(.5);
+                    //                    p->addGraph(cont.toyErr,"fit unc.",fillColor,1,1,20,1,false,true,false,"3");
+
+                    auto * g = p->addGraph(cont.mcErr,"MC stat unc.",fillColor,1,0,20,1,false,true,false,"2");
+                    legEntries.push_back(std::make_tuple(2,g,"MC stat unc.","F"));
                 }
 
                 if(cont.add){
@@ -1259,7 +1293,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
     if(step==1){ //prefit
         if(outName.size())         outName += "prefit_dataComp";
         DataPlotPrefs hhPlot;
-        hhPlot.modelType = MOD_PRE;
+        hhPlot.modelType = MOD_MC;
+        hhPlot.addMCErrorBars = true;
         hhPlot.addRatio = true;
         hhPlot.bins = {30,210,100,150};
         hhPlot.binInY = false;
@@ -1273,10 +1308,10 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
         writeables = doDataPlot(hhPlot,filename,postFitFilename,year);
         DataPlotPrefs hbbPlot = hhPlot;
-        hbbPlot.rebinFactor = 1;
+        hbbPlot.rebinFactor = 2;
         hbbPlot.bins = {700,4000};
         hbbPlot.binInY = true;
-        hbbPlot.addType = MOD_MC;
+//        hbbPlot.addType = MOD_MC;
         if(inreg == REG_SR) hbbPlot.blindRange = std::pair<double,double>(100,150);
 
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,year);
