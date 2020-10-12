@@ -149,19 +149,19 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY")   ,0.0,1.0);
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY")  ,0.0,1.0);
 
-            // lost tW mbb resolution and scale
+            // lost tW mbb resolution (OPT = 1/m) and scale (PT = m)
             card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTX" ,b),0.0,0.3);
             card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTX",b),0.0,0.6);
+
+            // Normalization (correlate top-derived bkgs, separate QG)
+            card.addSystematic(systName(bkgSels[BKG_QG],"norm")  ,"lnN",{{bkgSels[BKG_QG],1.5}});
+            card.addSystematic(systName("top","norm")            ,"lnN",{{bkgSels[BKG_LOSTTW],1.25},{bkgSels[BKG_MW],1.25},{bkgSels[BKG_MT],1.25}});
 
             //top HH resolution and scale (correlate all top-derived bkgs: lost tW, mW, mT)
             card.addParamSystematic(systName("top","res"  ) ,0.0,0.20);
             card.addParamSystematic(systName("top","scale") ,0.0,0.25);
             card.addParamSystematic(systName("top","mt_rel_scale",b) ,0.0,0.25);
             card.addParamSystematic(systName("top","lostmw_rel_scale",b) ,0.0,0.25);
-
-            // Normalization (correlate top-derived bkgs)
-            card.addSystematic(systName(bkgSels[BKG_QG],"norm")  ,"lnN",{{bkgSels[BKG_QG],1.5}});
-            card.addSystematic(systName("top","norm")            ,"lnN",{{bkgSels[BKG_LOSTTW],1.25},{bkgSels[BKG_MW],1.25},{bkgSels[BKG_MT],1.25}});
 
             if(reg == REG_NONTOPCR){
                 card.addSystematic(systName("top","tFrac",b)         ,"lnN",{{bkgSels[BKG_MT],1.0+0.25},{bkgSels[BKG_MW],1.0-0.25*rate_mt/rate_mw}});
@@ -316,7 +316,6 @@ printf("dbg0\n");
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX",b),0.0,1.0);
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY")   ,0.0,1.0);
             card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY")  ,0.0,1.0);
-    //        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PT2Y") ,0.0,1.0);
 
             //top HH resolution and scale
             card.addParamSystematic(systName("top","res"  ) ,0.0,0.20);
