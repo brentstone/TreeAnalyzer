@@ -255,7 +255,7 @@ void makeSignalYields(const std::string& name, const std::string& filename,
         plotter.write(filename+"_"+name+"_"+catName+"_yield.root");
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_yield.root ";
         argsP1 += " -minX 700 -maxX 3600 ";
-        argsP1 += " -g yield:laur5 ";
+        argsP1 += " -g yield:laur6 ";
         argsP1 += " -var "+MOD_MS+" ";
         MakeJSON(filename+"_"+name+"_"+catName+"_yield.json",argsP1);
         delete yieldGraph;
@@ -299,6 +299,7 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename,
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
     const std::string modStr = fitMJJ ? MOD_MJ : MOD_MR;
+
     auto setup1DFit = [&](const TH1* hbbH, double HHMass)->FunctionFitter*{
         auto vN=[&](std::string var)->std::string{return fitMJJ ? vnMJ(var):vnMR(var);};
         fitters.emplace_back(new CBFunctionFitter(hbbH,{},doExpo,modStr,{modStr}));
@@ -963,6 +964,8 @@ void go(int step, int sig, int channel, std::string treeDir) {
 
     const std::string signalTrees = baseTreeName +".root";
     const std::string name = signals[sig];
+
+    // need to do for spin-0 and spin-2 independently (but not combined)
     if(step == 0){
         makeSignalFittingDistributions(name,filename,signalMassBins[sig],signalTrees,
                 hhInclRange.cut+"&&"+hbbInclRange.cut,true,channel);
@@ -972,18 +975,28 @@ void go(int step, int sig, int channel, std::string treeDir) {
         	makeSignalYields(name,filename,signalMassBins[sig],channel);
     }
 
+    // does combined radion + grav
     if(step == 1) {
     	combineSignalFittingDistributions(filename,signalMassBins[sig],true,channel);
     	combineSignalFittingDistributions(filename,signalMassBins[sig],false,channel);
     }
 
+    // does combined radion + grav
     if(step == 2){
+        // fit mbb shape for each mass point, and interpolate btwn mass points for each CB param
         makeSignalMJJShapes1stIt(name,filename,signalMassBins[sig],channel);
+
+        // do mbb fit again, only for mean and sigma, constrain alpha & alpha2
         makeSignalMJJShapes2ndIt(name,filename,signalMassBins[sig],channel);
+
+        // fit mhh shape for each mass point, interpolate for each CB param
         makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"exclM_");
+
+        // correlate the mhh mean and sigma to the mbb mean and sigma and to make 2D templates,
+        // then fit to each search region
         makeSignal2DShapesSecondIteration(name,filename,signalMassBins[sig],channel);
 
-        gSystem->Exec(std::string("mkdir temp").c_str());
+        gSystem->Exec((std::string("mkdir -p temp/").c_str()));
         gSystem->Exec((std::string("cp *")+signals[ALLSIGNAL]+"*fit* temp/").c_str());
         gSystem->Exec((std::string("rm *")+signals[RADION]+"*fit*").c_str());
         gSystem->Exec((std::string("rm *")+signals[BLKGRAV]+"*fit*").c_str());
