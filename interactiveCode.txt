@@ -13,7 +13,7 @@
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 ## tt SF AN plots
 ## ----------------------------------------------------------------------------------------------------------------------------------------
-TString pre = "/Users/brentstone/Dropbox/Physics/HHbbWW/betreesNEW/Run2/supportInputs/";
+TString pre = "/Users/brentstone/Dropbox/Physics/HHbbWW/betrees/Run2/supportInputs/";
 TFile *fm = new TFile(pre+"HHbb1o2l_ttbarSF_mc_inputPlots.root");
 TFile *fd = new TFile(pre+"HHbb1o2l_ttbarSF_data_inputPlots.root");
 
@@ -22,6 +22,16 @@ p->addStackHist((TH1*)fm->Get("ttbar_noHbb_hbbMass"),"t#bar{t} MC");
 p->addStackHist((TH1*)fm->Get("other_noHbb_hbbMass"),"non-t#bar{t} MC");
 p->addHist((TH1*)fd->Get("data_noHbb_hbbMass"),"data");
 p->draw(false,"s");
+
+TFile *f = TFile::Open(pre+"HHbb1o2l_ttbarSF.json.root");
+TGraphErrors *g;
+f->GetObject("RATIO",g);
+g->GetXaxis()->SetNameTitle("mhh","m_{HH} [GeV]");
+g->GetYaxis()->SetNameTitle("ratio","(N_{data}-N_{non-tt})/N_{tt}");
+TCanvas *cg = new TCanvas("cg","cg");
+cg->cd();
+g->Draw();
+
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 
 ## ----------------------------------------------------------------------------------------------------------------------------------------
