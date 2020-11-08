@@ -283,7 +283,7 @@ const std::string fitMJJStd =vnMJ("mean")+":laur4,"+vnMJ("sigma")+":laur4,"
 const std::string fitMJJExpo =vnMJ("mean")+":laur4,"+vnMJ("sigma")+":laur4,"
         +vnMJ("alpha")+":laur4,"+vnMJ("alpha2")+":pol1," +vnMJ("n")+":pol0,"+vnMJ("n2")+":pol0,"
         +vnMJ("slope")+":laur4,"+vnMJ("fE")+":pol4";
-const std::string fitMVV =vnMR("mean")+":pol1," +vnMR("sigma")+":pol1,"
+const std::string fitMVV =vnMR("mean")+":pol1," +vnMR("sigma")+":pol2,"
         +vnMR("alpha")+":laur3," +vnMR("alpha2")+":laur3,"+vnMR("n")+":pol0,"+vnMR("n2")+":pol0";
 const std::string fitCond =vnMR("maxS")+":pol0,"
         +vnMR("mean_p1")+":pol2,"+vnMR("sigma_p1")+":laur3";
@@ -312,7 +312,6 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename,
             fitter->w->var(modStr.c_str())->setRange("fit",minHHMass,maxHHMass);
             fitter->w->var(modStr.c_str())->setRange("coef",minHHMass,maxHHMass);
         }
-
 
         if(fitMJJ){
             fitter->setVar(vN("mean")     ,125,90,180);
@@ -390,8 +389,8 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
         CatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_EMU )) continue;
-            if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(SEL1_LTMB)) continue;
+//            if(!ci.is(PURE_I  )) continue;
+            if(!ci.is(SEL1_NONE)) continue;
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -401,7 +400,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL )) continue;
-            if(!ci.is(SEL2_FULL)) continue;
+            if(!ci.is(SEL2_NONE)) continue;
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -433,8 +432,9 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         CatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_EMU )) continue;
-            if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(SEL1_LTMB)) continue;
+//            if(!ci.is(PURE_I  )) continue;
+            if(!ci.is(SEL1_NONE)) continue;
+
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -444,7 +444,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL )) continue;
-            if(!ci.is(SEL2_FULL)) continue;
+            if(!ci.is(SEL2_NONE)) continue;
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -470,9 +470,8 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
     if(channel==0 || channel==1) {
         CatIterator ci;
         while(ci.getBin()){
-//            if(!ci.is(BTAG_LMT )) continue;
-//            if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(SEL1_LTMB)) continue;
+            if(!ci.is(BTAG_LMT )) continue;
+            if(!ci.is(SEL1_NONE)) continue;
             mkShapes(ci.name());
         }
     }
@@ -480,8 +479,9 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
     if(channel==0 || channel==2) {
         DilepCatIterator ci;
         while(ci.getBin()){
-//            if(!ci.is(BTAG_LMT )) continue;
-            if(!ci.is(SEL2_FULL)) continue;
+            if(!ci.is(LEP_INCL )) continue;
+            if(!ci.is(BTAG_LMT )) continue;
+            if(!ci.is(SEL2_NONE)) continue;
             mkShapes(ci.name());
         }
     }
@@ -811,9 +811,9 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
             bool doExpo = ci.is(BTAG_L);
 
             std::string mjjCatName = lepCats[LEP_EMU]+"_"+btagCats[ci.b]
-                    +"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB];
+                    +"_"+purCats[ci.p]+"_"+selCuts1[SEL1_NONE];
             std::string mvvCatName = lepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"
-                    +purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB];
+                    +purCats[ci.p]+"_"+selCuts1[SEL1_NONE];
 
             CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
             mjjJSON.fillFunctions(MOD_MS);
@@ -844,9 +844,9 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
             bool doExpo = ci.is(BTAG_L);
 
             std::string mjjCatName = dilepCats[LEP_INCL]+"_"+btagCats[ci.b]
-                    +"_"+selCuts2[SEL2_FULL];
-            std::string mvvCatName = dilepCats[ci.l]+"_"+btagCats[BTAG_LMT]
-                    +"_"+selCuts2[SEL2_FULL];
+                    +"_"+selCuts2[SEL2_NONE];
+            std::string mvvCatName = dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]
+                    +"_"+selCuts2[SEL2_NONE];
 
             CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
             mjjJSON.fillFunctions(MOD_MS);
