@@ -89,11 +89,11 @@ std::string getMVVExpoMinMaxStr(std::string sample, bool is1l){
 }
 
 // determined from control region
-const float hh_scaleUnc = 0.0005; // coef of 1 means that we get a 100% scale at 2 TeV;
-const float hh_resUnc   = 1400; // coef of 1 means that we get a 200% scale at 700 GeV
+const float hh_scaleUnc = 0.0005; // PTY coef of 1 means that we get a 100% scale at 2 TeV;
+const float hh_resUnc   = 1400;  // OPTY coef of 1 means that we get a 200% scale at 700 GeV
 
-const float hbb_scaleUnc = 0.005; // coef of 1 means that we get a 100% scale at 200 GeV;
-const float hbb_resUnc   = 30;   // coef of 1 means that we get a 100% scale at 30 GeV;
+const float hbb_scaleUnc = 0.005; // PTX coef of 1 means that we get a 100% scale at 200 GeV;
+const float hbb_resUnc   = 30;   // OPTX coef of 1 means that we get a 100% scale at 30 GeV;
 
 //Originals////
 //JJ ->   -hs 0.00714 -hr 45
@@ -1273,7 +1273,7 @@ void go(int modelToDo, int channel, std::string treeDir, bool doQuick) {
         // cut templates with bounds on mHH used in analysis
         cutMVVTemplate(name,filename,channel);
 
-        // fit the P(mhh) templates to mhh distribution in each search region category
+        // fit the P(mhh) templates to mhh distribution in each search region category to get unique P(mhh)
         fitBackgroundShapesMVV(name,filename,channel,doQuick);
 
         // 2D crystal ball fit to mbb in bins of mhh, then interpolate fit parameters as function of mhh
