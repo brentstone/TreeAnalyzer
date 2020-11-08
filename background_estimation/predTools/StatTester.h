@@ -33,7 +33,6 @@ public:
                 plotter.add1D(toyH);
             }
         }
-        std::cout << hName << std::endl;
         processTS(ts_nom_sa,ts_sa,hName +"_saturated",true);
         processTS(ts_nom_ks,ts_ks,hName+"_ks",false);
 //        std::cout << outName<<std::endl;
@@ -54,13 +53,71 @@ public:
             ts_sa.push_back(calcSA(nBins,toys[iT]));
             ts_ks.push_back(calcKS(nBins,toys[iT]));
         }
-        std::cout << hName << std::endl;
+
         processTS(ts_nom_sa,ts_sa,hName+"_saturated",true);
         processTS(ts_nom_ks,ts_ks,hName+"_ks",false);
 //        std::cout << outName<<std::endl;
         if(outName.size())plotter.write(outName);
 }
 
+    typedef std::pair<TH2D*,TH2D*> ModelAndData2D;
+    StatTesterAnalyzer(const ModelAndData2D& nominal, const std::vector<ModelAndData2D>& toys,std::string hName, std::string outName = "")
+{
+        const int nBinsX  = nominal.first->GetNbinsX();
+        const int nBinsY  = nominal.first->GetNbinsY();
+        const unsigned int nToys = toys.size();
+        ts_nom_sa = calcSA2D(nBinsX,nBinsY,nominal);
+        std::vector<double> ts_sa; ts_sa.reserve(nToys);
+
+        for(unsigned int iT = 0; iT < nToys; ++iT){
+            ts_sa.push_back(calcSA2D(nBinsX,nBinsY,toys[iT]));
+        }
+
+        processTS(ts_nom_sa,ts_sa,hName+"_saturated2D",true);
+        if(outName.size())plotter.write(outName);
+}
+
+    StatTesterAnalyzer(const std::vector<ModelAndData2D> allNoms, const std::vector<std::vector<ModelAndData2D>> allToys, std::string outName = "")
+{
+    	// loop over the categories (dif selections):
+    	if(allNoms.size() != allToys.size())
+    		throw std::invalid_argument("Sizes of nominal and toys must be the same!");
+
+        std::cout<<allNoms.size()<<std::endl;
+        std::cout<<allToys.size()<<std::endl;
+        const unsigned int nToys = allToys.front().size();
+        std::cout<<"ntoys = "<<nToys<<std::endl;
+        std::vector<double> ts_sa(nToys,0.0);
+        std::cout<<ts_sa.size()<<std::endl;
+
+
+    	for(unsigned i=0; i<allNoms.size(); ++i) {
+    		std::cout<<"in loop"<<std::endl;
+    		auto nominal = allNoms[i];
+    		auto toys = allToys[i];
+//            const int nBinsX  = nominal.first->GetNbinsX();
+//            const int nBinsY  = nominal.first->GetNbinsY();
+//            const int nBinsX  = nominal.first->GetNbinsX();
+//            const int nBinsY  = nominal.first->GetNbinsY();
+            ts_nom_sa += calcSA2D(30,82,nominal);
+            ts_nom_sa += 1.0;
+
+            for(unsigned int iT = 0; iT < nToys; ++iT){
+            	std::cout<<"toy "<<iT<<" "<<toys[iT].first<<" "<<toys[iT].second<<std::endl;
+//            	std::cout<<"name "<<toys[iT].first->GetName()<<toys[iT].second->GetName()<<std::endl;
+//
+//            	std::cout<<toys[iT].first->GetNbinsX()<<toys[iT].first->GetNbinsY()<<std::endl;
+//            	ts_sa[iT] += calcSA2D(30,82,toys[iT]);
+            	ts_sa[iT] += 1.0;
+
+            	std::cout<<ts_sa[iT]<<std::endl;
+            }
+    	}
+		std::cout<<"exit loop"<<std::endl;
+
+//        processTS(ts_nom_sa,ts_sa,hName+"_saturated2D",true);
+        if(outName.size())plotter.write(outName);
+}
 
     void processTS(const double nominal_ts,std::vector<double>& toy_ts, const std::string hName, bool isSA){
         std::sort(toy_ts.begin(), toy_ts.end(), [](const double a, const double b){return a < b;});
@@ -81,15 +138,17 @@ public:
         int firstAbove = -1;
         TH1 * h = new TH1D(hName.c_str(),";test statistic",toy_ts.size(), toy_ts[0] -width , toy_ts[toy_ts.size()-1]+width);
         double total     = 0;
+
         for(unsigned int iT = 0; iT < nToys; ++iT){
             const double ts = toy_ts[iT];
             if(firstAbove <0 && ts >= nominal_ts) firstAbove = iT;
             h->Fill(ts);
             total += ts;
         }
+
         total /= nToys;
         double pV = firstAbove >= 0 ? 1 - (firstAbove)/nToys :0;
-        std::cout <<hName <<" -> Data value: "<< nominal_ts <<" ";
+        std::cout << std::endl<< hName <<" -> Data value: "<< nominal_ts <<" ";
         std::cout <<"Toy values mean(5%,15.9%,50%,84.1%,95%) p>x: : "<< total <<"("<<  quant_5<<","<<quant_159<<","<<quant_50<<","<<quant_841<<","<<quant_95<<") "<<pV<<std::endl;
 
         if(isSA){
@@ -143,6 +202,32 @@ public:
 //        std::cout << total*2<<std::endl;
         return total*2;
     }
+
+    double calcSA2D(const unsigned int nBinsX, const unsigned int nBinsY, const ModelAndData2D& modAData) {return calcSA2D(nBinsX,nBinsY,modAData.first,modAData.second);}
+    double calcSA2D(const unsigned int nBinsX, const unsigned int nBinsY, const TH2 *inputModel, const TH2 *inputData){
+//        std::cout<<"calculating"<<std::endl;
+//        std::cout<<inputModel<<std::endl;
+//        std::cout<<inputData<<std::endl;
+//        std::cout<<"nBins = "<<nBinsX<<", "<<nBinsY<<std::endl;
+
+
+    	double total = 0;
+        for(unsigned int iBX = 1 ; iBX <= nBinsX; ++iBX) for(unsigned int iBY = 1 ; iBY <= nBinsY; ++iBY){
+//            std::cout<<"iBins = "<<iBX<<", "<<iBY<<std::endl;
+        	double nModel = inputModel->GetBinContent(iBX,iBY);
+//            std::cout<<"nModel = "<<nModel<<std::endl;
+
+            total += nModel;
+            double nData = inputData->GetBinContent(iBX,iBY);
+//            std::cout<<"nData = "<<nData<<std::endl;
+            if(nData)
+            	total += nData*std::log(nData/nModel) - nData;
+        }
+
+//        std::cout << "total = " << total*2<<std::endl;
+        return total*2;
+    }
+
     double calcKS(const unsigned int nBins, const ModelAndData& modAData) {return calcKS(nBins,modAData.first->GetArray(),modAData.second->GetArray());}
     double calcKS(const unsigned int nBins, const double *inputModel, const double *inputData){
         auto modInt = getIntegral(nBins,inputModel);
