@@ -182,7 +182,8 @@ public:
     DataPlotter(const DataPlotPrefs& plotPrefs, const std::string& inputPrefix, const std::string& postFitFilename, const int year ) : prefs(plotPrefs), dataYear(year)
 {
 
-        if(prefs.addData) dataFile  = new TFile((inputPrefix+"_data_distributions.root").c_str(),"read");
+        if(prefs.addData) dataFile = prefs.modelType == MOD_POST ? new TFile(postFitFilename.c_str(),"read") :
+        		new TFile((inputPrefix+"_data_distributions.root").c_str(),"read");
         if(prefs.modelType == MOD_POST || prefs.addType == MOD_POST || prefs.addErrorBars )
             postfitFile  = new TFile(postFitFilename.c_str(),"read");
 
@@ -354,17 +355,21 @@ public:
         auto renormalizeBins = [&](TH1* h, bool isPoisson) {
             double binWidth = h->GetBinWidth(1);
             for(int i=2; i<=h->GetNbinsX(); ++i) {
-                if(h->GetBinContent(i) <= 0) continue;
+
+                double inCont = h->GetBinContent(i);
+                if(inCont <= 0) continue;
                 if(h->GetBinWidth(i) <= binWidth) continue;
 
                 double sf = binWidth / h->GetBinWidth(i);
-                h->SetBinContent(i,h->GetBinContent(i)*sf);
+                h->SetBinContent(i,inCont*sf);
 
-                if(h->GetBinError(i) == 0) continue;
+                double inErr = h->GetBinError(i);
+                if(inErr == 0) continue;
+
                 if(isPoisson)
-                    h->SetBinError(i,h->GetBinError(i)*std::sqrt(sf));
+                    h->SetBinError(i,h->GetBinContent(i) > 1 ? inErr*std::sqrt(sf) : inErr*sf);
                 else
-                    h->SetBinError(i,h->GetBinError(i)*sf);
+                    h->SetBinError(i,inErr*sf);
              }
          };
 
@@ -484,6 +489,7 @@ public:
         for(unsigned int iS = 0; iS < prefs.sels.size(); ++iS){
             const auto& s = prefs.sels[iS];
             const auto& st = prefs.titles[iS];
+
             HistContainer cont;
             cont.sig2D = signalHists[iS];
             getBackgrounds(s,cont);
@@ -492,7 +498,8 @@ public:
             //add in the data to nBKS
             TH2 * h = 0;
             if(prefs.addData){
-                dataFile->GetObject(("data_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),h);
+                if(prefs.modelType == MOD_POST) dataFile->GetObject(("data_"+s+"__"+MOD_MJ+"_"+MOD_MR).c_str(),h);
+                else dataFile->GetObject(("data_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),h);
             }
             cont.data2D = h;
 
@@ -653,6 +660,7 @@ public:
                         p->setBotMinMax(prefs.minBot,prefs.maxBot);
                     }
                     p->setYTitleBot((std::string("Data / ") + modTitles[prefs.modelType] +"").c_str());
+
                     auto * c = p->drawSplitRatio(-1,"stack",false,false,plotTitle.c_str());
 
                     if(prefs.doLog) c->GetPad(1)->SetLogy();
@@ -692,17 +700,27 @@ public:
         return writeables;
     }
 
-    std::vector<TObject*>  makeStatTest(const std::string outNamePrefix, bool useBuiltInToys = true) {
-        std::vector<TH1*> dataTSs(prefs.bins.size() -1,0);
-        std::vector<TGraphAsymmErrors*> toyTSs(prefs.bins.size() -1,0);
+    std::vector<TObject*> makeStatTest(const std::string outNamePrefix, bool useBuiltInToys = true, bool do1l = true) {
+
+        std::vector<TH1*> dataTSs_sa(prefs.bins.size() -1,0);
+        std::vector<TGraphAsymmErrors*> toyTSs_sa(prefs.bins.size() -1,0);
+        std::vector<TH1*> dataTSs_ks(prefs.bins.size() -1,0);
+        std::vector<TGraphAsymmErrors*> toyTSs_ks(prefs.bins.size() -1,0);
+        std::vector<TH1*> dataTSs_sa2D(prefs.bins.size() -1,0);
+        std::vector<TGraphAsymmErrors*> toyTSs_sa2D(prefs.bins.size() -1,0);
+
         std::vector<TObject*> writeables;
+
+//        std::vector<StatTesterAnalyzer::ModelAndData2D> allNoms;
+//        std::vector<std::vector<StatTesterAnalyzer::ModelAndData2D>> allToys;
 
         for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
             const auto& s = prefs.sels[iS];
             HistContainer cont;
             getBackgrounds(s,cont);
+
             //add in the data to nBKS
-            dataFile->GetObject(("data_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),cont.data2D);
+            dataFile->GetObject(("data_"+s+"__"+MOD_MJ+"_"+MOD_MR).c_str(),cont.data2D);
 
             //get toys
             std::vector<TH2*> toyFits;
@@ -715,12 +733,14 @@ public:
                     TH2* hm=0;
                     postfitFile->GetObject((std::string("toyData_")+ASTypes::int2Str(iT)+"_"+ s+"__"+MOD_MJ+"_"+MOD_MR).c_str(),hd);
                     if(prefs.modelType == MOD_POST)
-                        postfitFile->GetObject((std::string("toyDataFit_")+ASTypes::int2Str(iT)+"_"+ s+"__"+MOD_MJ+"_"+MOD_MR).c_str(),hm);
+                        postfitFile->GetObject((std::string("toyDataFit_")+ASTypes::int2Str(iT)+"_"+ s).c_str(),hm);
                     else
                         hm = (TH2*)cont.tot2D->Clone();
                     if(hd && hm) { toyFits.push_back(hm) ,toyData.push_back(hd);}
                 }
             }
+
+//            if(prefs.binInY) allNoms.emplace_back((TH2D*)cont.tot2D->Clone(),(TH2D*)cont.data2D->Clone());
 
             //Individual bins
             for(unsigned int iB = 0; iB + 1 < prefs.bins.size(); ++iB){
@@ -732,16 +752,23 @@ public:
                 get1DHists(s,iB,cont);
 
                 const std::string plotTitle = s +"_"+(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
-                StatTesterAnalyzer * a= 0;
+                StatTesterAnalyzer *a = 0, *a2 = 0;
                 if(useBuiltInToys){
 
                     auto bins = getBins(cont,iB);
                     std::vector<StatTesterAnalyzer::ModelAndData> toys; toys.reserve(toyFits.size());
+                    std::vector<StatTesterAnalyzer::ModelAndData2D> toys2D; toys2D.reserve(toyFits.size());
+
                     for(unsigned int iT = 0; iT < toyFits.size(); ++iT ){
                         toys.emplace_back((TH1D*)makeProjection(toyFits[iT],std::string("toyDataFit_")+ASTypes::int2Str(iT),s,iB,bins.first,bins.second),
                                 (TH1D*)makeProjection(toyData[iT],std::string("toyData_")+ASTypes::int2Str(iT),s,iB,bins.first,bins.second));
+                        toys2D.emplace_back((TH2D*)toyFits[iT],(TH2D*)toyData[iT]);
                     }
                     a = new StatTesterAnalyzer({(TH1D*)cont.tot,(TH1D*)cont.data},toys,plotTitle,outNamePrefix+"_"+plotTitle+".root" );
+                    if(prefs.binInY) {
+                    	a2 = new StatTesterAnalyzer({(TH2D*)cont.tot2D,(TH2D*)cont.data2D},toys2D,plotTitle,outNamePrefix+"_full2D.root" );
+//                    	allToys.push_back(toys2D);
+                    }
                     for(unsigned int iT = 0; iT < toyFits.size(); ++iT ){
                         delete toys[iT].first;
                         delete toys[iT].second;
@@ -749,18 +776,44 @@ public:
 
                 } else {
                     a = new StatTesterAnalyzer((TH1D*)cont.tot,(TH1D*)cont.data,10000,false,plotTitle,outNamePrefix+"_"+plotTitle+".root" );
+//                    if(prefs.binInY) a2 = new StatTesterAnalyzer((TH2D*)cont.tot2D,(TH2D*)cont.data2D,10000,false,plotTitle,outNamePrefix+"_"+plotTitle+".root" );
                 }
 
-                if(dataTSs[iB] == 0){
+                if(dataTSs_sa[iB] == 0){
                     std::string sumName = (prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
-                    dataTSs[iB] = new TH1F((sumName +"_data_TS").c_str(),";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
-                    toyTSs[iB] = new TGraphAsymmErrors();//(sumName +"_toy_TS",";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
+                    dataTSs_sa[iB] = new TH1F((sumName +"_data_TS_sa").c_str(),";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
+                    toyTSs_sa[iB]  = new TGraphAsymmErrors();//(sumName +"_toy_TS",";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
                 }
 
-                dataTSs[iB]->SetBinContent(iS+1,a->ts_nom_sa);
-                toyTSs[iB]->SetPoint(iS,iS,a->ts_avg_sa);
-                toyTSs[iB]->SetPointError(iS,0,0,a->ts_avg_sa - a->ts_down_sa,a->ts_up_sa-a->ts_avg_sa);
+                if(dataTSs_ks[iB] == 0){
+                    std::string sumName = (prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
+                    dataTSs_ks[iB] = new TH1F((sumName +"_data_TS_ks").c_str(),";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
+                    toyTSs_ks[iB]  = new TGraphAsymmErrors();//(sumName +"_toy_TS",";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
+                }
+
+                if(prefs.binInY && dataTSs_sa2D[iB] == 0){
+                    std::string sumName = (prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
+                    dataTSs_sa2D[iB] = new TH1F((sumName +"_data_TS_sa2D").c_str(),";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
+                    toyTSs_sa2D[iB]  = new TGraphAsymmErrors();//(sumName +"_toy_TS",";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
+                }
+
+                dataTSs_sa[iB]->SetBinContent(iS+1,a->ts_nom_sa);
+                toyTSs_sa[iB]->SetPoint(iS,iS,a->ts_avg_sa);
+                toyTSs_sa[iB]->SetPointError(iS,0,0,a->ts_avg_sa - a->ts_down_sa,a->ts_up_sa-a->ts_avg_sa);
+
+                dataTSs_ks[iB]->SetBinContent(iS+1,a->ts_nom_ks);
+                toyTSs_ks[iB]->SetPoint(iS,iS,a->ts_avg_ks);
+                toyTSs_ks[iB]->SetPointError(iS,0,0,a->ts_avg_ks - a->ts_down_ks,a->ts_up_ks-a->ts_avg_ks);
+
+                if(prefs.binInY) {
+                    dataTSs_sa2D[iB]->SetBinContent(iS+1,a2->ts_nom_sa);
+                    toyTSs_sa2D[iB]->SetPoint(iS,iS,a2->ts_avg_sa);
+                    toyTSs_sa2D[iB]->SetPointError(iS,0,0,a2->ts_avg_sa - a2->ts_down_sa,a2->ts_up_sa-a2->ts_avg_sa);
+                }
+
+
                 delete a;
+                if(prefs.binInY) delete a2;
             }
 
             for(unsigned int iT = 0; iT < toyFits.size(); ++iT ){
@@ -769,21 +822,57 @@ public:
             }
         }
 
-        for(unsigned int iB = 0; iB < dataTSs.size(); ++iB){
-            if(dataTSs[iB] == 0) continue;
+        for(unsigned int iB = 0; iB < dataTSs_sa.size(); ++iB){
+            if(dataTSs_sa[iB] == 0) continue;
             Plotter * p = new Plotter;
-            p->addGraph(toyTSs[iB],"Toy data");
-            p->addHist(dataTSs[iB],"Data",-1,1,4,20,1,true,false);
+            p->addGraph(toyTSs_sa[iB],"Toy data",-1,1,4,20,1,true,true,false,"P");
+            p->addHist(dataTSs_sa[iB],"Data",-1,1,4,20,1,true,false);
             p->setXTitle(" ");
-            p->setYTitle("test statistic");
-            auto c = p->draw(false,(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]) +"_testStat");
+            p->setYTitle("Test statistic");
+            auto c = p->draw(false,(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]) +"_SA_testStat");
             for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
-                p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS]).c_str());
+                p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS],do1l).c_str());
             }
             p->xAxis()->SetTitle(" ");
             c->Update();
 
             writeables.push_back(c);
+        }
+
+        for(unsigned int iB = 0; iB < dataTSs_ks.size(); ++iB){
+            if(dataTSs_ks[iB] == 0) continue;
+            Plotter * p = new Plotter;
+            p->addGraph(toyTSs_ks[iB],"Toy data",-1,1,4,20,1,true,true,false,"P");
+            p->addHist(dataTSs_ks[iB],"Data",-1,1,4,20,1,true,false);
+            p->setXTitle(" ");
+            p->setYTitle("Test statistic");
+            auto c = p->draw(false,(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]) +"_KS_testStat");
+            for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
+                p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS],do1l).c_str());
+            }
+            p->xAxis()->SetTitle(" ");
+            c->Update();
+
+            writeables.push_back(c);
+        }
+
+        if(prefs.binInY) {
+            for(unsigned int iB = 0; iB < dataTSs_sa2D.size(); ++iB){
+                if(dataTSs_sa2D[iB] == 0) continue;
+                Plotter * p = new Plotter;
+                p->addGraph(toyTSs_sa2D[iB],"Toy data",-1,1,4,20,1,true,true,false,"P");
+                p->addHist(dataTSs_sa2D[iB],"Data",-1,1,4,20,1,true,false);
+                p->setXTitle(" ");
+                p->setYTitle("Test statistic");
+                auto c = p->draw(false,(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]) +"_SA2D_testStat");
+                for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
+                    p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS],do1l).c_str());
+                }
+                p->xAxis()->SetTitle(" ");
+                c->Update();
+
+                writeables.push_back(c);
+            }
         }
 
         return writeables;
@@ -805,9 +894,9 @@ std::vector<TObject*> doDataPlot(const DataPlotPrefs& dataPlot, const std::strin
     return a.makePlots();
 }
 
-std::vector<TObject*> doStatTest(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const std::string& outNamePrefix, const int year){
+std::vector<TObject*> doStatTest(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const std::string& outNamePrefix, const int year, const bool do1l){
     DataPlotter a(dataPlot,inputPrefix,postFitFilename,year);
-    return a.makeStatTest(outNamePrefix);
+    return a.makeStatTest(outNamePrefix,true,do1l);
 }
 
 void doGlobChi2(std::vector<TObject*>& writeables, const std::string& limitBaseName, const double mH = 2000, const std::string& toyN = "toys"){
@@ -1232,6 +1321,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(b == btagCats[BTAG_LMT]) continue;
             if(p == purCats[PURE_I] ) continue;
             if(h != selCuts1[SEL1_FULL] ) continue;
+
             const std::string wsName = l +"_"+b+"_"+p +"_"+h+"_13TeV_Run2";
             fitter.addCategory(l +"_"+b+"_"+p +"_"+h,wsName);
         }
@@ -1241,6 +1331,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(l == dilepCats[LEP_INCL] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
             if(s != selCuts2[SEL2_FULL] ) continue;
+
             const std::string wsName = l +"_"+b+"_"+s+"_13TeV_Run2";
             fitter.addCategory(l +"_"+b+"_"+s,wsName);
         }
@@ -1322,8 +1413,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
     if(step==2){ //postfit for AN
 
-        bool blind=true;
-        bool doRebin = true;
+        bool blind = true;
+        bool doRebin = false;
 
         if(outName.size())         {
             outName += "postfit_dataComp";
@@ -1362,7 +1453,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
 //        if(do1lep) hhPlot.sels = {"emu_LMT_I_full"};
-        //        hhPlot.addData = false;
+//        hhPlot.addData = false;
         writeables = doDataPlot(hhPlot,filename,postFitFilename,year);
 
         DataPlotPrefs hbbPlot = hhPlot;
@@ -1378,20 +1469,19 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
     }
-    if(step ==3){ //statTest
+    if(step==3){ //statTest
         DataPlotPrefs hhTest;
         hhTest.modelType = MOD_POST;
         if(inreg == REG_SR){
             hhTest.bins = {30,100,100,150,210};
         } else {
-            //            hhTest.bins = {30,100,100,150,210};
             hhTest.bins = {30,210};
         }
         hhTest.binInY = false;
         hhTest.sels = srList;
         hhTest.titles = srListTitles;
         hhTest.addErrorBars =true;
-        writeables = doStatTest(hhTest,filename,postFitFilename,outName + "statTest",year);
+        writeables = doStatTest(hhTest,filename,postFitFilename,outName + "statTest",year,do1lep);
 
         DataPlotPrefs hbbTest = hhTest;
         hbbTest.binInY = true;
@@ -1401,8 +1491,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
             //            hbbTest.bins = {30,100,100,150,210};
         } else {
             //                        hhTest.bins = {30,210,30,100,150,210};
-            //            hbbTest.bins = {700,4000};
-            auto writeables2 = doStatTest(hbbTest,filename,postFitFilename,outName + "statTest",year);
+                        hbbTest.bins = {700,4000};
+            auto writeables2 = doStatTest(hbbTest,filename,postFitFilename,outName + "statTest",year,do1lep);
             writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         }
 
