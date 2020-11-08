@@ -90,7 +90,6 @@ PostFitter::PostFitter(const std::string& inputFileName, double rvalue, double m
 
 
     if(dynamic_cast<RooSimultaneous *>(mc->GetPdf()) && !dynamic_cast<RooSimultaneousOpt *>(mc->GetPdf())  ) {
-    	std::cout<<"isSlurm"<<std::endl;
         RooSimultaneousOpt *optpdf = new RooSimultaneousOpt(static_cast<RooSimultaneous&>(*mc->GetPdf()), TString(mc->GetPdf()->GetName())+"_opt");
         w->import(*optpdf);
         mc->SetPdf(*optpdf);
@@ -164,7 +163,11 @@ void PostFitter::doDataFit(bool doBonly){
 
     plot2DData(dobs,"data");
     plotTotal2DPDF(model->GetPdf(),dobs,"prefit");
-    fit(model,*dobs,false);
+
+    auto fitres = fit(model,*dobs,true);
+    TH2 *corrHist = fitres->correlationHist("correlationMatrix_data");
+    plotter.add1D(corrHist);
+
     plotTotal2DPDF(model->GetPdf(),dobs,"postfit");
     plot2DPDFComponents(model->GetPdf(),"postfit");
 
