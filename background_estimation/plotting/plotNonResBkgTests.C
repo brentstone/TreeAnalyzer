@@ -115,7 +115,7 @@ void testQCDSF(std::string name, std::string filename, const std::vector<std::st
 
 
 
-void testRatioFits(std::string name, std::string filename,  std::string fitName, const std::vector<std::string>& sels,std::vector<TObject*>& writeables) {
+void testRatioFits(std::string name, std::string filename, std::string fitName, const std::vector<std::string>& sels, std::vector<TObject*>& writeables, bool do1l) {
     Plotter * p = new Plotter(); //stupid CINT bugfix.....
 
     std::vector<TObject*> paramPads;
@@ -132,7 +132,7 @@ void testRatioFits(std::string name, std::string filename,  std::string fitName,
             }
             if(!can) return;
             TCanvas * c = new TCanvas();
-            can->GetYaxis()->SetTitle(getCategoryLabel(s).c_str());
+            can->GetYaxis()->SetTitle(getCategoryLabel(s,do1l).c_str());
             can->GetXaxis()->SetTitle(hhMCS.title.c_str());
             can->GetYaxis()->SetRangeUser(0.05,5);
             can->Draw();
@@ -230,13 +230,13 @@ public:
 void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool do1lep = true, std::string outName = ""){
     REGION reg = REGION(inreg);
 
-    std:: string inName =  "distributions2" ;
+    std:: string inName =  "bkgInputs" ;
     if(reg == REG_TOPCR){
-        inName =  "test_TopCR";
+        inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";
     }
     else if(reg == REG_NONTOPCR){
-        inName =  "test_NonTopCR";
+        inName =  "bkgInputsNonTopCR";
         hhFilename +="_NonTopCR";
     }
     std::string filename = inName +"/"+hhFilename;
@@ -259,7 +259,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool 
         if(!do1lep) return;
         if(outName.size()) outName += "_QCDRatio";
 
-        testRatioFits(mod,filename,"QCDSF",{"e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"},writeables);
+        testRatioFits(mod,filename,"QCDSF",{"e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"},writeables,do1lep);
         if(reg == REG_NONTOPCR){
             testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
                     {"e_L_LP_full","e_I_LP_full"},{"e_L_HP_full","e_I_HP_full"},{"mu_L_LP_full","mu_I_LP_full"},

@@ -19,6 +19,7 @@ std::vector<std::string> getSRList(REGION reg){
         if(b == bcats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != selCuts1[SEL1_FULL]) continue;
+
         sels.emplace_back(l +"_"+b+"_"+p +"_"+h);
     }
     return sels;
@@ -44,6 +45,7 @@ std::vector<std::string> getSRListTitles(REGION reg){
         if(b == bcats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != selCuts1[SEL1_FULL]) continue;
+
         if(reg==REG_NONTOPCR)
             sels.emplace_back(l.title +", "+p.title);
         else
@@ -68,7 +70,7 @@ std::vector<std::string> getDilepSRListTitles(REGION reg){
 }
 
 void renormalizeBinsForSmoothness(TH1* h, bool isPoisson) {
-	std::cout<<"renormalizing"<<std::endl;
+//	std::cout<<"renormalizing"<<std::endl;
     double binWidth = h->GetBinWidth(1);
     for(int i=2; i<=h->GetNbinsX(); ++i) {
         if(h->GetBinContent(i) <= 0) continue;
@@ -120,7 +122,7 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
         Plotter * pf = new Plotter();
         float binwidth = hs[0]->GetBinWidth(1);
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
-            hs[iH]->SetYTitle("N. of events");
+            hs[iH]->SetYTitle("Events");
             hs[iH]->SetXTitle(hbbMCS.title.c_str());
             if(iH == 0){
                 p->addHist(hs[iH],hNs[iH].c_str());
@@ -137,7 +139,11 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
             p->setUnderflow(false);
             p->setOverflow(false);
             p->setBotMinMax(0,2);
-            p->addText(getCategoryLabel(s).c_str(),0.17,0.84,0.04);
+            bool is1l = true;
+            if(TString(s).BeginsWith("e") || TString(s).BeginsWith("mu")) is1l = true;
+            else if(TString(s).BeginsWith("SF") || TString(s).BeginsWith("OF") || TString(s).BeginsWith("IF")) is1l = false;
+            else std::cout<<"sel string is no good: "<<s<<std::endl;
+            p->addText(getCategoryLabel(s,is1l).c_str(),0.17,0.84,0.04);
             if(strFind(var,"VV")) p->setXTitle(hhMCS.title);
             if(rebin > 0) p->rebin(rebin);
             if(withRatio){
@@ -251,7 +257,7 @@ std::vector<TObject*> make2DTests(std::string plotTitle, const TH2* dH,
             p->setUnderflow(false);
             p->setOverflow(false);
             p->setBotMinMax(0,2);
-            p->setYTitle("N. of events");
+            p->setYTitle("Events");
             p->setXTitle(binInY ? hbbMCS.title : hhMCS.title);
             if(rebin > 0) p->rebin(rebin);
             if(withRatio){
@@ -457,7 +463,11 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
         p->setXTitle( (binInY ? hbbMCS : hhMCS) .title.c_str());
         p->setYTitle("N. of events");
         p->setCMSLumi(0);
-        p->addText(getCategoryLabel(s).c_str(),0.17,0.84,0.04);
+        bool is1l = true;
+        if(TString(s).BeginsWith("e") || TString(s).BeginsWith("mu")) is1l = true;
+        else if(TString(s).BeginsWith("SF") || TString(s).BeginsWith("OF") || TString(s).BeginsWith("IF")) is1l = false;
+        else std::cout<<"sel string is no good: "<<s<<std::endl;
+        p->addText(getCategoryLabel(s,is1l).c_str(),0.17,0.84,0.04);
 
 //        auto * c = p->draw(false,(s + ": "+flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1])).c_str());
 //           c->SetLogy();

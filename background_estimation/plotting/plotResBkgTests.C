@@ -5,7 +5,7 @@
 std::vector<TObject*> writeables;
 
 
-void testHHPDFFits(std::string name, std::string filename, const std::vector<std::string> sels) {
+void testHHPDFFits(std::string name, std::string filename, const std::vector<std::string> sels, const bool do1l) {
 
     TFile * fd = new TFile((filename+"_"+name+"_distributions.root").c_str(),"read");
 
@@ -36,10 +36,11 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
         p->setMinMax(.01,hs[0]->Integral());
         p->setUnderflow(false);
         p->setOverflow(false);
-        p->rebin(2);
+        p->rebin(8);
         p->setXTitle(hhMCS.title);
-        p->setYTitle("N. of events");
-        p->addText(getCategoryLabel(s).c_str(),0.15,0.88,0.03);
+        p->setYTitle("Events");
+        p->addText(getCategoryLabel(s,do1l).c_str(),0.15,0.88,0.03);
+        p->setLegendPos(0.5,-0.065,0.93,0.93);
 
         p->setBotMinMax(0,2);
         // auto * c = p->drawSplitRatio(0,"stack",false,false,s);
@@ -93,13 +94,13 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
     auto srList = getSRList(reg);
     if (!do1lep) srList = getDilepSRList(reg);
 
-    std::string inName =  "distributions2" ;
+    std::string inName =  "bkgInputs" ;
     if(reg == REG_TOPCR){
-        inName =  "test_TopCR";
+        inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";
     }
     else if(reg == REG_NONTOPCR){
-        inName =  "test_NonTopCR";
+        inName =  "bkgInputsNonTopCR";
         hhFilename +="_NonTopCR";
     }
     std::string filename = inName +"/"+hhFilename;
@@ -138,7 +139,7 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
         break;
     case 1:
         if(outName.size()) outName += "_MVV_fit";
-        testHHPDFFits(mod,filename,srList);
+        testHHPDFFits(mod,filename,srList,do1lep);
         break;
     case 2:
         if(outName.size()) outName += "_MJJ_fit1stIt";
