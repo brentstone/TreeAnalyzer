@@ -23,15 +23,19 @@ public:
         rootFile->GetObject("w",w);
         w->saveSnapshot("prefit", utils::returnAllVars(w));
         auto pdf = w->pdf(pdfName.c_str()); // shapeBkg_losttw_std_e_L_LP_full_13TeV_opt
-        if(pdf==0) return;
+        if(pdf==0) {
+            std::cout<<"no pdf found: "<<pdfName<<std::endl; return;
+        }
 
         auto hN = pdf->createHistogram((pdfName+"_nom").c_str(),*w->var("MJ"),RooFit::YVar(*w->var("MR")),RooFit::IntrinsicBinning());
         hN->SetName((pdfName+"_nom").c_str());
         plotter.add1D(hN);
 
         for(const auto& n : nuisNames){
-            auto var = w->var(n.c_str()); //CMS_HHlnujj_losttw_PTX_L
+            std::cout<<n<<std::endl;
+            auto var = w->var(n.c_str()); // CMS_HHlnujj_losttw_PTX_L_1l (deprecated)
             auto nus = w->pdf((n+"_Pdf").c_str());
+
             double mean = w->var((n+"_In").c_str())->getVal();
 
             double err=0;

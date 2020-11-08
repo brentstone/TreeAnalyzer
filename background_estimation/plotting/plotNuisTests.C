@@ -42,7 +42,6 @@ std::string systName (const std::string& proc,const std::string& name, const std
 
 //systs -> plotting name : hName
 TCanvas * makeNuisPlot(const std::string& filename, const CutStr& bkg, const std::string& reg, const std::string& pName, const std::vector<std::pair<std::string,std::string>> systs, bool plotX){
-    printf("dbg0\n");
 	TH1::AddDirectory(kFALSE);
     TFile * f = new TFile(filename.c_str(),"read");
     std::string prefix = "shapeBkg_" + bkg + "_"+reg+"_13TeV_Run2";
@@ -119,8 +118,8 @@ TCanvas * makeNuisPlot(const std::string& filename, const CutStr& bkg, const std
         p->setCMSLumiLumiText("13 TeV");
     }
 
-    auto c = p->drawSplitRatio(0,"stack",false,false,bkg+"_"+pName);
-    c->SetTitle((bkg+"_"+pName).c_str());
+    auto c = p->drawSplitRatio(0,"stack",false,false,bkg+"_"+reg+"_"+pName);
+    c->SetTitle((bkg+"_"+reg+"_"+pName).c_str());
     p->botStyle.xAxis->SetTitleOffset(1.05);
     if(!plotX){
         c->GetPad(1)->SetLogy();
@@ -131,99 +130,215 @@ TCanvas * makeNuisPlot(const std::string& filename, const CutStr& bkg, const std
 }
 
 void getNuisHists(const std::string& rootFile, const std::string& outDir){
-    const std::string l = lepCats[LEP_MU];
-    const std::string b = btagCats[BTAG_L];
-    const std::string p = purCats[PURE_LP];
-    const std::string h = selCuts1[SEL1_FULL];
-    const std::string cat = l +"_"+b+"_"+p +"_"+h;
-    const std::string catNoSel = l +"_"+b+"_"+p;
 
-    auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
-        return getSystName("",proc,name, sel == "-1" ? cat : sel  );
-    };
+    std::string h = selCuts1[SEL1_FULL];
 
-    auto go=[&](const CutStr& bkg, const std::vector<std::string>& nuis ){
-        std::string pdfN = "shapeBkg_"+bkg + "_"+cat+"_13TeV_Run2";
-        if(bkg == bkgSels[BKG_QG] || bkg == bkgSels[BKG_LOSTTW]) pdfN +="_opt";
-        std::cout<<pdfN<<std::endl;
-        for(const auto& s : nuis) std::cout<<s<<std::endl;
-        NuisPlotter(rootFile,pdfN,nuis,outDir+bkg+"_nuisHists.root");
+	for(const auto& l : lepCats) for(const auto& b : btagCats) for(const auto& p : purCats) {
+		if(l == lepCats[LEP_EMU]) continue;
+		if(b == btagCats[BTAG_LMT]) continue;
+		if(p == purCats[PURE_I]) continue;
 
-    };
+	    const std::string cat = l +"_"+b+"_"+p+"_"+h;
+	    const std::string catNoSel = l +"_"+b+"_"+p;
 
-    go(bkgSels[BKG_QG],{
-    		systName(bkgSels[BKG_QG],"PTX",b),
-			systName(bkgSels[BKG_QG],"OPTX",b),
-			systName(bkgSels[BKG_QG],"PTY",catNoSel),
-			systName(bkgSels[BKG_QG],"OPTY",catNoSel)
-    });
+	    auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
+	        return getSystName("",proc,name, sel == "-1" ? cat : sel  );
+	    };
 
-    go(bkgSels[BKG_LOSTTW],{
-            systName(bkgSels[BKG_LOSTTW],"PTX" ,b),
-			systName(bkgSels[BKG_LOSTTW],"OPTX" ,b),
-            systName("top","res",catNoSel),
-			systName("top","scale",catNoSel),
-			systName("top","lostmw_rel_scale",b)
-    });
+	    auto go=[&](const CutStr& bkg, const std::vector<std::string>& nuis ){
+	        std::string pdfN = "shapeBkg_"+bkg + "_"+cat+"_13TeV_Run2";
+	        if(bkg == bkgSels[BKG_QG] || bkg == bkgSels[BKG_LOSTTW]) pdfN +="_opt";
+	        std::cout<<pdfN<<std::endl;
+	        for(const auto& s : nuis) std::cout<<s<<std::endl;
+	        NuisPlotter(rootFile,pdfN,nuis,outDir+bkg+"_"+catNoSel+"_nuisHists.root");
+	    };
 
-    go(bkgSels[BKG_MT],{
-            "hbb_scale_Run2",
-			"hbb_res_Run2",
-            systName("top","res",catNoSel),
-			systName("top","scale",catNoSel),
-			systName("top","mt_rel_scale",b)
-    });
+	    go(bkgSels[BKG_QG],{
+        		systName(bkgSels[BKG_QG],"PTX" ,b+"_1l"),
+				systName(bkgSels[BKG_QG],"OPTX",b+"_1l"),
+				systName(bkgSels[BKG_QG],"PTY",catNoSel),
+				systName(bkgSels[BKG_QG],"OPTY",catNoSel)
+	    });
+	    go(bkgSels[BKG_LOSTTW],{
+	            systName(bkgSels[BKG_LOSTTW],"PTX" ,b+"_1l"),
+				systName(bkgSels[BKG_LOSTTW],"OPTX",b)+"_1l",
+	            systName("top","res",catNoSel),
+				systName("top","scale",catNoSel),
+				systName("top","lostmw_rel_scale",b+"_1l")
+	    });
+	    go(bkgSels[BKG_MT],{
+	            "hbb_scale_top_Run2",
+				"hbb_res_top_Run2",
+	            systName("top","res",catNoSel),
+				systName("top","scale",catNoSel),
+				systName("top","mt_rel_scale",b+"_1l")
+	    });
+	    go(bkgSels[BKG_MW],{
+	            "hbb_scale_Run2",
+				"hbb_res_Run2",
+	            systName("top","res",catNoSel),
+				systName("top","scale",catNoSel),
+				systName("top","lostmw_rel_scale",b+"_1l")
+	    });
+	}
 
-    go(bkgSels[BKG_MW],{
-            "hbb_scale_Run2",
-			"hbb_res_Run2",
-            systName("top","res",catNoSel),
-			systName("top","scale",catNoSel),
-			systName("top","lostmw_rel_scale",b)
-    });
+	h = selCuts2[SEL2_FULL];
+	for(const auto& l : dilepCats) for(const auto& b : btagCats) {
+		if(l == dilepCats[LEP_INCL]) continue;
+		if(b == btagCats[BTAG_LMT]) continue;
 
+	    const std::string cat = l +"_"+b+"_"+h;
+	    const std::string catNoSel = l +"_"+b;
 
-//    //QG
-//    std::vector<std::string> qgN = {systName(bkgSels[BKG_QG]    ,"PTX",b),systName(bkgSels[BKG_QG]    ,"OPTX",b),systName(bkgSels[BKG_QG]    ,"PTY") ,systName(bkgSels[BKG_QG]    ,"OPTY")  };
-//    std::string qgPDF = "shapeBkg_"+bkgSels[BKG_QG] + "_std_"+cat+"_13TeV_opt";
-//    NuisPlotter(rootFile,qgPDF,qgN,outDir +bkgSels[BKG_QG]+"_nuisHists.root");
-//
-//    //losttw
-//    std::vector<std::string> name = {systName(bkgSels[BKG_QG]    ,"PTX",b),systName(bkgSels[BKG_QG]    ,"OPTX",b),systName(bkgSels[BKG_QG]    ,"PTY") ,systName(bkgSels[BKG_QG]    ,"OPTY")  };
-//    std::string qgPDF = "shapeBkg_"+bkgSels[BKG_QG] + "_std_"+cat+"_13TeV_opt";
-//    NuisPlotter(rootFile,qgPDF,qgN,outDir +bkgSels[BKG_LOSTTW]+"_nuisHists.root");
+	    auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
+	        return getSystName("",proc,name, sel == "-1" ? cat : sel  );
+	    };
+
+	    auto go=[&](const CutStr& bkg, const std::vector<std::string>& nuis ){
+	        std::string pdfN = "shapeBkg_"+bkg + "_"+cat+"_13TeV_Run2";
+	        if(bkg == bkgSels[BKG_QG] || bkg == bkgSels[BKG_LOSTTW]) pdfN +="_opt";
+	        std::cout<<pdfN<<std::endl;
+	        for(const auto& s : nuis) std::cout<<s<<std::endl;
+	        NuisPlotter(rootFile,pdfN,nuis,outDir+bkg+"_"+catNoSel+"_nuisHists.root");
+	    };
+
+	    go(bkgSels[BKG_QG],{
+	    		systName(bkgSels[BKG_QG],"PTX" ,b+"_2l"),
+				systName(bkgSels[BKG_QG],"OPTX",b+"_2l"),
+				systName(bkgSels[BKG_QG],"PTY",catNoSel),
+				systName(bkgSels[BKG_QG],"OPTY",catNoSel)
+	    });
+	    go(bkgSels[BKG_LOSTTW],{
+	            systName(bkgSels[BKG_LOSTTW],"PTX" ,b+"_2l"),
+				systName(bkgSels[BKG_LOSTTW],"OPTX",b)+"_2l",
+	            systName("top","res",catNoSel),
+				systName("top","scale",catNoSel),
+				systName("top","lostmw_rel_scale",b+"_2l")
+	    });
+	    go(bkgSels[BKG_MT],{
+	            "hbb_scale_top_Run2",
+				"hbb_res_top_Run2",
+	            systName("top","res",catNoSel),
+				systName("top","scale",catNoSel),
+				systName("top","mt_rel_scale",b+"_2l")
+	    });
+	    go(bkgSels[BKG_MW],{
+	            "hbb_scale_Run2",
+				"hbb_res_Run2",
+	            systName("top","res",catNoSel),
+				systName("top","scale",catNoSel),
+				systName("top","lostmw_rel_scale",b+"_2l")
+	    });
+	}
 
 }
 
 
 void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables){
-    const std::string l = lepCats[LEP_MU];
-    const std::string b = btagCats[BTAG_L];
-    const std::string p = purCats[PURE_LP];
-    const std::string h = selCuts1[SEL1_FULL];
-    const std::string cat = l +"_"+b+"_"+p +"_"+h;
-    const std::string catNoSel = l +"_"+b+"_"+p;
 
-    auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
-        return getSystName("",proc,name, sel == "-1" ? cat : sel  );
-    };
+    std::string h = selCuts1[SEL1_FULL];
+	for(const auto& l : lepCats) for(const auto& b : btagCats) for(const auto& p : purCats) {
+		if(l == lepCats[LEP_EMU]) continue;
+		if(b == btagCats[BTAG_LMT]) continue;
+		if(p == purCats[PURE_I]) continue;
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_nuisHists.root",bkgSels[BKG_QG],cat,"mbb",{ {"#it{m}_{b#bar{b}} scale" ,systName(bkgSels[BKG_QG]    ,"PTX",b)},{"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_QG]    ,"OPTX",b)}    },true));
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_nuisHists.root",bkgSels[BKG_QG],cat,"mhh",{ {"#it{m}_{HH} scale" ,systName(bkgSels[BKG_QG]    ,"PTY",catNoSel)},{"#it{m}_{HH} res." ,systName(bkgSels[BKG_QG]    ,"OPTY",catNoSel)}    },false));
+	    const std::string cat = l +"_"+b+"_"+p +"_"+h;
+	    const std::string catNoSel = l +"_"+b+"_"+p;
+
+	    auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
+	        return getSystName("",proc,name, sel == "-1" ? cat : sel  );
+	    };
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_QG],cat,"mbb",
+	    		{ {"#it{m}_{b#bar{b}} scale",systName(bkgSels[BKG_QG],"PTX",b+"_1l")},
+	    		  {"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_QG],"OPTX",b+"_1l")} },true));
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_QG],cat,"mhh",
+	    		{ {"#it{m}_{HH} scale" ,systName(bkgSels[BKG_QG],"PTY",catNoSel)},
+	    		  {"#it{m}_{HH} res." ,systName(bkgSels[BKG_QG] ,"OPTY",catNoSel)} },false));
 
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mbb",{ {"#it{m}_{b#bar{b}}} scale" ,systName(bkgSels[BKG_LOSTTW]    ,"PTX",b)},{"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_LOSTTW]    ,"OPTX",b)}    },true));
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhh",{{"top res." ,systName("top","res",catNoSel  )}, {"top scale" ,systName("top","scale",catNoSel)}, {"rel. top scale" ,systName("top","lostmw_rel_scale",b)}    },false));
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mbb",
+	    		{ {"#it{m}_{b#bar{b}}} scale",systName(bkgSels[BKG_LOSTTW],"PTX",b+"_1l")},
+	    		  {"#it{m}_{b#bar{b}} res."  ,systName(bkgSels[BKG_LOSTTW],"OPTX",b+"_1l")}    },true));
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhh",
+	    		{{"top res.",systName("top","res",catNoSel)},
+	    		 {"top scale" ,systName("top","scale",catNoSel)},
+				 {"rel. top scale" ,systName("top","lostmw_rel_scale",b+"_1l")}    },false));
 
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_nuisHists.root",bkgSels[BKG_MW],cat,"mbb",{{"b#bar{b} jet soft-drop scale","hbb_scale_Run2"},{"b#bar{b} jet soft-drop res.","hbb_res_Run2"}},true));
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhh",{{"top res." ,systName("top","res",catNoSel  )}, {"top scale" ,systName("top","scale",catNoSel)}, {"rel. top scale" ,systName("top","lostmw_rel_scale",b)}    },false));
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mbb",
+	    		{{"b#bar{b} jet soft-drop scale","hbb_scale_Run2"},
+	    		 {"b#bar{b} jet soft-drop res.","hbb_res_Run2"}},true));
 
-    //  remove rel because it is the same size as the standard scale
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mbb",{{"b#bar{b} jet SD mass scale","hbb_scale_Run2"},{"b#bar{b} jet SD mass res.","hbb_res_Run2"}},true));
-//    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"#it{m}_{HH} res." ,systName("top","res",catNoSel  )}, {"#it{m}_{HH} scale" ,systName("top","scale",catNoSel)}   },false));
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhh",
+	    		{{"top res." ,systName("top","res",catNoSel)},
+	    		 {"top scale" ,systName("top","scale",catNoSel)},
+				 {"rel. top scale" ,systName("top","lostmw_rel_scale",b+"_1l")}    },false));
 
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MT],cat,"mbb",
+	    		{{"b#bar{b} jet SD mass scale","hbb_scale_top_Run2"},
+	    		 {"b#bar{b} jet SD mass res.","hbb_res_top_Run2"}},true));
+
+	    //  remove rel because it is the same size as the standard scale
+		//    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",
+	    		{{"#it{m}_{HH} res." ,systName("top","res",catNoSel)},
+	    		 {"#it{m}_{HH} scale" ,systName("top","scale",catNoSel)}   },false));
+	}
+
+    h = selCuts2[SEL2_FULL];
+	for(const auto& l : dilepCats) for(const auto& b : btagCats) {
+		if(l == dilepCats[LEP_INCL]) continue;
+		if(b == btagCats[BTAG_LMT]) continue;
+
+	    const std::string cat = l +"_"+b+"_"+h;
+	    const std::string catNoSel = l +"_"+b;
+
+	    auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
+	        return getSystName("",proc,name, sel == "-1" ? cat : sel  );
+	    };
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_QG],cat,"mbb",
+	    		{ {"#it{m}_{b#bar{b}} scale" ,systName(bkgSels[BKG_QG],"PTX",b+"_2l")},
+	    		  {"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_QG],"OPTX",b+"_2l")}    },true));
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_QG],cat,"mhh",
+	    		{ {"#it{m}_{HH} scale" ,systName(bkgSels[BKG_QG],"PTY",catNoSel)},
+	    		  {"#it{m}_{HH} res." ,systName(bkgSels[BKG_QG] ,"OPTY",catNoSel)}    },false));
+
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mbb",
+	    		{ {"#it{m}_{b#bar{b}}} scale" ,systName(bkgSels[BKG_LOSTTW],"PTX",b+"_2l")},
+	    		  {"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_LOSTTW]  ,"OPTX",b+"_2l")}    },true));
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhh",
+	    		{{"top res." ,systName("top","res",catNoSel  )},
+	    		 {"top scale" ,systName("top","scale",catNoSel)},
+				 {"rel. top scale" ,systName("top","lostmw_rel_scale",b+"_2l")}    },false));
+
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mbb",
+	    		{{"b#bar{b} jet soft-drop scale","hbb_scale_Run2"},
+	    		 {"b#bar{b} jet soft-drop res.","hbb_res_Run2"}},true));
+
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhh",
+	    		{{"top res." ,systName("top","res",catNoSel  )},
+	    		 {"top scale" ,systName("top","scale",catNoSel)},
+				 {"rel. top scale" ,systName("top","lostmw_rel_scale",b+"_2l")}    },false));
+
+	    //  remove rel because it is the same size as the standard scale
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MT],cat,"mbb",
+	    		{{"b#bar{b} jet SD mass scale","hbb_scale_top_Run2"},
+	    		 {"b#bar{b} jet SD mass res.","hbb_res_top_Run2"}},true));
+
+	//    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
+	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",
+	    		{{"#it{m}_{HH} res." ,systName("top","res",catNoSel)},
+	    		 {"#it{m}_{HH} scale" ,systName("top","scale",catNoSel)}   },false));
+	}
 }
 
 
@@ -238,17 +353,15 @@ void plotNuisTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
     if(reg == REG_TOPCR){
         inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";
-//        limitBaseName +="_TopCR";
         outName=limitBaseName+"/plots/TopCR_";
     }
     else if(reg == REG_NONTOPCR){
         inName =  "bkgInputsNonTopCR";
         hhFilename +="_NonTopCR";
-//        limitBaseName +="_NonTopCR";
         outName=limitBaseName+"/plots/NonTopCR_";
         btagCats = qgBtagCats;
-
     }
+
     std::string filename = inName +"/"+hhFilename;
     std::string postFitFilename = limitBaseName +"/postFit.root";
 
