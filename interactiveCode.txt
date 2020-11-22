@@ -8,6 +8,9 @@
 # compare pre-fit and post-fit bkg component in any region
 # get MC yields for all bkg processes
 # get signal MC yields for all masses
+# get 1l electron eta comparisons
+# make plot GoF distribution from combine procedure
+# compare bbVV and bbtautau H->WW reco
 #
 
 ## ----------------------------------------------------------------------------------------------------------------------------------------
@@ -234,3 +237,98 @@ std::cout<<std::endl;
 
 ## ------------------------------------------------------------------------------------------------------------------------------------
 
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Plots for 1l electron eta selection studies
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+std::vector<TString> procs = {"qcd","radion","blkgrav"};
+std::vector<TString> etaSs = {"2p5","2p1","1p479"};
+
+for(const auto& proc : procs){
+Plotter *p = new Plotter();
+TFile *f = TFile::Open(proc+"_etaSel.root");
+for(unsigned i=0;i<etaSs.size();i++){
+TString eS = etaSs[i];
+TH1 *h = (TH1*)f->Get(proc+"_eta"+eS+(proc=="qcd"?TString("_mhh"):TString("_mx")));
+eS.ReplaceAll("p",".");
+p->addHist(h,"|#eta| #leq "+eS);
+}
+p->setYTitle("Events");
+p->setXTitle(proc=="qcd"?"M_{HH}":"M_{X}");
+if(proc=="qcd") p->rebin(10);
+p->setYTitleBot("Ratio");
+p->drawSplitRatio(0,proc,false,false,proc);
+}
+
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## GoF distribution w/ observed from the combine tool
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+TFile *fd = TFile::Open("higgsCombineTest.GoodnessOfFit.mH1000.root");
+TFile *ft = TFile::Open("higgsCombineTest.GoodnessOfFit.mH1000.123456.root");
+
+TTree *td = (TTree*)fd->Get("limit");
+TTree *tt = (TTree*)ft->Get("limit");
+
+double tsData, tsT;
+double pval = 0.0;
+td->SetBranchAddress("limit",&tsData);
+tt->SetBranchAddress("limit",&tsT);
+td->GetEntry(0);
+std::vector<double> tsTs;
+
+for(int i=0;i<tt->GetEntries();i++){
+tt->GetEntry(i);
+if(tsT > tsData) pval += 1.0;
+tsTs.push_back(tsT);
+}
+
+std::sort(tsTs.begin(),tsTs.end(),[](double a, double b){return a < b;});
+
+TH1D* h = new TH1D("h","h",40,tsTs.front()-100,tsTs.back()+100);
+for(const auto& t : tsTs) h->Fill(t);
+
+Plotter *p = new Plotter();
+p->addStackHist(h,"toys");
+TCanvas *c = p->draw(false,"s");
+TArrow *arr = new TArrow(tsData,h->GetMaximum(),tsData,0);
+arr->SetLineWidth(2);
+arr->SetLineColor(kRed);
+arr->Draw();
+
+std::cout<<"data ts = "<<tsData<<std::endl;
+std::cout<<"pval is = "<<pval/tt->GetEntries()<<std::endl;
+
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Compare H->WW reco. between bbVV and bbtautau signals
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+
+std::vector<TString> sigs = {"hww2l.root","hww2l_bbVV.root","hww2l_bbtt.root"};
+std::vector<TString> sigNames = {"Inclusive","bbWW","bb#tau#tau"};
+
+std::vector<TString> vars = {"mInv"};
+TString hid = "base";
+TString sig = "radion_m1000";
+
+for(const auto& v : vars){
+Plotter *p= new Plotter();
+
+for(unsigned i=0;i<sigs.size();++i){
+TFile *f = TFile::Open(sigs[i]);
+TH1 *h = (TH1*)f->Get(sig+"_"+hid+"_"+v);
+p->addHistLine(h,sigNames[i],-1,1,5);
+}
+p->rebin(5);
+//p->normalize();
+p->setYTitle("a.u.");
+p->draw(false,v);
+}
+
+## ------------------------------------------------------------------------------------------------------------------------------------
