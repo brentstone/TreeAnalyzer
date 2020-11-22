@@ -25,6 +25,8 @@
 #include "Processors/Variables/interface/LeptonSelection.h"
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
 #include "Processors/Corrections/interface/BTagScaleFactors.h"
+#include "Processors/Corrections/interface/FatJetBTagScaleFactors.h"
+
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/JetAndMETCorrections.h"
 #include "Processors/Corrections/interface/FatJetScaleFactors.h"
@@ -37,13 +39,13 @@ using namespace CorrHelp;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, bool addPDFWts = false) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
-        doPDFWeights = addPDFWts;
+        doPDFWeights = (treeInt > TREE_OTHER);
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC,CORRTYPE hemUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
-        JERProc->setCorrType(jerUNC);
+    	JERProc->setCorrType(jerUNC);
         if(jesUNC == UP || jesUNC == DOWN ){
             JESUncProc ->setCorrType(jesUNC);
             turnOnCorr(CORR_JES);
@@ -74,9 +76,10 @@ public:
         	outTree->addSingle(pu_N_,  "",  "pu_N");
         	outTree->addSingle(lep_N_,  "",  "lep_N");
         	outTree->addSingle(btag_N_,  "",  "btag_N");
-        	outTree->addSingle(sjbtag_N_, "", "sjbtag_N");
+//        	outTree->addSingle(sjbtag_N_, "", "sjbtag_N");
         	outTree->addSingle(fjbtag_N_, "", "fjbtag_N");
         	outTree->addSingle(topPt_N_, "",  "topPt_N");
+        	outTree->addSingle(prefire_N_, "",  "prefire_N");
         	outTree->addSingle(hbbDecayType_,  "",  "hbbDecayType");
         	outTree->addSingle(eQuarksInHbb_,  "",  "eQuarksInHbb");
         	outTree->addSingle(nLepsTT_,  "",  "nLepsTT");
@@ -84,8 +87,8 @@ public:
         }
 
         outTree->addSingle(era_,"","era");
-    	outTree->addSingle(ht_,  "",  "ht");
-    	outTree->addSingle(met_,  "",  "met");
+        outTree->addSingle(ht_,  "",  "ht");
+        outTree->addSingle(met_,  "",  "met");
         outTree->addSingle(event_, "", "event");
         outTree->addSingle(run_, "", "run");
         outTree->addSingle(lepChan_,  "",  "lepChan");
@@ -94,8 +97,8 @@ public:
         outTree->addSingle(isMuon2_, "", "isMuon2");
         outTree->addSingle(lep1PT_, "", "lep1PT");
         outTree->addSingle(lep2PT_, "", "lep2PT");
-    	outTree->addSingle(lep1ETA_,  "",  "lep1ETA");
-    	outTree->addSingle(lep2ETA_,  "",  "lep2ETA");
+        outTree->addSingle(lep1ETA_,  "",  "lep1ETA");
+        outTree->addSingle(lep2ETA_,  "",  "lep2ETA");
         outTree->addSingle(lep1Phi_,  "",  "lep1Phi");
         outTree->addSingle(lep2Phi_,  "",  "lep2Phi");
 
@@ -104,38 +107,43 @@ public:
         outTree->addSingle(dilepDR_, "", "dilepDR");
         outTree->addSingle(llMetDphi_, "", "llMetDphi");
 
-    	outTree->addSingle(hbbMass_,  "",  "hbbMass");
+        outTree->addSingle(hbbMass_,  "",  "hbbMass");
         outTree->addSingle(hbbMassUp_,  "",  "hbbMassUp");
         outTree->addSingle(hbbMassDown_,  "",  "hbbMassDown");
 
-    	outTree->addSingle(hbbPT_,  "",  "hbbPT");
-    	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
-    	outTree->addSingle(hbbTag_,  "",  "hbbTag");
+        outTree->addSingle(hbbPT_,  "",  "hbbPT");
+        outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
+        outTree->addSingle(hbbTag_,  "",  "hbbTag");
 
-    	outTree->addSingle(hhMass_,  "",  "hhMass");
-    	outTree->addSingle(hhMassBasic_,  "",  "hhMassBasic");
-    	outTree->addSingle(hwwPT_,  "",  "hwwPT");
+        outTree->addSingle(hhMass_,  "",  "hhMass");
+        outTree->addSingle(hhMassBasic_,  "",  "hhMassBasic");
+        outTree->addSingle(hwwPT_,  "",  "hwwPT");
         outTree->addSingle(hwwLi_,  "",  "hwwLi");
-    	outTree->addSingle(wjjTau2o1_,  "",  "wjjTau2o1");
-    	outTree->addSingle(wjjMass_,  "",  "wjjMass");
-    	outTree->addSingle(wlnuMass_,  "",  "wlnuMass");
-    	outTree->addSingle(wlnuPT_,  "",  "wlnuPT");
+        outTree->addSingle(wjjTau2o1_,  "",  "wjjTau2o1");
+        outTree->addSingle(wjjMass_,  "",  "wjjMass");
+        outTree->addSingle(wlnuMass_,  "",  "wlnuMass");
+        outTree->addSingle(wlnuPT_,  "",  "wlnuPT");
 
-    	outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
+        outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
 
         if(addUncVariables){
         	outTree->addSingle(w_muIDUp_,  "",  "w_muIDUp");
+        	outTree->addSingle(w_muIDDown_,  "",  "w_muIDDown");
         	outTree->addSingle(w_elRecoUp_,  "",  "w_elRecoUp");
+        	outTree->addSingle(w_elRecoDown_,  "",  "w_elRecoDown");
         	outTree->addSingle(w_elIDUp_,  "",  "w_elIDUp");
-        	outTree->addSingle(w_b_realUp_,  "",  "w_b_realUp");
-        	outTree->addSingle(w_b_fakeUp_,  "",  "w_b_fakeUp");
-        	outTree->addSingle(w_b_realDown_,  "",  "w_b_realDown");
-        	outTree->addSingle(w_b_fakeDown_,  "",  "w_b_fakeDown");
+        	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
+        	outTree->addSingle(w_bAk4_realUp_,  "",  "w_bAk4_realUp");
+        	outTree->addSingle(w_bAk4_realDown_,  "",  "w_bAk4_realDown");
+        	outTree->addSingle(w_bAk4_fakeUp_,  "",  "w_bAk4_fakeUp");
+        	outTree->addSingle(w_bAk4_fakeDown_,  "",  "w_bAk4_fakeDown");
+        	outTree->addSingle(w_bAk8_Up_,  "",  "w_bAk8_Up");
+        	outTree->addSingle(w_bAk8_Down_,  "",  "w_bAk8_Down");
         	outTree->addSingle(w_puUp_,  "",  "w_puUp");
         	outTree->addSingle(w_puDown_,  "",  "w_puDown");
-        	outTree->addSingle(w_muIDDown_,  "",  "w_muIDDown");
-        	outTree->addSingle(w_elRecoDown_,  "",  "w_elRecoDown");
-        	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
+        	outTree->addSingle(w_prefireUp_,  "",  "w_prefireUp");
+        	outTree->addSingle(w_prefireDown_,  "",  "w_prefireDown");
+
 //        	outTree->addSingle(w_muISOUp_,  "",  "w_muISOUp");
 //        	outTree->addSingle(w_elISOUp_,  "",  "w_elISOUp");
 //        	outTree->addSingle(w_muISODown_,  "",  "w_muISODown");
@@ -150,12 +158,16 @@ public:
     }
 
     bool runEvent() override {
+//    	std::cout<<"Event: "<<*reader_event->event<<std::endl;
         bool passPre1 = true;
         bool passPre2 = true;
         if(!DefaultSearchRegionAnalyzer::runEvent() || !passEventFilters) {
         	passPre1 = false;
         	passPre2 = false;
         }
+        fjprocTest.reset(new FatJetBTagScaleFactors (dataDirectory));
+        fjprocTest->setParameters(parameters.fatJets,int(*reader_event->dataEra));
+
         if(lepChan != SINGLELEP || !hbbCand || !wjjCand)  passPre1 = false;
         if(lepChan != DILEP || !hbbCand)                  passPre2 = false;
 
@@ -164,6 +176,8 @@ public:
         else               lepChan_ = NOCHANNEL;
 
         if(!doPDFWeights && lepChan_ == NOCHANNEL) return false;
+
+        fjbtag_N_ = fjprocTest->getSF(parameters.fatJets,{hbbCand});
 
         switch(FillerConstants::DataEra(*reader_event->dataEra)){
         case FillerConstants::ERA_2018:
@@ -250,6 +264,11 @@ public:
             llMetDphi_ = llMetDphi;
             hwwPT_ = hWW.pt();
 
+            if(FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018) {
+            	if(!isMuon1_ && lep1ETA_ <= 1.479 && lep1Phi_ >= -1.55 && lep1Phi_ <= 0.9) hasHEMLep_ = true;
+            	if(!isMuon2_ && lep2ETA_ <= 1.479 && lep2Phi_ >= -1.55 && lep2Phi_ <= 0.9) hasHEMLep_ = true;
+            }
+
             if(hbbCand) {
                 hhMass_  = hh.mass();
             } else {
@@ -306,11 +325,12 @@ public:
         xsec_    = getXSecWeight();
         pu_N_    = getPUWeight();
         lep_N_   = getLeptonWeight();
+//        fjbtag_N_= getFJBTagWeights(); --> currently done in runEvents()
         btag_N_  = getAK4BTagWeights();
-        sjbtag_N_= getSJBTagWeights();
-        fjbtag_N_= getFJBTagWeights();
+//        sjbtag_N_= getSJBTagWeights();
         topPt_N_ = getTopPTWeight();
         trig_N_  = getTriggerWeight();
+        prefire_N_ = FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018 ? 1.0 : *reader_event->prefweight;
     }
 
     void fillGenVariables() {
@@ -408,8 +428,13 @@ public:
         w_elRecoUp_   = float(lepProc->getElectronSF(UP,NOMINAL)*nomMu);
         w_elIDUp_     = float(lepProc->getElectronSF(NOMINAL,UP)*nomMu);
 //            w_elISOUp_    = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu);
-        w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,UP));
-        w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},UP,NOMINAL));
+        w_bAk4_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP));
+        w_bAk4_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN));
+        w_bAk4_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL));
+        w_bAk4_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL));
+        w_bAk8_Up_   = fjprocTest->getSF(parameters.fatJets,{hbbCand},UP);
+        w_bAk8_Down_ = fjprocTest->getSF(parameters.fatJets,{hbbCand},DOWN);
+
         w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
 
         w_muIDDown_   = float(lepProc->getMuonSF(NONE,DOWN)*nomEl);
@@ -417,9 +442,10 @@ public:
         w_elRecoDown_ = float(lepProc->getElectronSF(DOWN,NOMINAL)*nomMu);
         w_elIDDown_   = float(lepProc->getElectronSF(NOMINAL,DOWN)*nomMu);
 //            w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
-        w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
-        w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
         w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
+
+        w_prefireUp_ = *reader_event->prefweightup;
+        w_prefireDown_ = *reader_event->prefweightdown;
 
         if(doPDFWeights) {
             for(unsigned int i = 1; i < 9; ++i){
@@ -442,15 +468,17 @@ public:
     float pu_N_       = 0;
     float lep_N_      = 0;
     float btag_N_     = 0;
-    float sjbtag_N_   = 0;
+//    float sjbtag_N_   = 0;
     float fjbtag_N_   = 0;
     float topPt_N_    = 0;
+    float prefire_N_  = 0;
 
     size8 lepChan_    = 0;
     size64 event_     = 0;
     size   run_       = 0;
     size16 sampParam_ = 0;
-    size16 era_ = 0;
+    size16 era_       = 0;
+    size8 hasHEMLep_  = 0;
 
     //SR variables
     float ht_        = 0;
@@ -501,15 +529,19 @@ public:
     float w_muIDUp_      = 0;
     float w_elRecoUp_    = 0;
     float w_elIDUp_      = 0;
-    float w_b_realUp_    = 0;
-    float w_b_fakeUp_    = 0;
+    float w_bAk4_realUp_    = 0;
+    float w_bAk4_fakeUp_    = 0;
+    float w_bAk4_realDown_  = 0;
+    float w_bAk4_fakeDown_  = 0;
+    float w_bAk8_Up_   = 0;
+    float w_bAk8_Down_ = 0;
     float w_puUp_        = 0;
     float w_muIDDown_    = 0;
     float w_elRecoDown_  = 0;
     float w_elIDDown_    = 0;
-    float w_b_realDown_  = 0;
-    float w_b_fakeDown_  = 0;
     float w_puDown_      = 0;
+    float w_prefireUp_   = 0;
+    float w_prefireDown_ = 0;
 //    float w_muISOUp_     = 0;
 //    float w_elISOUp_     = 0;
 //    float w_muISODown_   = 0;
@@ -520,6 +552,8 @@ public:
 
     bool addUncVariables = false;
     bool doPDFWeights = false;
+
+    std::unique_ptr<FatJetBTagScaleFactors> fjprocTest;
 
 };
 
@@ -534,7 +568,7 @@ void doOne(const std::string& fileName, const int treeInt,int randSeed, const st
 }
 
 void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const std::string& outFileName, const CORRTYPE jerType, CORRTYPE jesUNC, CORRTYPE metUNC, CORRTYPE hemUNC, float xSec = -1, float numEvent = -1){
-    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed,jerType,jesUNC,metUNC,hemUNC);
+	Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed,jerType,jesUNC,metUNC,hemUNC);
     if(xSec > 0) a.setSampleInfo(xSec,numEvent);
     a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
     a.analyze();
@@ -544,16 +578,16 @@ void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const
 
 void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
     doOne(fileName,treeInt,randSeed,outFileName,xSec,numEvent);
-    if(treeInt==2){
+    if(treeInt>2 && (outFileName.find("Radion") != std::string::npos || outFileName.find("Bulk") != std::string::npos)) {
         size_t lastindex = outFileName.find_last_of(".");
         std::string extLessName = outFileName.substr(0, lastindex);
-//        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,NONE,xSec,numEvent);
-//        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,NONE,xSec,numEvent);
-//        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE,NONE,xSec,numEvent);
-//        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,NONE,xSec,numEvent);
-//        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN,NONE,xSec,numEvent);
-//        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,NONE,xSec,numEvent);
-//        doOneVar(fileName,treeInt,randSeed+7,extLessName+"_HEM.root"    ,NOMINAL,NONE,NONE,DOWN,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDown.root",NOMINAL,DOWN,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDown.root",NOMINAL,NONE,DOWN,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+7,extLessName+"_HEM.root"    ,NOMINAL,NONE,NONE,DOWN,xSec,numEvent);
     }
 
 }
