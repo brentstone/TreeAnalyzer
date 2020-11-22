@@ -20,25 +20,31 @@
     bool isSignal = true;
     const std::string cName = "radHH";
     const std::string l = "mu";
-    const std::string b = "M";
-    const std::string p = "HP";
+    const std::string b = "T";
+    const std::string p = "LP";
     const std::string h = "full";
-    const std::string cat  = "std_"+ l +"_"+b+"_"+p +"_"+h+"_13TeV";
+    const std::string cat  = l +"_"+b+"_"+p +"_"+h+"_13TeV_Run2";
     const std::string postFix = true ? "" : "_opt"; //only for losttw and qg
     const std::string prefix =  isSignal ? "shapeSig" : "shapeBkg";
     const std::string pdfName = prefix + "_" + cName+"_"+cat+postFix;
     RooWorkspace * w = 0;
 
-    int nBinsX = 90;
-//    int nBinsX = 30;
-//    int nBinsY = 72;
-//    std::vector<double> binsY = {700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2050,2100,2150,2200,2250,2300,2350,2400,2450,2500,2600,2700,2800,2900,3000,3200,3400,3600,3800,4000};
-    int nBinsY = 132;
-    std::vector<double> binsY =  {700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2025,2050,2075,2100,2125,2150,2175,2200,2225,2250,2275,2300,2325,2350,2375,2400,2425,2450,2475,2500,2525,2550,2575,2600,2625,2650,2675,2700,2725,2750,2775,2800,2825,2850,2875,2900,2925,2950,2975,3000,3025,3050,3075,3100,3125,3150,3175,3200,3225,3250,3275,3300,3325,3350,3375,3400,3425,3450,3475,3500,3525,3550,3575,3600,3625,3650,3675,3700,3725,3750,3775,3800,3825,3850,3875,3900,3925,3950,3975,4000};
-//    int nBinsY = 66;
-//    std::vector<double> binsY = {700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,1700,1750,1800,1850,1900,1950,2000,2050,2100,2150,2200,2250,2300,2350,2400,2450,2500,2550,2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,3100,3150,3200,3250,3300,3350,3400,3450,3500,3550,3600,3650,3700,3750,3800,3850,3900,3950,4000};
-//    int nBinsY = 86;
-//    std::vector<double> binsY = {700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2050,2100,2150,2200,2250,2300,2350,2400,2450,2500,2550,2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000};
+    int nBinsX = 30;
+    int nBinsY = 86;
+    std::vector<double> binsY = {700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,
+    		1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,1650,1675,1700,1725,
+			1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2050,2100,2150,2200,2250,2300,2350,2400,2450,2500,2550,
+			2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,
+			3850,3925,4000};
+
+    int nBinsY_2x = 43;
+    std::vector<double> binsY_2x = {
+            700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,
+            1700,1750,1800,1850,1900,1950,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,3100,
+            3250,3400,3550,3700,3850,4000
+    };
+
+
     std::string hhResSysName = "jer"; //0.05
     std::string hhScaleSysName = "jes"; //0.01
 
@@ -62,8 +68,10 @@
      const std::string normName = "n_exp_bin" +cat +"_proc_"+cName;
      auto norm = (RooAbsReal*)components->find(normName.c_str());
      double normV = norm->getVal();
-          RooArgSet vars(*xV) ;
-          vars.add(*yV) ;
+     RooArgSet vars(*xV) ;
+     vars.add(*yV) ;
+
+     std::cout<<"norm val = "<<normV<<std::endl;
 
      for( int iInX = 1; iInX <= histBinning->GetNbinsX(); ++iInX ){
        double centerX = histBinning->GetXaxis()->GetBinCenter(iInX);
@@ -84,14 +92,16 @@ void doOneSet(const std::string& name,RooArgSet* components ){
     std::vector<TObject*> paramPads;
     auto pdf = (RooAbsPdf*)components->find(pdfName.c_str());
 
-
     auto fineXBins = RooFit::Binning(360,30,210);
     auto fineYBins = RooFit::Binning(3300,700,4000);
 
     auto coarseXBins = RooFit::Binning(nBinsX,30,210);
+
     RooBinning varBinningY(nBinsY,&binsY[0]);
-//    auto coarseYBins = RooFit::Binning(132,700,4000);
+    RooBinning varBinningY_2x(nBinsY_2x,&binsY_2x[0]);
+
     auto coarseYBins = RooFit::Binning(varBinningY);
+    auto coarseYBins_2x = RooFit::Binning(varBinningY_2x);
 
     const std::string fineHistName = "Fine_"+name+"_"+cName+"_"+cat;
     TH2* histF = (TH2*)pdf->createHistogram(fineHistName.c_str(),
@@ -100,17 +110,20 @@ void doOneSet(const std::string& name,RooArgSet* components ){
     histF->SetXTitle("#it{m}_{bb} [GeV]");
     histF->SetYTitle("#it{m}_{HH} [GeV]");
 
+    std::cout<<"histF integral = "<<histF->Integral()<<std::endl;
+    std::cout<<"nx = "<<histF->GetNbinsX()<<", ny = "<<histF->GetNbinsY()<<std::endl<<std::endl;
 
-    //testing out my impementation of create histogram
-//    const std::string coarseHist = "Coarse_"+name+"_"+cName+"_"+cat;
-//    TH2* histC = (TH2*)pdf->createHistogram(coarseHist.c_str(),
-//            *w->var("MJ"),coarseXBins,RooFit::YVar(*w->var("MR"),coarseYBins));
-//    paramPads.push_back(histC);
-
-    auto rebin=[](const TH2* hIn, const std::string& outName)->TH2* {
+    auto rebin=[](const TH2* hIn, const std::string& outName, const bool doCoarser)->TH2* {
 //        TH2 * histRe = new TH2F(outName.c_str(),";MJ;MR",nBinsX,30,210,132,700,4000);
-        TH2 * histRe = new TH2F(outName.c_str(),";MJ;MR",nBinsX,30,210,nBinsY,&binsY[0]);
-        for( int iInX = 1; iInX <= hIn->GetNbinsX(); ++iInX ){
+    	TH2 * histRe = 0;
+    	if(doCoarser) {
+    		histRe = new TH2F(outName.c_str(),";MJ;MR",nBinsX,30,210,nBinsY_2x,&binsY_2x[0]);
+    	} else {
+    		histRe = new TH2F(outName.c_str(),";MJ;MR",nBinsX,30,210,nBinsY,&binsY[0]);
+
+    	}
+
+    	for( int iInX = 1; iInX <= hIn->GetNbinsX(); ++iInX ){
           double centerX = hIn->GetXaxis()->GetBinCenter(iInX);
           for( int iInY = 1; iInY <= hIn->GetNbinsY(); ++iInY ){
             double centerY = hIn->GetYaxis()->GetBinCenter(iInY);
@@ -122,21 +135,53 @@ void doOneSet(const std::string& name,RooArgSet* components ){
 
 
 
-    TH2 * histFRe = rebin(histF,fineHistName+"_Re");
+    TH2 * histFRe = rebin(histF,fineHistName+"_Re",false);
+    std::cout<<"histFRe integral = "<<histFRe->Integral()<<std::endl;
+    std::cout<<"nx = "<<histFRe->GetNbinsX()<<", ny = "<<histFRe->GetNbinsY()<<std::endl<<std::endl;
+
+
+    TH2 * histFRe_2x = rebin(histF,fineHistName+"_Re2x",true);
+
 //    paramPads.push_back(histFRe);
     const std::string coarseHist = "Coarse_"+name+"_"+cName+"_"+cat;
+    const std::string coarseHist_2x = "Coarse2_"+name+"_"+cName+"_"+cat;
+
     TH2* histC = createHistogram(coarseHist,pdf,histFRe,w->var("MJ"),w->var("MR"),components);
+    std::cout<<"histC integral = "<<histC->Integral()<<std::endl;
+    std::cout<<"nx = "<<histC->GetNbinsX()<<", ny = "<<histC->GetNbinsY()<<std::endl<<std::endl;
+
+    TH2* histC2 = createHistogram(coarseHist_2x,pdf,histFRe_2x,w->var("MJ"),w->var("MR"),components);
+
+
     histC->SetXTitle("#it{m}_{bb} [GeV]");
     histC->SetYTitle("#it{m}_{HH} [GeV]");
+    histC2->SetXTitle("#it{m}_{bb} [GeV]");
+    histC2->SetYTitle("#it{m}_{HH} [GeV]");
+
     paramPads.push_back(histC);
+    paramPads.push_back(histC2);
 //    paramPads.push_back(histCRe);
     TH2* histRat = (TH2*)histC->Clone();
+    TH2* histRat2 = (TH2*)histC2->Clone();
+
+
     histRat->Divide(histFRe);
+    histRat2->Divide(histFRe_2x);
+
     paramPads.push_back(histRat);
+    paramPads.push_back(histRat2);
+
     histRat->SetXTitle("#it{m}_{bb} [GeV]");
     histRat->SetYTitle("#it{m}_{HH} [GeV]");
+    histRat2->SetXTitle("#it{m}_{bb} [GeV]");
+    histRat2->SetYTitle("#it{m}_{HH} [GeV]");
 
+    TH2 *histC_Re2 = rebin(histC,"histC_Re",true);
+    TH2 *hRat = (TH2*)histC2->Clone();
+    hRat->Divide(histC_Re2);
+    paramPads.push_back(hRat);
 
+/*
     auto setNSigma=[&](const::std::string& nuisName, float nSigma = 0){
         auto var = w->var(nuisName.c_str()); //CMS_HHlnujj_losttw_PTX_L
         auto nus = w->pdf((nuisName+"_Pdf").c_str());
@@ -183,7 +228,7 @@ void doOneSet(const std::string& name,RooArgSet* components ){
     paramPads.push_back(histResDownRe);
     paramPads.push_back(histResUpRe);
     paramPads.push_back(histScaleUpRe);
-
+*/
     Drawing::drawAll(paramPads, name.c_str(),"COLZ");
     std::cout << name<<" -> " << histFRe->Integral() <<" "<<" "<<histC->Integral()<<std::endl;
 }
@@ -198,6 +243,7 @@ void go(std::string inFile){
     auto components = totPDF->getComponents();
 
     w->var("MH")->setVal(1000);
+    std::cout<<"doing OneSet"<<std::endl;
     doOneSet("1000",components);
 
     w->var("MH")->setVal(2000);
@@ -212,18 +258,8 @@ void go(std::string inFile){
     w->var("MH")->setVal(3500);
     doOneSet("3500",components);
 
-//    const std::string prefix =  isSignal ? "shapeSig" : "shapeBkg";
-//    const std::string pdfName = prefix + "_" + cName+"_"+cat+postFix;
-//    const std::string normName = "n_exp_bin" +cat +"_proc_"+cName;
-//
-//
 
-
-
-
-
-
-  }
+}
 
 #endif
 
