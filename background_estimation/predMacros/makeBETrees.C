@@ -92,6 +92,7 @@ public:
         outTree->addSingle(event_, "", "event");
         outTree->addSingle(run_, "", "run");
         outTree->addSingle(lepChan_,  "",  "lepChan");
+        outTree->addSingle(hasHEMLep_,  "",  "hasHEMLep");
 
         outTree->addSingle(isMuon1_, "", "isMuon1");
         outTree->addSingle(isMuon2_, "", "isMuon2");
