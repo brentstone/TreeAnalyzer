@@ -196,18 +196,18 @@ You can also do the same thing....but interactively. This time you need to break
     hadd higgsCombineTest.HybridNew.mH2300.allToys.root higgsCombineTest.HybridNew.mH2300.*    
     combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance   --readHybridResult --toysFile=higgsCombineTest.HybridNew.mH2300.allToys.root 
 
-### Do a fit and comput the standard fit diagnostics  
+### Do a fit and compute the standard fit diagnostics  
 These are a part of the "standard tests." You will need to make sure that you have your card in root file form:  
 
     text2workspace.py combinedCard.txt -o combined.root
 
-Do a fit to the data with some mass hypothesis:  
+Do a fit to the data with some mass hypothesis:
 
-    combine -M FitDiagnostics -m 1000 combined.root  
+    combine -M FitDiagnostics -m 1000 combined.root
 
-Get the fit diagnostics (e.g. NP pulls):  
+Get the fit diagnostics (e.g. NP pulls):
 
-     python ~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/test/diffNuisances.py -g plots.root fitDiagnostics.root 
+     python ~/pathToTreeAnalyzer/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/test/diffNuisances.py -g plots.root fitDiagnostics.root 
 
 ### Goodness of fit tests  
 Run first, to get the observed value:
@@ -249,6 +249,10 @@ If you wanted to run with crab instead (crab.py is the same as for observation w
 
     combineTool.py -M Impacts -d forImpact.root --doFits --robustFit 1 --parallel 20 -m 1000 --rMax 0.42 --rMin 0.047 --toysFrequentist -t -1 --expectSignal=0.14 --job-mode crab3 --task-name grid-test  --custom-crab cuscrab.py 
     combineTool.py -M Impacts -d forImpact.root --doFits --robustFit 1 --parallel 20 -m 1000 --rMax 0.2 --job-mode crab3 --task-name grid-test  --custom-crab cuscrab.py 
+
+Once all these jobs have been completed, collect the results and write them to a json:
+
+    combineTool.py -M Impacts -d forImpact.root -m 1000 -o impacts.json
 
 Finally, you can then make your pretty plots:  
 
