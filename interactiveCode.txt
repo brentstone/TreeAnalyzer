@@ -11,6 +11,7 @@
 # get 1l electron eta comparisons
 # make plot GoF distribution from combine procedure
 # compare bbVV and bbtautau H->WW reco
+# print out limits from file
 #
 
 ## ----------------------------------------------------------------------------------------------------------------------------------------
@@ -329,6 +330,32 @@ p->rebin(5);
 //p->normalize();
 p->setYTitle("a.u.");
 p->draw(false,v);
+}
+
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Print out limits from a file
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+TFile *f = TFile::Open("higgsCombineTest.AsymptoticLimits.mH.root");
+TTree *t = (TTree*)f->Get("limit");
+double limit, mh;
+float quantileExpected;
+t->SetBranchAddress("limit",&limit);
+t->SetBranchAddress("mh",&mh);
+t->SetBranchAddress("quantileExpected",&quantileExpected);
+
+std::vector<std::pair<double,double>> massLims;
+for(int i=0; i<t->GetEntries(); ++i){
+t->GetEntry(i);
+if(quantileExpected != 0.5) continue;
+massLims.push_back(std::make_pair(mh,limit));
+}
+std::sort(massLims.begin(),massLims.end(),[](std::pair<double,double> a, std::pair<double,double> b){return a.first < b.first;});
+
+for(const auto& ml : massLims) {
+std::cout<<"m"<<ml.first<<": "<<ml.second<<std::endl;
 }
 
 ## ------------------------------------------------------------------------------------------------------------------------------------
