@@ -19,7 +19,8 @@ parser.add_option("-o","--onlyInitialFit",dest="onlyInitialFit",type=int,help="o
 (options,args) = parser.parse_args()
 
 if options.freq!=0 and options.skipInitialFit==0:
-    rcmd = "/bin/bash -l -c '{combine} -m {mass} -M MultiDimFit --saveWorkspace   --freezeParameters r --setParameters r=0 -n {tag}_{mass} {card}'".format(combine=options.combine,mass=options.mass,card=options.input,tag=options.label)
+    rcmd = "/bin/bash -l -c '{combine} -m {mass} -M MultiDimFit --saveWorkspace --freezeParameters r --setParameters r=0 -n {tag}_{mass} {card}'".format(combine=options.combine,mass=options.mass,card=options.input,tag=options.label)
+    print rcmd
     ps = subprocess.Popen(rcmd, shell=True)
     ps.wait()
     fitName="higgsCombine{tag}_{mass}.MultiDimFit.mH{mass}.root".format(tag=options.label,mass=options.mass)
@@ -44,9 +45,12 @@ if options.onlyInitialFit == 0:
         seed=int(201606+random.random()*10101982)
     
         if options.freq==0:
-            rcmd = "/bin/bash -l -c '{combine} -m {mass} -M MaxLikelihoodFit --expectSignal={r} --bypassFrequentistFit -t 10 --seed {seed}  -n {tag}_{i}_{mass} --rMin=-1 --rMax=1 --skipBOnlyFit  {card}'".format(combine=options.combine,mass=options.mass,seed=seed,card=options.input,r=options.r,tag=options.label,i=i)
+            rcmd = "/bin/bash -l -c '{combine} -m {mass} -M FitDiagnostics --expectSignal={r} --bypassFrequentistFit -t 10 --seed {seed} -n {tag}_{i}_{mass} --rMin=-1 --rMax=1 --skipBOnlyFit {card}'".format(combine=options.combine,mass=options.mass,seed=seed,card=options.input,r=options.r,tag=options.label,i=i)
         else:
             fitName="higgsCombine{tag}_{mass}_forBias.MultiDimFit.mH{mass}.root".format(tag=options.label,mass=options.mass)
-            rcmd = "/bin/bash -l -c '{combine} -m {mass} -M MaxLikelihoodFit --expectSignal={r} --bypassFrequentistFit -t 10 --seed {seed} --snapshotName MultiDimFit2 -n {tag}_{i}_{mass} --rMin=-1 --rMax=1 --skipBOnlyFit  {card}'".format(combine=options.combine,mass=options.mass,seed=seed,card=fitName,r=options.r,tag=options.label,i=i)
+            rcmd = "/bin/bash -l -c '{combine} -m {mass} -M FitDiagnostics --expectSignal={r} --bypassFrequentistFit -t 10 --seed {seed} --snapshotName MultiDimFit2 -n {tag}_{i}_{mass} --rMin=-1 --rMax=1 --skipBOnlyFit {card}'".format(combine=options.combine,mass=options.mass,seed=seed,card=fitName,r=options.r,tag=options.label,i=i)
+            print rcmd
             ps = subprocess.Popen(rcmd, shell=True)
             ps.wait()
+            
+#     os.system("hadd biasInput_Postfit_r{fitDiagnosticsPostfit_*_{mass}.root".format(mass=options.mass))
