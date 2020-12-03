@@ -30,7 +30,7 @@ do
   hadd ${outputdir}/bulkgrav_bbVV_m${mx}.root     ${inputdir}/out_BulkGravTohhTohVV*M-${mx}*[0-9].root
   hadd ${outputdir}/bulkgrav_bbtautau_m${mx}.root ${inputdir}/out_BulkGrav_hh_htata*M${mx}*[0-9].root
 
-  for sys in HEM JESUp JESDOWN JERUp JERDown METUp METDOWN
+  for sys in HEM JESUp JESDown JERUp JERDown METUp METDown
   do
     hadd ${outputdir}/radion_bbVV_m${mx}_${sys}.root       ${inputdir}/out_Radion_hh_hVV*M-${mx}*_${sys}.root
     hadd ${outputdir}/radion_bbtautau_m${mx}_${sys}.root   ${inputdir}/out_Radion_hh_htata*M${mx}*_${sys}.root
