@@ -579,7 +579,7 @@ void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const
 
 void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
     doOne(fileName,treeInt,randSeed,outFileName,xSec,numEvent);
-    if(treeInt>2 && (outFileName.find("Radion") != std::string::npos || outFileName.find("Bulk") != std::string::npos)) {
+    if(treeInt==2 && (outFileName.find("Radion") != std::string::npos || outFileName.find("Bulk") != std::string::npos)) {
         size_t lastindex = outFileName.find_last_of(".");
         std::string extLessName = outFileName.substr(0, lastindex);
         doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,NONE,xSec,numEvent);
