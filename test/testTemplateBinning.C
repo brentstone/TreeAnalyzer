@@ -249,14 +249,8 @@ void go(std::string inFile){
     w->var("MH")->setVal(2000);
     doOneSet("2000",components);
 
-    w->var("MH")->setVal(2200);
-    doOneSet("2200",components);
-
-    w->var("MH")->setVal(3100);
-    doOneSet("3100",components);
-
-    w->var("MH")->setVal(3500);
-    doOneSet("3500",components);
+    w->var("MH")->setVal(3000);
+    doOneSet("3000",components);
 
 
 }
