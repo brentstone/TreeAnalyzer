@@ -46,8 +46,14 @@ std::pair<double,TH2*> calcSatTS(TH2* mod, TH2 *data, TString name) {
 
         hTS->SetBinContent(iX,iY,0.0);
         hTS->SetBinError(iX,iY,0.0);
-	// hack for test
-//	if(contMod <= 3 || contDat <= 3) continue;
+
+        double binLowX = mod->GetXaxis()->GetBinLowEdge(iX);
+        double binLowY = mod->GetYaxis()->GetBinLowEdge(iY);
+
+	// hack for testing a subrange
+//    if(contMod < 0 || contDat < 11) continue;
+//    if( binLowX >= 150) continue;
+//    if(binLowY >= 1000 ) continue;
 
         double ts = getSatTS(contMod,contDat);
         hTS->SetBinContent(iX,iY,2*ts);
@@ -71,12 +77,12 @@ TFile *f = TFile::Open(postFitDir+"/postFit.root");
 
 double totTS = 0;
 std::vector<double> toys_totTS(nToys,0.0);
+std::vector<TH2*> toysHist_totTS(nToys,0);
 
 TH2 *obsTS = 0;
 
 for(const auto& sel : (doNonTop ? selsNonTop : selsTop)) {
     
-//if(sel!="e_T_LP") continue;
     bool skip = false;
     for(const auto& s : exclSels) {if(sel == s) skip = true;}
     if(skip) continue;
@@ -96,6 +102,8 @@ for(const auto& sel : (doNonTop ? selsNonTop : selsTop)) {
 
         auto toyinfo = calcSatTS(toyMod,toyData,"toy"+iS+"_"+sel);
         toys_totTS[i-1] += toyinfo.first;
+        if(!toysHist_totTS[i-1]) toysHist_totTS[i-1] = (TH2*)toyinfo.second->Clone(TString::Format("toyTS_%d",i));
+        else                     toysHist_totTS[i-1]->Add(toyinfo.second,1);
     }
 }
 
@@ -110,9 +118,14 @@ p->addStackHist(htoys,"toys");
 std::cout<<"Toys:"<<std::endl;
 showQuantiles(toys_totTS,totTS);
 
-p->draw(false,"toyDist");
+TCanvas *c = p->draw(false,"toyDist");
+TArrow *arr = new TArrow(totTS,10,totTS,0);
+arr->SetLineWidth(2);
+arr->SetLineColor(kRed);
+arr->Draw();
 
 plotter.add2D(obsTS);
+for(int i=0;i<nToys;++i) plotter.add2D(toysHist_totTS[i]);
 plotter.write("outSatGoF.root");
 
 }
