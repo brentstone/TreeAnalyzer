@@ -445,8 +445,8 @@ public:
 //            w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
         w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
 
-        w_prefireUp_ = *reader_event->prefweightup;
-        w_prefireDown_ = *reader_event->prefweightdown;
+        w_prefireUp_ = FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018 ? 1.0 : *reader_event->prefweightup;
+        w_prefireDown_ = FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018 ? 1.0 : *reader_event->prefweightdown;
 
         if(doPDFWeights) {
             for(unsigned int i = 1; i < 9; ++i){
