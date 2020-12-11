@@ -159,7 +159,6 @@ public:
     }
 
     bool runEvent() override {
-//    	std::cout<<"Event: "<<*reader_event->event<<std::endl;
         bool passPre1 = true;
         bool passPre2 = true;
         if(!DefaultSearchRegionAnalyzer::runEvent() || !passEventFilters) {
@@ -266,8 +265,8 @@ public:
             hwwPT_ = hWW.pt();
 
             if(FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018) {
-            	if(!isMuon1_ && lep1ETA_ <= 1.479 && lep1Phi_ >= -1.55 && lep1Phi_ <= 0.9) hasHEMLep_ = true;
-            	if(!isMuon2_ && lep2ETA_ <= 1.479 && lep2Phi_ >= -1.55 && lep2Phi_ <= 0.9) hasHEMLep_ = true;
+                if(!isMuon1_ && lep1ETA_ <= -1.479 && lep1Phi_ >= -1.55 && lep1Phi_ <= -0.9) hasHEMLep_ = true;
+                if(!isMuon2_ && lep2ETA_ <= -1.479 && lep2Phi_ >= -1.55 && lep2Phi_ <= -0.9) hasHEMLep_ = true;
             }
 
             if(hbbCand) {
