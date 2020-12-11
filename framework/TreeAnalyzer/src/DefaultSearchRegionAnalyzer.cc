@@ -39,7 +39,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     if(nrSubStr>1){
         signal_mass = (((TObjString *)match->At(1))->GetString()).Atoi();
     }
-    isTuneCP5 = (fileName.find("TuneCP5") != std::string::npos);
 
     fjProc      .reset(new FatJetProcessor ());
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
@@ -148,7 +147,6 @@ void DefaultSearchRegionAnalyzer::setupParametersFromEra(){
             break;
         case FillerConstants::ERA_2016:
             parameters = ReaderConstants::set2016Parameters();
-            if(isTuneCP5) parameters.jets.jetBtagCorrSFFile ="corrections/btagging/DeepJet_2016LegacySF_V1_TuneCP5.csv";
             break;
         default:
             throw std::invalid_argument(
@@ -163,10 +161,7 @@ void DefaultSearchRegionAnalyzer::setupProcessorParameters(){
     if(isCorrOn(CORR_JER))     JERProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_LEP))     leptonSFProc->setParameters(parameters.leptons);
     if(isCorrOn(CORR_LEP))     dileptonSFProc->setParameters(parameters.dileptons);
-    if(isCorrOn(CORR_AK4BTAG)) {
-        if(isTuneCP5 && FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2016) ak4btagSFProc->setReshaping();
-        ak4btagSFProc->setParameters(parameters.jets);
-    }
+    if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
 
     hSolverLi->setParameters(parameters.hww);
 }
@@ -495,12 +490,7 @@ float DefaultSearchRegionAnalyzer::getSJBTagWeights() {
 }
 
 float DefaultSearchRegionAnalyzer::getAK4BTagWeights() {
-    float norm = 1.0;
-    if(isTuneCP5 && *reader_event->dataEra == FillerConstants::ERA_2016) {
-        norm = isSignal() ? parameters.jets.jetBtagCorrTuneCP5norm_sig
-    		: parameters.jets.jetBtagCorrTuneCP5norm_bkg;
-    }
-    return norm*ak4btagSFProc->getSF(jets_HbbV);
+    return ak4btagSFProc->getSF(jets_HbbV);
 }
 
 float DefaultSearchRegionAnalyzer::getTopPTWeight() {

@@ -103,7 +103,6 @@ public:
     FillerConstants::MCProcess mcProc = FillerConstants::NOPROCESS;
     int             signal_mass=0;
     TString         smpName  = "";
-    bool            isTuneCP5;
 
     std::vector<const Jet*> jets_ht;
     float ht;
