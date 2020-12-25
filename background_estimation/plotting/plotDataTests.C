@@ -264,8 +264,13 @@ public:
         }
     }
 
-    std::vector<TH2*> getComponents(const ModelType type, const std::string& sel ){
+    std::vector<TH2*> getComponents(const ModelType type, const std::string& sel, const bool modIsAdd ){
         std::vector<TH2*> bkgs;
+        if(type == MOD_PRE && modIsAdd) {
+        	bkgs.push_back((TH2*)postfitFile->Get((std::string("prefit_")+sel).c_str()));
+        	return bkgs;
+        }
+
         for(unsigned int iT = 0; iT < bkgSels.size(); ++iT){
             TH2 * h = 0;
             if(type == MOD_MC) {
@@ -286,14 +291,19 @@ public:
         std::vector<TH2*> postFits;
         std::vector<TH2*> preFits;
         std::vector<TH2*> mcs;
-        if(prefs.modelType == MOD_POST || prefs.addType == MOD_POST ) postFits = getComponents(MOD_POST,sel);
+        if(prefs.modelType == MOD_POST || prefs.addType == MOD_POST ) postFits = getComponents(MOD_POST,sel,false);
         if(prefs.modelType == MOD_MC || prefs.addType == MOD_MC || prefs.modelType == MOD_PRE || prefs.addType == MOD_PRE )
-            mcs = getComponents(MOD_MC,sel);
+            mcs = getComponents(MOD_MC,sel,false);
         if(prefs.modelType == MOD_PRE || prefs.addType == MOD_PRE ){
-            preFits = getComponents(MOD_PRE,sel);
-            for(unsigned int iT = 0; iT < bkgSels.size(); ++iT){
-                if(preFits[iT]) preFits[iT]->Scale(mcs[iT]->Integral()/preFits[iT]->Integral());
-            }
+        	if(prefs.modelType == MOD_POST) {
+        		preFits = getComponents(MOD_PRE,sel,true);
+        	} else {
+                preFits = getComponents(MOD_PRE,sel,false);
+                for(unsigned int iT = 0; iT < bkgSels.size(); ++iT){
+                    if(preFits[iT]) preFits[iT]->Scale(mcs[iT]->Integral()/preFits[iT]->Integral());
+                }
+        	}
+
         }
 
         auto combine = [](std::vector<TH2*>& comps, std::vector<CutStr> bkgCats) -> TH2* {
@@ -314,13 +324,16 @@ public:
         cont.tot2D = combine(cont.bkg2D,bkgSels);
 
         if(prefs.addType == MOD_POST)cont.add2D=combine(postFits,bkgSels);
-        if(prefs.addType == MOD_PRE) cont.add2D=combine(preFits,bkgSels);
+        if(prefs.addType == MOD_PRE) {
+        	if(prefs.modelType == MOD_POST) cont.add2D = &*preFits[0];
+        	else cont.add2D=combine(preFits,bkgSels);
+        }
         if(prefs.addType == MOD_MC) cont.add2D=combine(mcs,bkgSels);
         if(prefs.addType == MOD_NONE) cont.add2D=0;
     }
 
     TH1* makeProjection(TH2* h, const std::string& title, const std::string s, const int iB, const int binL, const int binH){
-        auto h1 = prefs.binInY ? h->ProjectionX(  (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH)
+    	auto h1 = prefs.binInY ? h->ProjectionX(  (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH)
                 :  h->ProjectionY( (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH);
         if(prefs.rebinFactor > 1){
             h1->Rebin(prefs.rebinFactor);
@@ -765,7 +778,7 @@ public:
                         toys2D.emplace_back((TH2D*)toyFits[iT],(TH2D*)toyData[iT]);
                     }
                     a = new StatTesterAnalyzer({(TH1D*)cont.tot,(TH1D*)cont.data},toys,plotTitle,outNamePrefix+"_"+plotTitle+".root" );
-                    if(prefs.binInY) {
+                    if(!prefs.binInY) {
                     	a2 = new StatTesterAnalyzer({(TH2D*)cont.tot2D,(TH2D*)cont.data2D},toys2D,plotTitle,outNamePrefix+"_full2D.root" );
 //                    	allToys.push_back(toys2D);
                     }
@@ -791,7 +804,7 @@ public:
                     toyTSs_ks[iB]  = new TGraphAsymmErrors();//(sumName +"_toy_TS",";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
                 }
 
-                if(prefs.binInY && dataTSs_sa2D[iB] == 0){
+                if(!prefs.binInY && dataTSs_sa2D[iB] == 0){
                     std::string sumName = (prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
                     dataTSs_sa2D[iB] = new TH1F((sumName +"_data_TS_sa2D").c_str(),";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
                     toyTSs_sa2D[iB]  = new TGraphAsymmErrors();//(sumName +"_toy_TS",";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
@@ -805,7 +818,7 @@ public:
                 toyTSs_ks[iB]->SetPoint(iS,iS,a->ts_avg_ks);
                 toyTSs_ks[iB]->SetPointError(iS,0,0,a->ts_avg_ks - a->ts_down_ks,a->ts_up_ks-a->ts_avg_ks);
 
-                if(prefs.binInY) {
+                if(!prefs.binInY) {
                     dataTSs_sa2D[iB]->SetBinContent(iS+1,a2->ts_nom_sa);
                     toyTSs_sa2D[iB]->SetPoint(iS,iS,a2->ts_avg_sa);
                     toyTSs_sa2D[iB]->SetPointError(iS,0,0,a2->ts_avg_sa - a2->ts_down_sa,a2->ts_up_sa-a2->ts_avg_sa);
@@ -813,7 +826,7 @@ public:
 
 
                 delete a;
-                if(prefs.binInY) delete a2;
+                if(!prefs.binInY) delete a2;
             }
 
             for(unsigned int iT = 0; iT < toyFits.size(); ++iT ){
@@ -856,7 +869,7 @@ public:
             writeables.push_back(c);
         }
 
-        if(prefs.binInY) {
+        if(!prefs.binInY) {
             for(unsigned int iB = 0; iB < dataTSs_sa2D.size(); ++iB){
                 if(dataTSs_sa2D[iB] == 0) continue;
                 Plotter * p = new Plotter;
@@ -866,7 +879,11 @@ public:
                 p->setYTitle("Test statistic");
                 auto c = p->draw(false,(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]) +"_SA2D_testStat");
                 for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
-                    p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS],do1l).c_str());
+                	std::cout<<prefs.sels[iS]<<" "<<prefs.sels.size()<<std::endl;
+//                    p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS],do1l).c_str());
+                    if(iS <= 7) p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS],true).c_str());
+                    else p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS],false).c_str());
+
                 }
                 p->xAxis()->SetTitle(" ");
                 c->Update();
@@ -941,119 +958,6 @@ void doGlobChi2(std::vector<TObject*>& writeables, const std::string& limitBaseN
     ft->Close();
 }
 
-void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseName ){
-
-
-    auto makeBiasPlot = [&](const std::string& filename, const std::string& hName, const double rV, TFitResultPtr& fitres) ->TH1*  {
-        TFile * f = new TFile(filename.c_str(),"read");
-        if(!f) return 0;
-        TTree * tree = 0;
-        f->GetObject("tree_fit_sb",tree);
-        if(!tree){return 0;}
-        double fr=0;
-        double frerr=0;
-        tree->SetBranchAddress("r",&fr);
-        tree->SetBranchAddress("rErr",&frerr);
-        std::vector<double> biases;
-        for(unsigned int iE = 0; tree->GetEntry(iE); ++iE ){
-            if(frerr == 0) continue;
-            if(std::fabs((fr - rV)/frerr ) > 5) continue;
-            biases.push_back( (fr - rV)/frerr   );
-        }
-        f->Close();
-
-        TH1 * h = new TH1D(hName.c_str(),";signal strength pull",10, -5,5);
-        h->SetDirectory(0);
-        TH1::AddDirectory(kFALSE);
-        for(auto b : biases) h->Fill(b);
-        auto c = new TCanvas(hName.c_str(),hName.c_str());
-        h->Draw();
-        fitres = h->Fit("gaus","S");;
-        writeables.push_back(c);
-        //        std::sort(biases.begin(),biases.end(), [](const double a, const double b){return a < b;});
-        //        double nToys = biases.size();
-        //        h->SetDirectory(0);
-        //        TH1::AddDirectory(kFALSE);
-        //        for(auto b : biases) h->Fill(b);
-        //        std::cout << hName <<" "<< biases[nToys*0.5]<<std::endl;
-        //        return h;
-
-        return h;
-
-    };
-
-    std::vector<std::pair<int,double>> massRs = {{1000,0.0600585},{1600,0.0239257},{2500,0.0141601}};
-    std::vector<std::pair<int,double>> massRx2s = {{1000,0.120117},{1600,0.0478514},{2500,0.0283202}};
-    std::vector<std::pair<int,double>> massRx5s = {{1000,0.3002925},{1600,0.1196285},{2500,0.0708005}};
-    Plotter * p = new Plotter();
-    Plotter * pw = new Plotter();
-
-    std::vector<std::vector<double>> means(massRs.size());
-    std::vector<std::vector<double>> meanErs(massRs.size());
-
-    auto doSet = [&] (const std::string& label,const std::string& plotlabel, const std::vector<std::pair<int,double>>& massRs ){
-        TGraphErrors * gr = new TGraphErrors();
-        TGraphErrors * grw = new TGraphErrors();
-        int iP = 0;
-
-        for(unsigned int iM = 0; iM < massRs.size(); ++iM){
-            const auto& mr = massRs[iM];
-            TFitResultPtr fitres ;
-            auto dist = makeBiasPlot(limitBaseName + "/biasInput_"+label+"_"+int2Str(mr.first)+".root",
-                    "biasDist_"+label+"_"+int2Str(mr.first), mr.second,fitres);
-            if(dist){
-                auto pars = fitres->GetParams();
-                auto errs = fitres->GetErrors();
-                gr->SetPoint(iP,double(mr.first),pars[1]);
-                gr->SetPointError(iP,0,errs[1]);
-                grw->SetPoint(iP,double(mr.first),pars[2]);
-                grw->SetPointError(iP,0,errs[2]);
-                means[iM].push_back(pars[1]);
-                meanErs[iM].push_back(errs[1]);
-            }
-            ++iP;
-        }
-        if(iP){
-            p->addGraph(gr,plotlabel);
-            pw->addGraph(grw,plotlabel);
-        }
-    };
-
-    //   doSet("prefit"    ,"prefit b-model: r=excluded"   ,massRs);
-    doSet("postfit"   ,"postfit b-model: r=excluded"  ,massRs);
-    //   doSet("prefit_t2" ,"prefit b-model: r=2*excluded" ,massRx2s);
-    doSet("postfit_t2","postfit b-model: r=2*excluded",massRx2s);
-    doSet("postfit_t5","postfit b-model: r=5*excluded",massRx5s);
-
-    p->setYTitle("signal strength bias");
-    p->setXTitle((sigMCS.title).c_str());
-    auto c = p->draw(false,"signalInjectTest_bias");
-    c->SetTitle("signalInjectTest_bias");
-    writeables.push_back(c);
-
-    pw->setYTitle("signal strength width");
-    pw->setXTitle((sigMCS.title).c_str());
-    auto cw = pw->draw(false,"signalInjectTest_width");
-    cw->SetTitle("signalInjectTest_width");
-    writeables.push_back(cw);
-
-    std::cout << std::endl << std::endl;
-    for(unsigned int iM = 0; iM < massRs.size(); ++iM){
-        std::cout << int2Str(massRs[iM].first) << "&";
-        for(unsigned int iR = 0; iR < means[iM].size(); ++iR ){
-            std::cout <<TString::Format("$%0.2f\\pm%0.2f$",means[iM][iR],meanErs[iM][iR]);
-            if(iR+1 ==  means[iM].size()) std::cout <<" \\\\ \n";
-            else std::cout <<" & ";
-        }
-
-    }
-    std::cout << std::endl << std::endl;
-
-
-
-}
-
-
 
 TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& label,const std::string& title, const RooFitResult * fit_s_res,const RooFitResult * fit_b_res, const RooArgSet* prefit){
     TH1 * fit_s_uncsize = 0;
@@ -1083,7 +987,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
 
         auto fillPt = [&](TH1 * h, TGraphAsymmErrors* g, const RooRealVar *  v ){
             float SF = 1./nuis_p->getError();
-            float x  = SF*(v ? v->getVal() : 0 );
+            float x  = (v ? v->getVal() : 0 );
             float eu = SF*(v ? v->getErrorHi() : 0);
             float ed = SF*(v ? v->getErrorLo() : 0);
             float e =  SF*(v ? v->getError() : 0);
@@ -1095,6 +999,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
             if(h) h->SetBinError(nP+1,e);
             if(h) h->GetXaxis()->SetBinLabel(nP+1,unc.c_str());
         };
+
         if(fit_b) fillPt(fit_b_uncsize,fit_b_uncs,nuis_b);
         if(fit_s) fillPt(fit_s_uncsize,fit_s_uncs,nuis_s);
         fillPt(prefit_uncsize,0,nuis_p);
@@ -1124,7 +1029,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
     TH1 * h_fit_e_b = fit_b ? (TH1*)fit_b_uncsize->Clone() : 0;
 
     prefit_uncsize->SetLineWidth(4)                   ;
-    prefit_uncsize->SetTitle("Nuisance Paramaeters")  ;
+    prefit_uncsize->SetTitle("Nuisance Parameters")  ;
     prefit_uncsize->SetLineColor(kBlack)         ;
     prefit_uncsize->SetFillColor(kGray)          ;
     prefit_uncsize->SetMaximum(1.9)                     ;
@@ -1229,7 +1134,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
 
 void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseName, REGION reg, bool doS = false){
 
-    TFile * fd = new TFile((limitBaseName+"/fitDiagnostics1000.root").c_str(),"read");
+    TFile * fd = new TFile((limitBaseName+"/fitDiagnostics.root").c_str(),"read");
     if(!fd){
         std::cout <<"No plots file!"<<std::endl;
         return;
@@ -1242,65 +1147,86 @@ void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseN
     fd->GetObject("fit_b",fit_b);
 
 
-    auto addBN = [&](std::vector<std::string>& ns, const std::string& proc,const std::string& name ){
+    auto addBN = [&](std::vector<std::string>& ns, const std::string& proc,const std::string& name, const bool do1l ){
+    	std::string ch = do1l ? "_1l" : "_2l";
         for(const auto& b :btagCats){
             if(b == btagCats[BTAG_LMT]) continue;
-            std::string sn = proc +"_"+name+"_"+b;
+            std::string sn = proc +"_"+name+"_"+b+ch;
             ns.push_back(sn);
         }
     };
-    auto addAllN = [&](std::vector<std::string>& ns, const std::string& proc,const std::string& name ){
-        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats){
-            if(l == lepCats[LEP_EMU] ) continue;
-            if(b == btagCats[BTAG_LMT]) continue;
-            if(p == purCats[PURE_I] ) continue;
-            std::string sn = proc +"_"+name+"_"+l +"_"+b+"_"+p;
-            ns.push_back(sn);
+    auto addAllN = [&](std::vector<std::string>& ns, const std::string& proc,const std::string& name, const bool do1l ){
+    	if(do1l) {
+        	for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats){
+                if(l == lepCats[LEP_EMU] ) continue;
+                if(b == btagCats[BTAG_LMT]) continue;
+                if(p == purCats[PURE_I] ) continue;
+                std::string sn = proc +"_"+name+"_"+l +"_"+b+"_"+p;
+                ns.push_back(sn);
+            }
+    	} else {
+        	for(const auto& l : dilepCats) for(const auto& b : btagCats) {
+                if(l == dilepCats[LEP_EMU] ) continue;
+                if(b == btagCats[BTAG_LMT]) continue;
+                std::string sn = proc +"_"+name+"_"+l +"_"+b;
+                ns.push_back(sn);
+            }
+    	}
 
-        }
     };
 
-    std::vector<std::string> sigNs = {"yield","eff_mu","eff_e","tau21_PtDependence","tau21_eff","btag_eff","unclust","jes","jer","hbb_scale","hbb_res"};
-    std::vector<std::string> hbbNs = {"hbb_scale","hbb_res"};
-    addBN(hbbNs,bkgSels[BKG_QG],"PTX");
-    addBN(hbbNs,bkgSels[BKG_QG],"OPTX");
-    addBN(hbbNs,bkgSels[BKG_LOSTTW],"PTX");
-    addBN(hbbNs,bkgSels[BKG_LOSTTW],"OPTX");
+    std::vector<std::string> sigN1s = {"lumi","trigger","tau21_eff","bAk4_real","bAk4_fake","bAk8_eff",
+    		"jes","jer","unclust","hem"};
+    std::vector<std::string> sigN2s = {"prefire","pileup","e_Reco","e_ID_1l","e_ID_2l","e_ISO","mu_ID_1l","mu_ID_2l","mu_ISO",
+			"hbb_scale","hbb_res"};
 
+    std::vector<std::string> hbbNs = {"hbb_scale","hbb_res","hbb_scale_top","hbb_res_top"};
     std::vector<std::string> QGhhNs;
-    addAllN(QGhhNs,bkgSels[BKG_QG],"PTY");
-    addAllN(QGhhNs,bkgSels[BKG_QG],"OPTY");
-
     std::vector<std::string> tophhNs;
-    addAllN(tophhNs,"top","res");
-    addAllN(tophhNs,"top","scale");
-
     std::vector<std::string> topNormNs;
-    addAllN(topNormNs,"top","norm");
-    addBN(topNormNs,"top","mt_rel_scale");
-    addBN(topNormNs,"top","lostmw_rel_scale");
-    if(reg == REG_NONTOPCR){
-        addBN(topNormNs,"top","tFrac");
-        addBN(topNormNs,"top","lostFrac");
-    } else {
-        addBN(topNormNs,"top","wFrac");
-        addBN(topNormNs,"top","lostFrac");
-    }
-
     std::vector<std::string> qgNormNs;
-    addAllN(qgNormNs,bkgSels[BKG_QG],"norm");
 
+    const std::vector<const bool> is1ls = {true,false};
+    for(const auto& is1 : is1ls) {
+        addBN(hbbNs,bkgSels[BKG_QG],"PTX",is1);
+        addBN(hbbNs,bkgSels[BKG_QG],"OPTX",is1);
+        addBN(hbbNs,bkgSels[BKG_LOSTTW],"PTX",is1);
+        addBN(hbbNs,bkgSels[BKG_LOSTTW],"OPTX",is1);
 
+        if(is1) {
+            addAllN(QGhhNs,bkgSels[BKG_QG],"PTY",is1);
+            addAllN(QGhhNs,bkgSels[BKG_QG],"OPTY",is1);
+        } else {
+            addBN(QGhhNs,bkgSels[BKG_QG],"PTY",is1);
+            addBN(QGhhNs,bkgSels[BKG_QG],"OPTY",is1);
+        }
+
+        addAllN(tophhNs,"top","res",is1);
+        addAllN(tophhNs,"top","scale",is1);
+        addAllN(topNormNs,"top","norm",is1);
+        addBN(topNormNs,"top","mt_rel_scale",is1);
+        addBN(topNormNs,"top","lostmw_rel_scale",is1);
+
+        if(reg == REG_NONTOPCR){
+            addBN(topNormNs,"top","tFrac",is1);
+            addBN(topNormNs,"top","lostFrac",is1);
+        } else {
+            addBN(topNormNs,"top","wFrac",is1);
+            addBN(topNormNs,"top","lostFrac",is1);
+        }
+
+        addAllN(qgNormNs,bkgSels[BKG_QG],"norm",is1);
+    }
 
     writeables.push_back(makeUncPlot(qgNormNs,"qgNormNs","Q/G bkg. norm.",fit_s,fit_b,prefit));
     writeables.push_back(makeUncPlot(topNormNs,"topNormNs","Top bkg. norm.",fit_s,fit_b,prefit));
     writeables.push_back(makeUncPlot(QGhhNs,"QGhhNs","Q/G bkg. #it{m}_{HH}",fit_s,fit_b,prefit));
     writeables.push_back(makeUncPlot(tophhNs,"tophhNs","Top bkg. #it{m}_{HH}",fit_s,fit_b,prefit));
     writeables.push_back(makeUncPlot(hbbNs,"hbbNs","Bkg. #it{m}_{b#bar{b}}",fit_s,fit_b,prefit));
-    writeables.push_back(makeUncPlot(sigNs,"sigNs","Signal",fit_s,fit_b,prefit));
+    writeables.push_back(makeUncPlot(sigN1s,"sigN1s","Signal",fit_s,fit_b,prefit));
+    writeables.push_back(makeUncPlot(sigN2s,"sigN2s","Signal",fit_s,fit_b,prefit));
+
 }
-
-
 
 
 void runPostFit(const std::string& inName, const std::string& outName, double fixR=0, int channel = 0){
@@ -1322,7 +1248,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(p == purCats[PURE_I] ) continue;
             if(h != selCuts1[SEL1_FULL] ) continue;
 
-            const std::string wsName = l +"_"+b+"_"+p +"_"+h+"_13TeV_Run2";
+            const std::string wsName = l +"_"+b+"_"+p +"_"+h+"_13TeV";
             fitter.addCategory(l +"_"+b+"_"+p +"_"+h,wsName);
         }
     }
@@ -1332,7 +1258,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(b == btagCats[BTAG_LMT]) continue;
             if(s != selCuts2[SEL2_FULL] ) continue;
 
-            const std::string wsName = l +"_"+b+"_"+s+"_13TeV_Run2";
+            const std::string wsName = l +"_"+b+"_"+s+"_13TeV";
             fitter.addCategory(l +"_"+b+"_"+s,wsName);
         }
     }
@@ -1426,11 +1352,11 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_POST;
-//        hhPlot.addType = MOD_PRE;
+        hhPlot.addType = MOD_PRE;
 //        if(doRebin) hhPlot.rebinFactor = 4;
-        if(doRebin) hhPlot.rebinFactor = 2;
+//        if(doRebin) hhPlot.rebinFactor = 2;
         if(inreg == REG_SR){
-            if(blind) hhPlot.bins = {30,100,100,150,210};
+            if(blind) hhPlot.bins = {30,102,102,150,210};
             else {
                 hhPlot.bins = {30,210};
                 hhPlot.signals = {"1000","2500"};
@@ -1473,13 +1399,17 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
         DataPlotPrefs hhTest;
         hhTest.modelType = MOD_POST;
         if(inreg == REG_SR){
-            hhTest.bins = {30,100,100,150,210};
+            hhTest.bins = {30,102,102,150,210};
         } else {
             hhTest.bins = {30,210};
         }
         hhTest.binInY = false;
         hhTest.sels = srList;
         hhTest.titles = srListTitles;
+
+        for(const auto& s : getDilepSRList(reg)) hhTest.sels.push_back(s);
+        for(const auto& t : getDilepSRListTitles(reg)) hhTest.titles.push_back(t);
+
         hhTest.addErrorBars =true;
         writeables = doStatTest(hhTest,filename,postFitFilename,outName + "statTest",year,do1lep);
 
@@ -1502,14 +1432,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
 
     if(step==4){ //summary plots
         if(outName.size())         outName += "summaryPlots";
-        doGlobChi2(writeables,limitBaseName);
-        //        doUncPlots(writeables,limitBaseName,reg,reg!=REG_SR);
-        doUncPlots(writeables,limitBaseName,reg,true);
-        Dummy d(outName);
-    }
-    if(step==5){ //bias test
-        if(outName.size())         outName += "biasTest";
-        doBiasTest(writeables,limitBaseName);
+//        doGlobChi2(writeables,limitBaseName);
+        doUncPlots(writeables,limitBaseName,reg,reg!=REG_SR);
         Dummy d(outName);
     }
 
@@ -1715,18 +1639,6 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int yea
     }
 
 
-
-
-
-
-
-
-
 }
-
-
-
-
-
 
 
