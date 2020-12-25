@@ -1,4 +1,5 @@
 #include <vector>
+#include <utility>
 #include "TFile.h"
 #include "TH1.h"
 #include "TTree.h"
@@ -29,47 +30,48 @@ public:
     std::string outName;
 };
 
-std::vector<std::pair<int,double>> massR1s = {
-		{800,0.0240234},
-		{900,0.0141113},
-		{1000,0.0093016},
-		{1200,0.00524902},
-		{1500,0.003064},
-		{1800,0.00213623},
-		{2000,0.00175171},
-		{2500,0.0012085},
-		{3000,0.000946},
+std::vector<std::pair<int,double>> massR1s_rad = {
+		{800,0.0239258},
+		{900,0.0139648},
+		{1000,0.00925293},
+		{1200,0.00522461},
+		{1400,0.00355225},
+		{1600,0.00269775},
+		{1800,0.00214844},
+		{2000,0.00176392},
+		{2500,0.0012207},
+		{3000,0.000952148},
 		{3500,0.000836182}
 };
 
-
-std::vector<std::pair<int,double>> massR2s = {
-		{800,0.0480468},
-		{900,0.0282226},
-		{1000,0.0186032},
-		{1200,0.01049804},
-		{1500,0.006128},
-		{1800,0.00427246},
-		{2000,0.00350342},
-		{2500,0.002417},
-		{3000,0.001892},
-		{3500,0.001672364}
+std::vector<std::pair<int,double>> massR1s_blk = {
+		{800,0.0162598},
+		{900,0.00986328},
+		{1000,0.00671387},
+		{1200,0.00394287},
+		{1400,0.002771},
+		{1600,0.00216064},
+		{1800,0.00174561},
+		{2000,0.00145264},
+		{2500,0.00102234},
+		{3000,0.000799561},
+		{3500,0.000692749}
 };
 
-std::vector<std::pair<int,double>> massR5s = {
-		{800,0.120117},
-		{900,0.0705565},
-		{1000,0.046508},
-		{1200,0.0262451},
-		{1500,0.01532},
-		{1800,0.01068115},
-		{2000,0.0087585500},
-		{2500,0.0060425},
-		{3000,0.00473},
-		{3500,0.00418091}
-};
+std::vector<std::pair<int,double>> massR1s = {};
+std::vector<std::pair<int,double>> massR2s = {};
+std::vector<std::pair<int,double>> massR5s = {};
 
-void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseName ){
+void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseName, int sig ){
+
+	if(sig == 0) massR1s = massR1s_rad;
+	else if(sig == 1) massR1s = massR1s_blk;
+	else throw std::invalid_argument("sig should be either 0 (rad) or 1 (blk), dangus");
+
+	for(const auto& th : massR1s) {
+		massR2s.push_back(std::make_pair(th.first,2*th.second));
+		massR5s.push_back(std::make_pair(th.first,5*th.second));
+	}
 
     auto makeBiasPlot = [&](const std::string& filename, const std::string& hName, const double rV, TFitResultPtr& fitres,
     						double& dMean, double& dMedian, double& dStdDev) ->TH1*  {
@@ -123,13 +125,13 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
         hStats->SetBinContent(5,dStdDev);
         writeables.push_back(hStats);
 
-        //        std::sort(biases.begin(),biases.end(), [](const double a, const double b){return a < b;});
-        //        double nToys = biases.size();
-        //        h->SetDirectory(0);
-        //        TH1::AddDirectory(kFALSE);
-        //        for(auto b : biases) h->Fill(b);
-        //        std::cout << hName <<" "<< biases[nToys*0.5]<<std::endl;
-        //        return h;
+//        std::sort(biases.begin(),biases.end(), [](const double a, const double b){return a < b;});
+//        double nToys = biases.size();
+//        h->SetDirectory(0);
+//        TH1::AddDirectory(kFALSE);
+//        for(auto b : biases) h->Fill(b);
+//        std::cout << hName <<" "<< biases[nToys*0.5]<<std::endl;
+//        return h;
 
         return h;
 
@@ -209,9 +211,9 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
     std::cout << std::endl << std::endl;
 }
 
-void plotBiasTests(std::string limDir) {
+void plotBiasTests(std::string limDir, int sig) {
 
 	std::string outName = limDir+"/plots/biasTest";
-	doBiasTest(writeables,limDir);
+	doBiasTest(writeables,limDir,sig);
 	Dummy d(outName);
 }

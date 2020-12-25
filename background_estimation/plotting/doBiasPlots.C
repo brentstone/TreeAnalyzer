@@ -3,8 +3,10 @@
 #include "TGraphErrors.h"
 #include "HistoPlotting/include/Plotter.h"
 
-std::vector<double> masses = {800,900,1000,1200,1500,1800,2000,2500,3000,3500};
+std::vector<double> masses = {800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500};
 std::map<int,TString> binIds = { {1,"mu"}, {2,"mu_unc"}, {3,"dMean"}, {4,"dMedian"}, {5,"dStdDev"} };
+std::map<int,TString> yTitles = { {1,"r_{bias} #mu"}, {3,"r_{bias} mean"}, {4,"r_{bias} median"}, {5,"r_{bias} std dev"} };
+
 std::vector<TString> rexcls = {"r1","r2","r5"};
 std::map<TString,TString> rStrs = { {"r1","r_{inj} = r_{excl}"}, {"r2","r_{inj} = 2r_{excl}"}, {"r5","r_{inj} = 5r_{excl}"} };
 
@@ -34,8 +36,10 @@ void doBiasPlots(TString dir) {
 
 			p->addGraph(g,rStrs[r],-1,1,2,20,1,true,true,false,"L");
 		}
-		p->setMinMax(-2,2);
+		if(id.first == 5) p->setMinMax(0,2);
+		else p->setMinMax(-2,2);
 		p->setXTitle("M_{X} [GeV]");
+		p->setYTitle(yTitles[id.first]);
 		p->draw(false,id.second);
 	}
 
