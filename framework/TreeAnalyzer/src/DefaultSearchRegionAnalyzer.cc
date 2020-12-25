@@ -24,6 +24,7 @@
 #include "Processors/Corrections/interface/FatJetScaleFactors.h"
 #include "Processors/Corrections/interface/JetAndMETCorrections.h"
 #include "TPRegexp.h"
+#include "TObjString.h"
 
 
 
