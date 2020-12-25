@@ -286,22 +286,22 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool 
     case 3:
         if(outName.size()) outName += "_MVVKern";
         if(doTW) {
-        	if (do1lep) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
-        	else        stepSels = {"IF_LMT_mll"};
+        	if (do1lep) stepSels = {"emu_L_HP_ltmb","emu_T_HP_ltmb","emu_L_LP_ltmb","emu_T_LP_ltmb"};
+        	else        stepSels = {"IF_L_mll","IF_T_mll"};
         } else {
         	if (do1lep) stepSels = {"emu_L_HP_ltmb","emu_T_HP_ltmb","emu_L_LP_ltmb","emu_T_LP_ltmb"};
-        	else        stepSels = {"IF_LMT_lrpb"};
+        	else        stepSels = {"IF_L_lrpb","IF_T_lrpb"};
         }
         writeables = test1DKern(mod,filename,"MVV",stepSels);
         break;
     case 4:
         if(outName.size()) outName += "_2DTemp";
         if(doTW) {
-        	if (do1lep) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
-        	else        stepSels = {"IF_LMT_mll"};
+        	if (do1lep) stepSels = {"emu_LMT_HP_ltmb","emu_LMT_HP_ltmb"};
+        	else        stepSels = {"IF_L_mll","IF_T_mll"};
         } else {
-        	if (do1lep) stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
-        	else        stepSels = {"OF_LMT_R_phi_b","SF_LMT_R_phi_b","IF_LMT_R_phi_b"};
+        	if (do1lep) stepSels = {"emu_L_HP_ltmb","emu_T_HP_ltmb","emu_L_LP_ltmb","emu_T_LP_ltmb"};
+        	else        stepSels = {"IF_L_lrpb","IF_T_lrpb"};
         }
         test2DTemplate(mod,filename,stepSels);
         break;

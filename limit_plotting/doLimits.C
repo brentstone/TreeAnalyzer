@@ -20,8 +20,9 @@ const float maxX = 3600;
 const float minY = 0.05;
 const float maxY = 10000;
 const bool doLog = true;
-    std::string titleX = "#it{m}_{X} [GeV]";
-    std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
+std::string titleX = "#it{m}_{X} [GeV]";
+std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
+
 std::vector<std::string> partLabels = {"Spin-0 X","Spin-2 X"};
 std::vector<std::string> fileLabel = {"radion","blkgrav"};
 std::string lumiText = "137.1 fb^{-1} (13 TeV)";

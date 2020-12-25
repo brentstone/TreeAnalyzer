@@ -36,15 +36,11 @@ std::string getSystName (const std::string& prefix, const std::string& proc,cons
     return sn;
 };
 
-std::string systName (const std::string& proc,const std::string& name, const std::string& cat) {
-    return getSystName("CMS_HHlnujj",proc,name,cat);
-};
-
 //systs -> plotting name : hName
 TCanvas * makeNuisPlot(const std::string& filename, const CutStr& bkg, const std::string& reg, const std::string& pName, const std::vector<std::pair<std::string,std::string>> systs, bool plotX){
 	TH1::AddDirectory(kFALSE);
     TFile * f = new TFile(filename.c_str(),"read");
-    std::string prefix = "shapeBkg_" + bkg + "_"+reg+"_13TeV_Run2";
+    std::string prefix = "shapeBkg_" + bkg + "_"+reg+"_13TeV";
     if(bkg == bkgSels[BKG_QG] || bkg == bkgSels[BKG_LOSTTW]) prefix +="_opt";
     if(f==0){
         std::cout <<"NO FILE"<<std::endl;
@@ -89,7 +85,7 @@ TCanvas * makeNuisPlot(const std::string& filename, const CutStr& bkg, const std
     };
 
     Plotter * p = new Plotter();
-    p->addHistLine(proc(nH,bkg + "_"+reg+"_"+pName+"_nom"),"Initial template"  );
+    p->addHistLine(proc(nH,bkg + "_"+reg+"_"+pName+"_nom"),"Nominal template"  );
 
     for(unsigned int iS = 0; iS < systs.size(); ++iS){
         p->addHistLine(proc(sUps[iS],bkg + "_"+reg+"_"+pName+systs[iS].second+"Up"),systs[iS].first +" unc. up",StyleInfo::getLineColor(iS+1) , 1  );
@@ -98,25 +94,20 @@ TCanvas * makeNuisPlot(const std::string& filename, const CutStr& bkg, const std
     if(plotX){
         p->setXTitle(hbbMCS.title);
         if(bkg == bkgSels[BKG_QG] || bkg == bkgSels[BKG_LOSTTW])
-            p->setMinMax(0,0.03);
+            p->setMinMax(0,0.18);
         else
-            p->setMinMax(0,0.1);
+            p->setMinMax(0,0.4);
     } else {
-        p->setMinMax(0.00001,0.2);
+        p->setMinMax(0.00001,0.5);
         p->setXTitle(hhMCS.title);
     }
     p->setYTitle("Arbitrary scale");
-    p->setBotMinMax(0,1.99);
     p->setYTitleBot("Alt. / initial temp.");
     p->setLegendPos(0.45,0.5530435,0.93,0.93);
-
-    if(bkg == bkgSels[BKG_MT]){
-        p->setBotMinMax(0.71,1.29);
-        p->setCMSLumi();
-        p->setCMSLumiPosition(0,1.05);
-        p->setCMSLumiExtraText("Simulation Supplementary");
-        p->setCMSLumiLumiText("13 TeV");
-    }
+    p->setCMSLumi();
+    p->setCMSLumiPosition(0,1.05);
+    p->setCMSLumiLumiText("13 TeV");
+    p->setBotMinMax(0.5,1.5);
 
     auto c = p->drawSplitRatio(0,"stack",false,false,bkg+"_"+reg+"_"+pName);
     c->SetTitle((bkg+"_"+reg+"_"+pName).c_str());
@@ -146,7 +137,7 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
 	    };
 
 	    auto go=[&](const CutStr& bkg, const std::vector<std::string>& nuis ){
-	        std::string pdfN = "shapeBkg_"+bkg + "_"+cat+"_13TeV_Run2";
+	        std::string pdfN = "shapeBkg_"+bkg + "_"+cat+"_13TeV";
 	        if(bkg == bkgSels[BKG_QG] || bkg == bkgSels[BKG_LOSTTW]) pdfN +="_opt";
 	        std::cout<<pdfN<<std::endl;
 	        for(const auto& s : nuis) std::cout<<s<<std::endl;
@@ -167,15 +158,15 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
 				systName("top","lostmw_rel_scale",b+"_1l")
 	    });
 	    go(bkgSels[BKG_MT],{
-	            "hbb_scale_top_Run2",
-				"hbb_res_top_Run2",
+	            "hbb_scale_top",
+				"hbb_res_top",
 	            systName("top","res",catNoSel),
 				systName("top","scale",catNoSel),
 				systName("top","mt_rel_scale",b+"_1l")
 	    });
 	    go(bkgSels[BKG_MW],{
-	            "hbb_scale_Run2",
-				"hbb_res_Run2",
+	            "hbb_scale",
+				"hbb_res",
 	            systName("top","res",catNoSel),
 				systName("top","scale",catNoSel),
 				systName("top","lostmw_rel_scale",b+"_1l")
@@ -195,7 +186,7 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
 	    };
 
 	    auto go=[&](const CutStr& bkg, const std::vector<std::string>& nuis ){
-	        std::string pdfN = "shapeBkg_"+bkg + "_"+cat+"_13TeV_Run2";
+	        std::string pdfN = "shapeBkg_"+bkg + "_"+cat+"_13TeV";
 	        if(bkg == bkgSels[BKG_QG] || bkg == bkgSels[BKG_LOSTTW]) pdfN +="_opt";
 	        std::cout<<pdfN<<std::endl;
 	        for(const auto& s : nuis) std::cout<<s<<std::endl;
@@ -205,8 +196,8 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
 	    go(bkgSels[BKG_QG],{
 	    		systName(bkgSels[BKG_QG],"PTX" ,b+"_2l"),
 				systName(bkgSels[BKG_QG],"OPTX",b+"_2l"),
-				systName(bkgSels[BKG_QG],"PTY",catNoSel),
-				systName(bkgSels[BKG_QG],"OPTY",catNoSel)
+				systName(bkgSels[BKG_QG],"PTY",b+"_2l"),
+				systName(bkgSels[BKG_QG],"OPTY",b+"_2l")
 	    });
 	    go(bkgSels[BKG_LOSTTW],{
 	            systName(bkgSels[BKG_LOSTTW],"PTX" ,b+"_2l"),
@@ -216,15 +207,15 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
 				systName("top","lostmw_rel_scale",b+"_2l")
 	    });
 	    go(bkgSels[BKG_MT],{
-	            "hbb_scale_top_Run2",
-				"hbb_res_top_Run2",
+	            "hbb_scale_top",
+				"hbb_res_top",
 	            systName("top","res",catNoSel),
 				systName("top","scale",catNoSel),
 				systName("top","mt_rel_scale",b+"_2l")
 	    });
 	    go(bkgSels[BKG_MW],{
-	            "hbb_scale_Run2",
-				"hbb_res_Run2",
+	            "hbb_scale",
+				"hbb_res",
 	            systName("top","res",catNoSel),
 				systName("top","scale",catNoSel),
 				systName("top","lostmw_rel_scale",b+"_2l")
@@ -259,7 +250,7 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
 
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mbb",
-	    		{ {"#it{m}_{b#bar{b}}} scale",systName(bkgSels[BKG_LOSTTW],"PTX",b+"_1l")},
+	    		{ {"#it{m}_{b#bar{b}} scale",systName(bkgSels[BKG_LOSTTW],"PTX",b+"_1l")},
 	    		  {"#it{m}_{b#bar{b}} res."  ,systName(bkgSels[BKG_LOSTTW],"OPTX",b+"_1l")}    },true));
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhh",
@@ -269,8 +260,8 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
 
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mbb",
-	    		{{"b#bar{b} jet soft-drop scale","hbb_scale_Run2"},
-	    		 {"b#bar{b} jet soft-drop res.","hbb_res_Run2"}},true));
+	    		{{"b#bar{b} jet SD mass scale","hbb_scale"},
+	    		 {"b#bar{b} jet SD mass res.","hbb_res"}},true));
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhh",
 	    		{{"top res." ,systName("top","res",catNoSel)},
@@ -279,8 +270,8 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
 
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MT],cat,"mbb",
-	    		{{"b#bar{b} jet SD mass scale","hbb_scale_top_Run2"},
-	    		 {"b#bar{b} jet SD mass res.","hbb_res_top_Run2"}},true));
+	    		{{"b#bar{b} jet SD mass scale","hbb_scale_top"},
+	    		 {"b#bar{b} jet SD mass res.","hbb_res_top"}},true));
 
 	    //  remove rel because it is the same size as the standard scale
 		//    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
@@ -306,12 +297,12 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
 	    		  {"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_QG],"OPTX",b+"_2l")}    },true));
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_QG],cat,"mhh",
-	    		{ {"#it{m}_{HH} scale" ,systName(bkgSels[BKG_QG],"PTY",catNoSel)},
-	    		  {"#it{m}_{HH} res." ,systName(bkgSels[BKG_QG] ,"OPTY",catNoSel)}    },false));
+	    		{ {"#it{m}_{HH} scale" ,systName(bkgSels[BKG_QG],"PTY",b+"_2l")},
+	    		  {"#it{m}_{HH} res." ,systName(bkgSels[BKG_QG] ,"OPTY",b+"_2l")}    },false));
 
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mbb",
-	    		{ {"#it{m}_{b#bar{b}}} scale" ,systName(bkgSels[BKG_LOSTTW],"PTX",b+"_2l")},
+	    		{ {"#it{m}_{b#bar{b}} scale" ,systName(bkgSels[BKG_LOSTTW],"PTX",b+"_2l")},
 	    		  {"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_LOSTTW]  ,"OPTX",b+"_2l")}    },true));
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhh",
@@ -321,8 +312,8 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
 
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mbb",
-	    		{{"b#bar{b} jet soft-drop scale","hbb_scale_Run2"},
-	    		 {"b#bar{b} jet soft-drop res.","hbb_res_Run2"}},true));
+	    		{{"b#bar{b} jet SD mass scale","hbb_scale"},
+	    		 {"b#bar{b} jet SD mass res.","hbb_res"}},true));
 
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhh",
 	    		{{"top res." ,systName("top","res",catNoSel  )},
@@ -331,8 +322,8 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
 
 	    //  remove rel because it is the same size as the standard scale
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MT],cat,"mbb",
-	    		{{"b#bar{b} jet SD mass scale","hbb_scale_top_Run2"},
-	    		 {"b#bar{b} jet SD mass res.","hbb_res_top_Run2"}},true));
+	    		{{"b#bar{b} jet SD mass scale","hbb_scale_top"},
+	    		 {"b#bar{b} jet SD mass res.","hbb_res_top"}},true));
 
 	//    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
 	    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_"+catNoSel+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",
