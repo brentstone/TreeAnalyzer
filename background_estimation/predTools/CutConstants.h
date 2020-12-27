@@ -18,18 +18,21 @@ public:
 };
 std::string hhFilename    = "HHbb1o2l";
 
-enum PROC  {TTBAR,WJETS,QCD,OTHER};
+enum PROC  {TTBAR,WJETS,ZJETS,QCD,OTHER1,OTHER2};
 std::vector<CutStr > processes = {
-        CutStr("ttbar"     ,"process==2","t#bar{t}"),
-        CutStr("wjets"     ,"process==3","W+jets"),
-        CutStr("qcd"       ,"process==8","Multijet"),
-        CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","Other SM")
+        CutStr("ttbar"     ,"(process==2)","t#bar{t}"),
+        CutStr("wjets"     ,"(process==3)","W+jets"),
+        CutStr("zjets"     ,"(process==4)","Z+jets"),
+        CutStr("qcd"       ,"(process==8)","QCD multi-jet"),
+        CutStr("other1"     ,"(process>1&&!(process==2||process==3||process==8))","Other 1l SM"),
+        CutStr("other2"     ,"(process>1&&!(process==2||process==4))","Other 2l SM")
 };
 
 enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
 
 CutStr hemW ("hemW" , "(lepChan==2&&era==2018?(!isMuon1&&lep1ETA<=-1.479&&lep1Phi>=-1.55&&lep1Phi<=-0.9?(21.08/59.74):1.0)*(!isMuon2&&lep2ETA<=-1.479&&lep2Phi>=-1.55&&lep2Phi<=-0.9?(21.08/59.74):1.0):1.0)");
-CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N*fjbtag_N*(era==2018?1.0:prefire_N)*"+hemW.cut);
+CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N*fjbtag_N*prefire_N*"+hemW.cut);
+CutStr sigTau21W ("sigTau21W","(wjjTau2o1<(era==2016?0.55:0.45)?0.99:(wjjTau2o1<=0.75?1.116:1.0))");
 
 //CutStr qgWt_SR ("qgWt_SR" , "((process==3||process==8)?(era==2018?1.278:(era==2017?1.236:(era==2016?1.12:1.0))):1.0)");
 //CutStr qgWt_NT ("qgWt_NT" , "((process==3||process==8)?(era==2018?0.924:(era==2017?0.955:(era==2016?0.981:1.0))):1.0)");
@@ -49,6 +52,7 @@ CutStr dRC   ("dRC"    , "dilepDR<=1.0");
 CutStr drCrC  ("drCrC"   , "dilepDR>=0.4");
 
 CutStr aHEM ("aHEM","((era==2018&&run>=319077)?(isMuon1==0?(lep1ETA>-1.479||lep1Phi<-1.55||lep1Phi>-0.9):1.0)&&(isMuon2==0?(lep2ETA>-1.479||lep2Phi<-1.55||lep2Phi>-0.9):1.0):1.0)");
+//CutStr aHEM ("aHEM","(era!=2018||run<319077||!hasHEMLep)");
 
 CutStr preSel1("preSel1"  , "lepChan==1");
 CutStr preSel2("preSel2"  , "(lepChan==2&&"+aHEM.cut+")");
@@ -57,14 +61,16 @@ CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hbbUpMCS("hbbMassUp","hbbMassUp","#it{m}_{b#bar{b}} [GeV]");
 CutStr hbbDnMCS("hbbMassDown","hbbMassDown","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
-//CutStr hhMCS ("hhMass" ,"((lepChan==1)*hhMassBasic+(lepChan==2)*hhMass)","#it{m}_{HH} [GeV]");
 
-unsigned int nHbbMassBins   =30;
+unsigned int nHbbMassBins = 30;
 double minHbbMass = 30  ;
 double maxHbbMass = 210 ;
+
 unsigned int nHHMassBins   =86;
+//unsigned int nHHMassBins = 72;
 double minHHMass  = 700;
 double maxHHMass  = 4000;
+
 std::vector<double> hhMassBins = {
         700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,
         1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,
@@ -72,7 +78,6 @@ std::vector<double> hhMassBins = {
         2200,2250,2300,2350,2400,2450,2500,2550,2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,
         3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000
 };
-
 
 unsigned int nInclHHMassBins   =128;
 double minInclHHMass  = 0   ;
@@ -86,6 +91,7 @@ std::vector<double> inclHHMassBins = {0,25,50,75,100,125,150,175,200,225,250,275
         3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000,
         4075,4150,4225,4300,4375,4450,4525,4600,4675,4750,4825,4900,4975,5050
 };
+
 unsigned int nInclHbbMassBins   =42;
 double minInclHbbMass  = 0   ;
 double maxInclHbbMass  = 252;
@@ -163,7 +169,7 @@ CutStr inclBtagCat("I","(hbbTag>=0.0)");
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","(1.0)","IP"),
-        CutStr("LP" ,"(hwwLi>=2.5||(wjjTau2o1>=(era==2016?0.55:0.45)))","LP"),
+        CutStr("LP" ,"(hwwLi>=2.5||(wjjTau2o1>=(era==2016?0.55:0.45)&&wjjTau2o1<=0.75))","LP"),
         CutStr("HP" ,"(hwwLi<2.5&&(wjjTau2o1<(era==2016?0.55:0.45)))"  ,"HP")
 
 };
