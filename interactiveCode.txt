@@ -12,12 +12,12 @@
 # make plot GoF distribution from combine procedure
 # compare bbVV and bbtautau H->WW reco
 # print out limits from file
-#
+# HEM dilepton correction plots
 
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 ## tt SF AN plots
 ## ----------------------------------------------------------------------------------------------------------------------------------------
-TString pre = "/Users/brentstone/Dropbox/Physics/HHbbWW/betrees/Run2/supportInputs/";
+TString pre = "/Users/brentstone/Dropbox/Physics/HHbbWW/betreesNEW/Run2/supportInputs/";
 TFile *fm = new TFile(pre+"HHbb1o2l_ttbarSF_mc_inputPlots.root");
 TFile *fd = new TFile(pre+"HHbb1o2l_ttbarSF_data_inputPlots.root");
 
@@ -270,7 +270,7 @@ p->drawSplitRatio(0,proc,false,false,proc);
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 
 TFile *fd = TFile::Open("higgsCombineTest.GoodnessOfFit.mH1000.root");
-TFile *ft = TFile::Open("higgsCombineTest.GoodnessOfFit.mH1000.123456.root");
+TFile *ft = TFile::Open("higgsCombineTest.GoodnessOfFit.mH1000.toys.root");
 
 TTree *td = (TTree*)fd->Get("limit");
 TTree *tt = (TTree*)ft->Get("limit");
@@ -295,6 +295,8 @@ for(const auto& t : tsTs) h->Fill(t);
 
 Plotter *p = new Plotter();
 p->addStackHist(h,"toys");
+p->setXTitle("GoF statistic");
+p->setYTitle("N_{toys}");
 TCanvas *c = p->draw(false,"s");
 TArrow *arr = new TArrow(tsData,h->GetMaximum(),tsData,0);
 arr->SetLineWidth(2);
@@ -309,7 +311,6 @@ std::cout<<"pval is = "<<pval/tt->GetEntries()<<std::endl;
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 ## Compare H->WW reco. between bbVV and bbtautau signals
 ## ----------------------------------------------------------------------------------------------------------------------------------------
-
 
 std::vector<TString> sigs = {"hww2l.root","hww2l_bbVV.root","hww2l_bbtt.root"};
 std::vector<TString> sigNames = {"Inclusive","bbWW","bb#tau#tau"};
@@ -327,10 +328,24 @@ TH1 *h = (TH1*)f->Get(sig+"_"+hid+"_"+v);
 p->addHistLine(h,sigNames[i],-1,1,5);
 }
 p->rebin(5);
-//p->normalize();
+p->normalize();
 p->setYTitle("a.u.");
 p->draw(false,v);
 }
+
+sig = "radion";
+Plotter *pp = new Plotter();
+std::vector<TString> ms = {"m1000","m3000"};
+std::vector<TString> massnames = {"1.0 TeV","3.0 TeV"};
+for(unsigned i=1;i<=2;++i) {
+TFile *f = TFile::Open(sigs[i]);
+for(unsigned j=0;j<=1;++j) {
+TH1 *h = (TH1*)f->Get(sig+"_"+ms[j]+"_"+hid+"_dTheta");
+pp->addHistLine(h,sigNames[i]+" "+massnames[j]);
+}
+}
+pp->normalize();
+pp->draw(false,"decay comparison");
 
 ## ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -356,6 +371,24 @@ std::sort(massLims.begin(),massLims.end(),[](std::pair<double,double> a, std::pa
 
 for(const auto& ml : massLims) {
 std::cout<<"m"<<ml.first<<": "<<ml.second<<std::endl;
+}
+
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## HEM dilepton plots
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+TFile *f = TFile::Open("debug2018.root");
+std::vector<TString> sufs = {"eta","phi"};
+for(const auto& suf : sufs){
+Plotter *p = new Plotter();
+TH1 *hd = (TH1*)f->Get("data_nosel2__e_"+suf);
+TH1 *hd2 = (TH1*)f->Get("data_nosel2__e_noHEM_"+suf);
+p->addHist(hd,"data w/ corr.",-1,1,4,20,1,true,true);
+p->addHist(hd2,"data w/o corr.",-1,1,4,20,1,true,true);
+p->rebin(2);
+p->draw(false,suf);
 }
 
 ## ------------------------------------------------------------------------------------------------------------------------------------
