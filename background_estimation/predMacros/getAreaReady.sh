@@ -27,7 +27,7 @@ then
   for fld in 2016 2017 2018
   do
     yr=$(echo ${fld} | tr -dc '1,6-8')
-    rsync -azP ${OUTSRV}${inputdir}/${remoteFld}${yr}/*.root ${fld}/
+    rsync -azP ${OUTSRV}${inputdir}/${remoteFld}${yr}_nov22/*.root ${fld}/
   done
 fi
 
@@ -51,7 +51,7 @@ do
   	hadd -f ${fld}/signalPieces/spin2_m${mx}.root ${fld}/signalPieces/bulkgrav_bbVV_m${mx}.root ${fld}/signalPieces/bulkgrav_bbtautau_m${mx}.root
   	hadd -f ${fld}/signalPieces/spinE_m${mx}.root ${fld}/signalPieces/spin*_m${mx}.root
 
-  	for sys in HEM JESUp JESDOWN JERUp JERDown METUp METDOWN
+  	for sys in HEM JESUp JESDown JERUp JERDown METUp METDown
   	do
   	  hadd -f ${fld}/signalPieces/spin0_m${mx}_${sys}.root ${fld}/signalPieces/radion_bbVV_m${mx}_${sys}.root ${fld}/signalPieces/radion_bbtautau_m${mx}_${sys}.root
   	  hadd -f ${fld}/signalPieces/spin2_m${mx}_${sys}.root ${fld}/signalPieces/bulkgrav_bbVV_m${mx}_${sys}.root ${fld}/signalPieces/bulkgrav_bbtautau_m${mx}_${sys}.root
@@ -75,7 +75,6 @@ rm Run2/betrees_*.root
 hadd Run2/betrees_mc.root 201*/betrees_mc.root
 hadd Run2/betrees_data.root 201*/betrees_data.root
 
-rm Run2/signalPieces/spin*.root
 for mx in 800 900 1000 1200 1400 1600 1800 2000 2500 3000 3500 4000 4500
 do
   hadd -f Run2/signalPieces/spin0_m${mx}.root 201?/signalPieces/spin0_m${mx}.root
