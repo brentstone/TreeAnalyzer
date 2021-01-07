@@ -15,6 +15,8 @@ void makeSignalPDFSystDists(const std::string& name, const std::string& filename
     std::vector<PlotSel> sels;
     sels.emplace_back(lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_FULL],
             lepCats[LEP_EMU].cut +"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+selCuts1[SEL1_FULL].cut+"&&"+hhRange.cut+"&&"+hbbRange.cut);
+    sels.emplace_back(dilepCats[LEP_INCL] +"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_FULL],
+            dilepCats[LEP_INCL].cut +"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_FULL].cut+"&&"+hhRange.cut+"&&"+hbbRange.cut);
     sels.emplace_back("incl","1.0");
 
     vars.emplace_back("yield",std::string("; yield"),"0.0",1,-1,1.0 );
@@ -26,7 +28,7 @@ void makeSignalPDFSystDists(const std::string& name, const std::string& filename
         inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
         std::vector<PlotSamp> samps = { {sigName,"1.0"}};
 
-        for(unsigned int i = 0; i < 6; ++i){
+        for(unsigned int i = 0; i < 8; ++i){
             std::string name = sigName+"_s_"+ASTypes::int2Str(i);
             std::string cut = "w_scale["+ASTypes::int2Str(i)+"]";
             samps.emplace_back(name,cut,true);
@@ -36,7 +38,7 @@ void makeSignalPDFSystDists(const std::string& name, const std::string& filename
             std::string cut = "w_pdf["+ASTypes::int2Str(i)+"]";
             samps.emplace_back(name,cut,true);
         }
-        MakePlots a(inputName,outFileName,samps,sels,vars,"1.0",nomW.cut);
+        MakePlots a(inputName,outFileName,samps,sels,vars,"1.0",nomW.cut+"*"+sigTau21W.cut);
     }
     std::string compiledFile =  filename+"_"+name + "_pdfSyst_distributions.root";
     std::string allFiles = filename+"_"+name+"_m*" + "_pdfSyst_distributions.root";
@@ -66,22 +68,22 @@ void makeSignalNormSystDists(const std::string& name, const std::string& filenam
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
 
     std::vector<std::pair<std::string,std::string>> sysStrings = {
-            {"muIDUp"    ,"w_muIDUp*xsec*trig_N*pu_N*btag_N"     },
-//            {"muISOUp"   ,"w_muISOUp*xsec*trig_N*pu_N*btag_N"    },
-            {"elRecoUp"  ,"w_elRecoUp*xsec*trig_N*pu_N*btag_N"   },
-            {"elIDUp"    ,"w_elIDUp*xsec*trig_N*pu_N*btag_N"     },
-//            {"elISOUp"   ,"w_elISOUp*xsec*trig_N*pu_N*btag_N"    },
-            {"b_realUp"  ,"w_b_realUp*xsec*trig_N*pu_N*lep_N"    },
-            {"b_fakeUp"  ,"w_b_fakeUp*xsec*trig_N*pu_N*lep_N"    },
-            {"puUp"      ,"w_puUp*xsec*trig_N*btag_N*lep_N"      },
-            {"muIDDown"  ,"w_muIDDown*xsec*trig_N*pu_N*btag_N"   },
-//            {"muISODown" ,"w_muISODown*xsec*trig_N*pu_N*btag_N"  },
-            {"elRecoDown","w_elRecoDown*xsec*trig_N*pu_N*btag_N" },
-            {"elIDDown"  ,"w_elIDDown*xsec*trig_N*pu_N*btag_N"   },
-//            {"elISODown" ,"w_elISODown*xsec*trig_N*pu_N*btag_N"  },
-            {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
-            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  },
-            {"puDown"    ,"w_puDown*xsec*trig_N*btag_N*lep_N"    }
+            {"muIDUp"       ,"w_muIDUp*xsec*trig_N*pu_N*btag_N*fjbtag_N*prefire_N"     },
+            {"muIDDown"     ,"w_muIDDown*xsec*trig_N*pu_N*btag_N*fjbtag_N*prefire_N"   },
+            {"elRecoUp"     ,"w_elRecoUp*xsec*trig_N*pu_N*btag_N*fjbtag_N*prefire_N"   },
+            {"elRecoDown"   ,"w_elRecoDown*xsec*trig_N*pu_N*btag_N*fjbtag_N*prefire_N" },
+            {"elIDUp"       ,"w_elIDUp*xsec*trig_N*pu_N*btag_N*fjbtag_N*prefire_N"     },
+            {"elIDDown"     ,"w_elIDDown*xsec*trig_N*pu_N*btag_N*fjbtag_N*prefire_N"   },
+            {"puUp"         ,"w_puUp*xsec*trig_N*btag_N*lep_N*fjbtag_N*prefire_N"      },
+            {"puDown"       ,"w_puDown*xsec*trig_N*btag_N*lep_N*fjbtag_N*prefire_N"    },
+            {"bAk4_realUp"  ,"w_bAk4_realUp*xsec*trig_N*pu_N*lep_N*fjbtag_N*prefire_N"    },
+            {"bAk4_realDown","w_bAk4_realDown*xsec*trig_N*pu_N*lep_N*fjbtag_N*prefire_N"  },
+            {"bAk4_fakeUp"  ,"w_bAk4_fakeUp*xsec*trig_N*pu_N*lep_N*fjbtag_N*prefire_N"    },
+            {"bAk4_fakeDown","w_bAk4_fakeDown*xsec*trig_N*pu_N*lep_N*fjbtag_N*prefire_N"  },
+            {"bAk8_Up"      ,"w_bAk8_Up*xsec*trig_N*pu_N*lep_N*btag_N*prefire_N"    },
+            {"bAk8_Down"    ,"w_bAk8_Down*xsec*trig_N*pu_N*lep_N*btag_N*prefire_N"  },
+            {"prefireUp"    ,"w_prefireUp*xsec*trig_N*pu_N*btag_N*fjbtag_N*lep_N"     },
+            {"prefireDown"  ,"w_prefireDown*xsec*trig_N*pu_N*btag_N*fjbtag_N*lep_N"   },
     };
 
     for(const auto& sM : signalMassBins){
@@ -93,7 +95,7 @@ void makeSignalNormSystDists(const std::string& name, const std::string& filenam
         for(auto& sS : sysStrings){
             samps.emplace_back(sigName+"_"+sS.first,sS.second);
         }
-        MakePlots a(inputName,outFileName,samps,sels,vars,hhRange.cut+"&&"+hbbRange.cut,"1.0");
+        MakePlots a(inputName,outFileName,samps,sels,vars,hhRange.cut+"&&"+hbbRange.cut,sigTau21W.cut);
     }
     std::string compiledFile =  filename+"_"+name + "_normSyst_distributions.root";
     std::string allFiles = filename+"_"+name+"_m*" + "_normSyst_distributions.root";
@@ -108,14 +110,13 @@ void makeSignalShapeSystDists(const std::string& name, const std::string& filena
 
     if(channel == 0 || channel == 1) {
         for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :selCuts1){
-            if(h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_LTMB]) continue;
-            sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
-                    l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+            if(h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_NONE]) continue;
+            sels.emplace_back(l +"_"+b+"_"+p +"_"+h,l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
         }
     }
     if(channel == 0 || channel == 2) {
         for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts2){
-            if(s != selCuts2[SEL2_FULL] && s != selCuts2[SEL2_RPhiB]) continue;
+            if(s != selCuts2[SEL2_FULL] && s != selCuts2[SEL2_NONE]) continue;
             sels.emplace_back(l +"_"+b +"_"+s,l.cut +"&&"+b.cut+"&&"+s.cut);
         }
     }
@@ -127,7 +128,7 @@ void makeSignalShapeSystDists(const std::string& name, const std::string& filena
         const std::string outFileName=filename+"_"+sigName + "_"+systName+"_distributions.root";
         std::string inputName = inputFile;
         inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
-        std::vector<PlotSamp> samps = { {sigName,nomW.cut}};
+        std::vector<PlotSamp> samps = { {sigName,nomW.cut+"*"+sigTau21W.cut}};
         MakePlots a(inputName,outFileName,samps,sels,vars,hhInclRange.cut+"&&"+hbbRange.cut,"1.0");
     }
     std::string compiledFile =  filename+"_"+name + "_"+systName+"_distributions.root";
@@ -176,7 +177,7 @@ void makeSignalFittingDistributions(const std::string& name, const std::string& 
         inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
 
         if(gSystem->AccessPathName(inputName.c_str())) continue;
-        MakePlots a(inputName,outFileName,samps,sels,vars,cut,nomW.cut);
+        MakePlots a(inputName,outFileName,samps,sels,vars,cut,nomW.cut+"*"+sigTau21W.cut); // include tau21 SFs here
     }
     std::string compiledFile =  filename+"_"+name +
             (doIncl ? "_inclM_distributions.root" : "_exclM_distributions.root");
@@ -1028,8 +1029,7 @@ void go(int step, int sig, int channel, std::string treeDir) {
         makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"JESDown_");
         makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"JERDown_");
 
-
-        makeSignalPDFSystDists(name,filename,signalMassBins[sig],signalTrees);
+//        makeSignalPDFSystDists(name,filename,signalMassBins[sig],signalTrees);
 
     }
 
