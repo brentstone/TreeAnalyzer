@@ -45,6 +45,7 @@ public:
 	const GenParticle* getGenLepFromTau(const GenParticle* tau);
 	bool hasMatchedSingleLep();
 	bool hasMatchedDileps();
+	bool hasMatchedHbb();
 
 };
 

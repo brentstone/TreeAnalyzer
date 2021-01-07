@@ -180,4 +180,9 @@ bool SignalHelper::hasMatchedDileps() {
 	return true;
 }
 
+bool SignalHelper::hasMatchedHbb() {
+	if (!genHbb || !recoHbb) return false;
+	return true;
+}
+
 }
