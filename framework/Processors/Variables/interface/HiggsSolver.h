@@ -87,9 +87,9 @@ public:
     //Helper functions
     static double interpolate(const double x,const double x1,const double x2,
             const double y1,const double y2);
-    static double extapDown(const double x, const double bound, const double probAtBound,
+    static double extrapDown(const double x, const double bound, const double probAtBound,
             const double integBound);
-    static double extapUp(const double x, const double bound, const double probAtBound,
+    static double extrapUp(const double x, const double bound, const double probAtBound,
             const double integBound);
 };
 //--------------------------------------------------------------------------------------------------
@@ -277,7 +277,7 @@ public:
     typedef TMinuitMinimizer Minimizer;
         enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, WLNU_MASS, HWW_MASS, NPDFS};
 
-    //Setup
+    // Setup
     HSolverLi(const std::string& dataDir);
     ~HSolverLi() {}
     void setParameters(const HWWParameters& hwwParam, bool verbose=false);

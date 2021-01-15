@@ -226,12 +226,12 @@ double HSolverChi::offWlnuHWWErr    = 3;
 //--------------------------------------------------------------------------------------------------
 // BASEPDF
 //--------------------------------------------------------------------------------------------------
-double BASEPDF::extapDown(const double x, const double bound, const double probAtBound,
+double BASEPDF::extrapDown(const double x, const double bound, const double probAtBound,
         const double integBound)  {
     return probAtBound*std::exp((x-bound)*probAtBound/integBound);
 }
 //--------------------------------------------------------------------------------------------------
-double BASEPDF::extapUp(const double x, const double bound, const double probAtBound,
+double BASEPDF::extrapUp(const double x, const double bound, const double probAtBound,
         const double integBound)  {
     return probAtBound*std::exp((bound-x)*probAtBound/integBound);
 }
@@ -306,11 +306,11 @@ void OneDimPDFWExtrap::setup(TFile * inFile, const std::string& hName, bool verb
 //--------------------------------------------------------------------------------------------------
 double OneDimPDFWExtrap::getProbability(const double x) const{
     if(x <= minX){
-        return bW*extapDown(x,minX,
+        return bW*extrapDown(x,minX,
                 hCur->GetBinContent(1),hCur->GetBinContent(0));
     }
     if( x >= maxX){
-        return bW*extapUp(x,maxX,
+        return bW*extrapUp(x,maxX,
                 hCur->GetBinContent(nB),hCur->GetBinContent(nB+1));
     }
     return bW*hCur->Interpolate(x);
@@ -327,11 +327,11 @@ void OneDimPDFWInterpAndExtrap::setup(TFile * inFile, const std::string& hLowNam
 //--------------------------------------------------------------------------------------------------
 double OneDimPDFWInterpAndExtrap::getProbability(const double x) const{
     if(x <= minX){
-        return bW*extapDown(x,minX,
+        return bW*extrapDown(x,minX,
                 hCur->GetBinContent(1),hCur->GetBinContent(0));
     }
     if( x >= maxX){
-        return bW*extapUp(x,maxX,
+        return bW*extrapUp(x,maxX,
                 hCur->GetBinContent(nB),hCur->GetBinContent(nB+1));
     }
     return bW*hCur->Interpolate(x);
@@ -360,16 +360,16 @@ double TwoDimPDF::getProbability(const double x, const double y) const {
     //Do the corners first
     if(x <= minX){
         if(y<= minY){
-            return bW*extapDown(x,minX,
+            return bW*extrapDown(x,minX,
                     h->GetBinContent(1,1),h->GetBinContent(0,1))
-            *  extapDown(y,minY,
+            *  extrapDown(y,minY,
                     h->GetBinContent(1,1),h->GetBinContent(1,0));
 
         }
         if(y>= maxY){
-            return bW*extapDown(x,minX,
+            return bW*extrapDown(x,minX,
                     h->GetBinContent(1,nBY),h->GetBinContent(0,nBY))
-            *  extapUp(y,maxY,
+            *  extrapUp(y,maxY,
                     h->GetBinContent(1,nBY),h->GetBinContent(1,nBY+1));
 
 
@@ -377,15 +377,15 @@ double TwoDimPDF::getProbability(const double x, const double y) const {
     }
     if(x >= maxX){
         if(y<= minY){
-                            return bW*extapUp(x,maxX,
+                            return bW*extrapUp(x,maxX,
                     h->GetBinContent(nBX,1),h->GetBinContent(nBX+1,1))
-            *  extapDown(y,minY,
+            *  extrapDown(y,minY,
                     h->GetBinContent(nBX,1),h->GetBinContent(nBX,0));
         }
         if(y>= maxY){
-            return bW*extapUp(x,maxX,
+            return bW*extrapUp(x,maxX,
                     h->GetBinContent(nBX,nBY),h->GetBinContent(nBX+1,nBY))
-            *  extapUp(y,maxY,
+            *  extrapUp(y,maxY,
                     h->GetBinContent(nBX,nBY),h->GetBinContent(nBX,nBY+1));
         }
     }
@@ -419,10 +419,10 @@ double TwoDimPDF::getProbability(const double x, const double y) const {
             yEI = interpolate(y,yBC,yP1BC,yI,yP1I);
         }
         if(x <= minX){
-            return bW*extapDown(x,minX,yEP,yEI);
+            return bW*extrapDown(x,minX,yEP,yEI);
         }
 
-        return bW*extapUp(x,maxX,yEP,yEI);
+        return bW*extrapUp(x,maxX,yEP,yEI);
     }
     if(y <= minY || y >= maxY){
         int yBP, yBI;
@@ -452,9 +452,9 @@ double TwoDimPDF::getProbability(const double x, const double y) const {
             xEI = interpolate(x,xBC,xP1BC,xI,xP1I);
         }
         if(y <= minY){
-            return bW*extapDown(y,minY,xEP,xEP);
+            return bW*extrapDown(y,minY,xEP,xEP);
         }
-        return bW*extapUp(y,maxY,xEP,xEI);
+        return bW*extrapUp(y,maxY,xEP,xEI);
     }
 
     //And everything else
@@ -467,7 +467,9 @@ void HSolverLiFunction::setObservables(const MomentumF& inL,
         const MomentumF& inM, const MomentumF& inJ){
 
 
-    lepton = inL.p4();met = inM.p4();qqJet = inJ.p4();
+    lepton = inL.p4();
+    met = inM.p4();
+    qqJet = inJ.p4();
     origQQPT = inJ.pt();
 
     hwwParX = qqJet.px()+ lepton.px() + met.px();
@@ -496,7 +498,6 @@ void HSolverLiFunction::setIterationStorage(const double * p){
     neutE = std::sqrt(neutPerp*neutPerp+neutPar*neutPar+p[NEUT_Z]*p[NEUT_Z]);
     neutX = neutPerp*hwwPerpNormX + neutPar*hwwParNormX;
     neutY = neutPerp*hwwPerpNormY + neutPar*hwwParNormY;
-    neutE = std::sqrt(neutPerp*neutPerp+neutPar*neutPar+p[NEUT_Z]*p[NEUT_Z]);
     neutrino.SetPxPyPzE(neutX,neutY,p[NEUT_Z],neutE);
 
 
