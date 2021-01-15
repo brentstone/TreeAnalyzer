@@ -420,7 +420,7 @@ void add2DCB(RooWorkspace* w, const std::string& name,const std::string& PF, con
     PDFAdder::addCB(w,varXCBPDFName,pVar,variableX,varXPF,variableX,json,scale_X,resolution_X);
     if(exponential_X){
         std::string vN = std::string("fE") +"_"+varXPF;
-        std::string expr = std::string("min(")+ pVar+"*0+"+json.getP(std::string("fE")+variableX)+",1)";
+        std::string expr = std::string("min(")+ pVar+"*0+"+json.getP(std::string("fE")+variableX)+",1.0)";
         RooFormulaVar varF(vN.c_str(),vN.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str())));
         w->import(varF);
         PDFAdder::addExpo(w,varXEPDFName,pVar,variableX,varXPF,variableX,json);
