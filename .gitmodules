@@ -1,0 +1,6 @@
+[submodule "framework/AnalysisSupport"]
+	path = framework/AnalysisSupport
+	url = git@github.com:brentstone/AnalysisSupport.git
+[submodule "framework/HiggsAnalysis/CombinedLimit"]
+	path = framework/HiggsAnalysis/CombinedLimit
+	url = git@github.com:brentstone/HiggsAnalysis-CombinedLimit.git
