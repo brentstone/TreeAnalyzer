@@ -73,7 +73,7 @@ private:
     RooRealVar *MH = 0;
     RooAbsData *dobs =  0;
     RooRealVar *weightVar_ = 0;
-    std::auto_ptr<RooAbsPdf> nuisancePdf;
+    std::unique_ptr<RooAbsPdf> nuisancePdf;
 
     TAxis *xAxis = 0;
     TAxis *yAxis = 0;
@@ -163,6 +163,7 @@ void PostFitter::doDataFit(bool doBonly){
 
     plot2DData(dobs,"data");
     plotTotal2DPDF(model->GetPdf(),dobs,"prefit");
+    plot2DPDFComponents(model->GetPdf(),"prefit");
 
     auto fitres = fit(model,*dobs,true);
     TH2 *corrHist = fitres->correlationHist("correlationMatrix_data");
