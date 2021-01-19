@@ -107,7 +107,7 @@ public:
 
 void getPDFScaleUncDists(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
     Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
-    a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
+    a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);
 }
