@@ -21,15 +21,12 @@ double getComb(TFile *f, TString prefix, TString suffix) {
 
 void doOneSignal(TString ss, TFile *f) {
 
-//    TGraph * gn = new TGraph;
-//    TGraph * gsu = new TGraph;
-//    TGraph * gsd = new TGraph;
-//    TGraph * gpu = new TGraph;
-//    TGraph * gpd = new TGraph;
-//    TGraph * gtu = new TGraph;
-//    TGraph * gtd = new TGraph;
+    TGraph * gp = new TGraph;
+    TGraph * gs = new TGraph;
+    TGraph * gt = new TGraph;
 
 	std::vector<int> masses = {800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500};
+	std::vector<double> pdfUncs, scaleUncs, totUncs;
 
 	double avgUnc = 0;
 
@@ -78,6 +75,13 @@ void doOneSignal(TString ss, TFile *f) {
     	double scaleUnc = (scales.back()-scales.front())/2;
     	double unc = std::sqrt(pdfVariance+scaleUnc*scaleUnc);
 
+//    	pdfUncs.push_back(pdfUnc);
+//    	scaleUncs.push_back(scaleUnc);
+//    	totUncs.push_back(unc);
+    	gp->SetPoint(nP,sM,pdfUnc);
+    	gs->SetPoint(nP,sM,scaleUnc);
+    	gt->SetPoint(nP,sM,unc);
+
 //    	printf("\nPDF uncertainty = %f\n",pdfUnc);
 //    	printf("Generous scale uncertainty = %f\n",scaleUnc);
     	printf("Total uncertainty = %f\n",unc);
@@ -99,20 +103,13 @@ void doOneSignal(TString ss, TFile *f) {
 
 	std::cout<<std::endl<<"avgUnc = "<<avgUnc<<std::endl;
 	std::cout<<"-------------------------------------------------------------------------------------------"<<std::endl;
-//    Plotter * p = new Plotter;
-//
-//    p->addGraph(gn, "nominal");
-//    p->addGraph(gsd,"scale: Down");
-//    p->addGraph(gsu, "scale: Up");
-//    p->addGraph(gpd,"pdf: Down");
-//    p->addGraph(gpu, "pdf: Up");
-//    p->addGraph(gtd,"tot: Down");
-//    p->addGraph(gtu, "tot: Up");
-//
-////    p->setMinMax(-0.5,0.5);
-//    p->setYTitle(ss);
-//
-//    p->draw(false,ss);
+    Plotter * p = new Plotter;
+    p->addGraph(gs,"scale");
+    p->addGraph(gp,"pdf");
+    p->addGraph(gt,"total");
+
+    p->setYTitle(ss);
+    p->draw(false,ss);
 
 }
 
