@@ -55,9 +55,11 @@ void addSignalNormSysts(DataCardMaker& card, std::string sigName, bool is1l, TSt
 	bool isEorSF = is1l ? fullcat.BeginsWith("e") : fullcat.BeginsWith("SF");
 	bool isLoose = fullcat.Contains("_L_");
 	bool isLP = is1l ? fullcat.Contains("LP") : false;
+	bool isRad = TString(sigName).BeginsWith("rad");
 
     card.addSystematic("lumi","lnN",{{sigName,1.018}});         // from Lumi POG TWIKI
     card.addSystematic("prefire","lnN",{{sigName,1.005}});      // prefire weights (1l could be 0.4% but this is fine)
+    card.addSystematic("pdfscale","lnN",{{sigName,isRad ? 1.02 : 1.025}}); // pdf + scale
 
     if(is1l) {
         card.addSystematic("trigger","lnN",{{sigName,1.02}});   // trigger measurement
@@ -261,8 +263,6 @@ printf("dbg0\n");
         std::string jetForm = "(1.0+0.5*unclust)*(1.0+0.5*jer)*(1.0+2.0*jes)*(1.0+0.3*hem)";
         std::string uncForm = "("+brealForm+"*"+bfakeForm+"*"+jetForm+")";
 
-        std::cout<<uncForm<<std::endl;
-
 //            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),
 //            		1.0,"1.0",{},MOD_MS);
 
@@ -407,8 +407,8 @@ if (channel == 0 || channel == 2) {
         std::string brealForm = getbAk4Form(true,false);
         std::string bfakeForm = getbAk4Form(false,false);
 
-        std::string jetForm = "(1.0+unclust)*(1.0+jer)*(1.0+0.5*jes)";
-        std::string uncForm = brealForm+"*"+jetForm;
+        std::string jetForm = "(1.0+unclust)*(1.0+jer)*(1.0+0.5*jes)*(1.0+0.3*hem)";
+        std::string uncForm = "("+brealForm+"*"+bfakeForm+"*"+jetForm+")";
 
         card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),
                 1.0,uncForm,{"bAk4_real","bAk4_fake","unclust","jer","jes","hem"},MOD_MS);
