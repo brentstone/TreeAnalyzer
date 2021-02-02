@@ -28,6 +28,7 @@
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/JetAndMETCorrections.h"
 #include "Processors/Corrections/interface/FatJetScaleFactors.h"
+#include "Processors/Corrections/interface/FatJetBtagScaleFactors.h"
 #include "AnalysisSupport/Utilities/interface/Types.h"
 
 
@@ -37,7 +38,9 @@ using namespace CorrHelp;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {}
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
+        fjbtagSFProc_new.reset(new FatJetBTagScaleFactors (dataDirectory));
+    }
 
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
 
@@ -77,6 +80,7 @@ public:
         outTree->addSingle(llMetDphi_, "", "llMetDphi");
 
     	outTree->addSingle(hbbMass_,  "",  "hbbMass");
+        outTree->addSingle(hbbPT_,  "",  "hbbPT");
 
     	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
     	outTree->addSingle(hbbTag_,  "",  "hbbTag");
@@ -89,16 +93,142 @@ public:
     	outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
     	outTree->addSingle(nJets_hbbV,"","nJets_hbbV");
 
-    	outTree->addSingle(w_ak4_central,  "",  "w_ak4_central");
-    	outTree->addSingle(w_ak4_realUp,  "",  "w_ak4_realUp");
-    	outTree->addSingle(w_ak4_fakeUp,  "",  "w_ak4_fakeUp");
-    	outTree->addSingle(w_ak4_realDown,  "",  "w_ak4_realDown");
-    	outTree->addSingle(w_ak4_fakeDown,  "",  "w_ak4_fakeDown");
     	outTree->addSingle(w_ak8_central,  "",  "w_ak8_central");
-    	outTree->addSingle(w_ak8_realUp,  "",  "w_ak8_realUp");
-    	outTree->addSingle(w_ak8_fakeUp,  "",  "w_ak8_fakeUp");
-    	outTree->addSingle(w_ak8_realDown,  "",  "w_ak8_realDown");
-    	outTree->addSingle(w_ak8_fakeDown,  "",  "w_ak8_fakeDown");
+    	outTree->addSingle(w_ak8_central_new,  "",  "w_ak8_central_new");
+    	outTree->addSingle(w_ak8_up,  "",  "w_ak8_up");
+    	outTree->addSingle(w_ak8_up_new,  "",  "w_ak8_up_new");
+    	outTree->addSingle(w_ak8_down,  "",  "w_ak8_down");
+    	outTree->addSingle(w_ak8_down_new,  "",  "w_ak8_down_new");
+    }
+
+    float getTTBAR_dak8_SF(const FatJet* hbb, CORRTYPE corr = NOMINAL) {
+    	float sf = 1.0, norm = 1.0;
+    	float pt = hbb->pt();
+    	FillerConstants::DataEra yr = FillerConstants::DataEra(*reader_event->dataEra);
+
+    	if(yr == FillerConstants::ERA_2016) {
+    		if(pt <= 600) {
+    			sf = 1.039;
+    			norm = 0.72;
+
+    			if(corr == UP) {
+    				sf +=0.061;
+    				norm += 0.05;
+    			} else if(corr == DOWN) {
+    				sf -= 0.058;
+    				norm -= 0.05;
+    			}
+
+    		} else if(pt <= 800) {
+    			sf = 1.035;
+    			norm = 0.65;
+
+    			if(corr == UP) {
+    				sf += 0.105;
+    				norm += 0.06;
+    			} else if(corr == DOWN) {
+    				sf -= 0.098;
+    				norm -= 0.06;
+    			}
+
+    		} else {
+    			sf = 1.301;
+    			norm = 0.52;
+
+    			if(corr == UP) {
+    				sf += 0.325;
+    				norm += 0.07;
+    			} else if(corr == DOWN) {
+    				sf -= 0.266;
+    				norm -= 0.07;
+    			}
+    		}
+
+    	} else if(yr == FillerConstants::ERA_2017) {
+
+    		if(pt <= 600) {
+    			sf = 0.91;
+    			norm = 0.85;
+
+    			if(corr == UP) {
+    				sf += 0.05;
+    				norm += 0.06;
+    			} else if(corr == DOWN) {
+    				sf -= 0.05;
+    				norm -= 0.06;
+    			}
+
+    		} else if(pt <= 800) {
+    			sf = 0.93;
+    			norm = 0.87;
+
+    			if(corr == UP) {
+    				sf += 0.11;
+    				norm += 0.08;
+    			} else if(corr == DOWN) {
+    				sf -= 0.09;
+    				norm -= 0.08;
+    			}
+
+    		} else {
+    			sf = 1.07;
+    			norm = 0.74;
+
+    			if(corr == UP) {
+    				sf += 0.28;
+    				norm += 0.09;
+    			} else if(corr == DOWN) {
+    				sf -= 0.25;
+    				norm -= 0.09;
+    			}
+    		}
+
+    	} else if(yr == FillerConstants::ERA_2018) {
+
+    		if(pt <= 600) {
+    			sf = 0.89;
+    			norm = 0.83;
+
+    			if(corr == UP) {
+    				sf += 0.04;
+    				norm += 0.06;
+    			} else if(corr == DOWN) {
+    				sf -= 0.05;
+    				norm -= 0.06;
+    			}
+
+    		} else if(pt <= 800) {
+    			sf = 0.94;
+    			norm = 0.89;
+
+    			if(corr == UP) {
+    				sf += 0.08;
+    				norm += 0.08;
+    			} else if(corr == DOWN) {
+    				sf -= 0.08;
+    				norm -= 0.08;
+    			}
+
+    		} else {
+    			sf = 1.05;
+    			norm = 0.86;
+
+    			if(corr == UP) {
+    				sf += 0.21;
+    				norm += 0.09;
+    			} else if(corr == DOWN) {
+    				sf -= 0.19;
+    				norm -= 0.09;
+    			}
+    		}
+
+    	} else {
+    		std::cout<<"getTTBAR_dak8_SF fcked up"<<std::endl;
+    	}
+
+
+
+    	return sf*norm;
     }
 
     bool runEvent() override {
@@ -108,6 +238,14 @@ public:
         	passPre1 = false;
         	passPre2 = false;
         }
+
+        if(!setupNewFJProc){
+        	setupNewFJProc = true;
+        	newParams = parameters.fatJets;
+        	newParams.fatJetBtagSFFile = "corrections/btagging/deepak8_hbbSF_new.csv";
+        	fjbtagSFProc_new->setParameters(newParams,int(*reader_event->dataEra));
+        }
+
         if(lepChan != SINGLELEP || !hbbCand || !wjjCand)  passPre1 = false;
         if(lepChan != DILEP || !hbbCand)                  passPre2 = false;
 
@@ -204,6 +342,7 @@ public:
             hbbMass_ = hbbMass;
             hbbCSVCat_ = hbbCSVCat;
             hbbTag_ = hbbTag;
+            hbbPT_ = hbbCand->pt();
         } else {
             hbbMass_ = 0;
             hbbCSVCat_ = 0;
@@ -215,17 +354,21 @@ public:
             fillWeights();
             fillGenVariables();
 
-            w_ak4_central  = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,NOMINAL));
-            w_ak8_central  = float(sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,NOMINAL));
+            bool isTTBAR = (FillerConstants::MCProcess(*reader_event->process) == FillerConstants::TTBAR);
 
-            w_ak4_realUp  = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP));
-            w_ak8_realUp  = float(sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,UP));
-            w_ak4_fakeUp  = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL));
-            w_ak8_fakeUp  = float(sjbtagSFProc->getSF(parameters.jets,{hbbCand},UP,NOMINAL));
-            w_ak4_realDown  = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN));
-            w_ak8_realDown  = float(sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
-            w_ak4_fakeDown  = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL));
-            w_ak8_fakeDown  = float(sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
+            w_ak8_central  = float(fjbtagSFProc->getSF(parameters.fatJets,{hbbCand}));
+            w_ak8_up       = float(fjbtagSFProc->getSF(parameters.fatJets,{hbbCand},UP));
+            w_ak8_down     = float(fjbtagSFProc->getSF(parameters.fatJets,{hbbCand},DOWN));
+
+            if(isTTBAR) {
+            	w_ak8_central_new = getTTBAR_dak8_SF(hbbCand,NOMINAL);
+            	w_ak8_up_new      = getTTBAR_dak8_SF(hbbCand,UP);
+            	w_ak8_down_new    = getTTBAR_dak8_SF(hbbCand,DOWN);
+            } else {
+                w_ak8_central_new  = float(fjbtagSFProc_new->getSF(newParams,{hbbCand}));
+                w_ak8_up_new       = float(fjbtagSFProc_new->getSF(newParams,{hbbCand},UP));
+                w_ak8_down_new     = float(fjbtagSFProc_new->getSF(newParams,{hbbCand},DOWN));
+            }
 
             nJets_hbbV = jets_HbbV.size();
         }
@@ -335,8 +478,8 @@ public:
     float trig_N_     = 0;
     float pu_N_       = 0;
     float lep_N_      = 0;
-    float w_ak4_central     = 0;
     float w_ak8_central   = 0;
+    float w_ak8_central_new   = 0;
 
     size8 lepChan_    = 0;
     size64 event_     = 0;
@@ -360,7 +503,7 @@ public:
     float llMetDphi_  = 0;
 
     float hbbMass_   = 0;
-
+    float hbbPT_     = 0;
     size8 hbbCSVCat_ = 0;
     float hbbTag_ = 0;
 
@@ -378,14 +521,14 @@ public:
     size8 nLepsTT_ = 250;
 
     //systematic variables
-    float w_ak4_realUp    = 0;
-    float w_ak4_fakeUp    = 0;
-    float w_ak4_realDown  = 0;
-    float w_ak4_fakeDown  = 0;
-    float w_ak8_realUp    = 0;
-    float w_ak8_fakeUp    = 0;
-    float w_ak8_realDown  = 0;
-    float w_ak8_fakeDown  = 0;
+    float w_ak8_up    = 0;
+    float w_ak8_down    = 0;
+    float w_ak8_up_new  = 0;
+    float w_ak8_down_new  = 0;
+
+    bool setupNewFJProc = false;
+    std::unique_ptr<FatJetBTagScaleFactors> fjbtagSFProc_new;
+    FatJetParameters newParams;
 
 };
 
