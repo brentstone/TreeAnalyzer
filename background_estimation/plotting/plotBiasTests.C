@@ -73,8 +73,13 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
 		massR5s.push_back(std::make_pair(th.first,5*th.second));
 	}
 
+	auto getInterpQuantile = [](std::vector<double>& vec, double quant) -> double {
+		// assumes quant*vec.size() is an even integer
+		return 0.5*( vec[int(quant*vec.size())] + vec[int(quant*vec.size())-1]);
+	};
+
     auto makeBiasPlot = [&](const std::string& filename, const std::string& hName, const double rV, TFitResultPtr& fitres,
-    						double& dMean, double& dMedian, double& dStdDev) ->TH1*  {
+    						double& dMean, double& dMedian, double& dStdDev, double& dLow, double& dUp) ->TH1*  {
         TFile * f = new TFile(filename.c_str(),"read");
         if(!f) return 0;
         TTree * tree = 0;
@@ -98,7 +103,11 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
 
         std::sort(biases.begin(),biases.end(), [](const double a, const double b){return a < b;});
         printf("biases size = %d",int(biases.size()));
-        dMedian = biases[int(0.5*biases.size())];
+
+        dMedian = (biases.size() % 2 == 0) ? getInterpQuantile(biases,0.5) : biases[floor(0.5*biases.size())];
+        dLow = getInterpQuantile(biases,0.16);
+        dUp  = getInterpQuantile(biases,0.84);
+
         dMean = 0;
         dStdDev = 0;
         for(const auto& b : biases) dMean += b/biases.size();
@@ -117,12 +126,17 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
         fitres = h->Fit("gaus","S");;
         writeables.push_back(c);
 
-        TH1D *hStats = new TH1D((hName+"_quants").c_str(),"",5,0,5);
+        TH1D *hStats = new TH1D((hName+"_quants").c_str(),"",9,0,9);
         hStats->SetBinContent(1,fitres->GetParams()[1]);
         hStats->SetBinContent(2,fitres->GetErrors()[1]);
-        hStats->SetBinContent(3,dMean);
-        hStats->SetBinContent(4,dMedian);
-        hStats->SetBinContent(5,dStdDev);
+        hStats->SetBinContent(3,fitres->GetParams()[2]);
+        hStats->SetBinContent(4,fitres->GetErrors()[2]);
+        hStats->SetBinContent(5,dMean);
+        hStats->SetBinContent(6,dMedian);
+        hStats->SetBinContent(7,dStdDev);
+        hStats->SetBinContent(8,dLow);
+        hStats->SetBinContent(9,dUp);
+
         writeables.push_back(hStats);
 
 //        std::sort(biases.begin(),biases.end(), [](const double a, const double b){return a < b;});
@@ -156,9 +170,9 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
             const auto& mr = massRs[iM];
             std::cout<<mr.first<<std::endl;
             TFitResultPtr fitres ;
-            double dMean=0, dMed=0, dSD=0;
+            double dMean=0, dSD=0, dMed=0, dLow=0, dUp=0;
             auto dist = makeBiasPlot(limitBaseName + "/biasInput_"+label+"_m"+int2Str(mr.first)+".root",
-                    "biasDist_"+label+"_"+int2Str(mr.first), mr.second,fitres,dMean,dMed,dSD);
+                    "biasDist_"+label+"_"+int2Str(mr.first), mr.second,fitres,dMean,dMed,dSD,dLow,dUp);
             if(dist){
                 auto pars = fitres->GetParams();
                 auto errs = fitres->GetErrors();
@@ -213,7 +227,7 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
 
 void plotBiasTests(std::string limDir, int sig) {
 
-	std::string outName = limDir+"/plots/biasTest";
+	std::string outName = limDir+"/plots2/biasTest";
 	doBiasTest(writeables,limDir,sig);
 	Dummy d(outName);
 }
