@@ -30,7 +30,8 @@ std::vector<CutStr > processes = {
 
 enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
 
-CutStr hemW ("hemW" , "(lepChan==2&&era==2018?(!isMuon1&&lep1ETA<=-1.479&&lep1Phi>=-1.55&&lep1Phi<=-0.9?(21.08/59.74):1.0)*(!isMuon2&&lep2ETA<=-1.479&&lep2Phi>=-1.55&&lep2Phi<=-0.9?(21.08/59.74):1.0):1.0)");
+//CutStr hemW ("hemW" , "(lepChan==2&&era==2018?(!isMuon1&&lep1ETA<=-1.479&&lep1Phi>=-1.55&&lep1Phi<=-0.9?(21.08/59.74):1.0)*(!isMuon2&&lep2ETA<=-1.479&&lep2Phi>=-1.55&&lep2Phi<=-0.9?(21.08/59.74):1.0):1.0)");
+CutStr hemW ("hemW" , "(hasHEMLep?(21.08/59.74):1.0)");
 CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N*fjbtag_N*prefire_N*"+hemW.cut);
 CutStr sigTau21W ("sigTau21W","(wjjTau2o1<(era==2016?0.55:0.45)?0.99:(wjjTau2o1<=0.75?1.116:1.0))");
 
@@ -51,8 +52,8 @@ CutStr metC ("metC"  , "met>=85");
 CutStr dRC   ("dRC"    , "dilepDR<=1.0");
 CutStr drCrC  ("drCrC"   , "dilepDR>=0.4");
 
-CutStr aHEM ("aHEM","((era==2018&&run>=319077)?(isMuon1==0?(lep1ETA>-1.479||lep1Phi<-1.55||lep1Phi>-0.9):1.0)&&(isMuon2==0?(lep2ETA>-1.479||lep2Phi<-1.55||lep2Phi>-0.9):1.0):1.0)");
-//CutStr aHEM ("aHEM","(era!=2018||run<319077||!hasHEMLep)");
+//CutStr aHEM ("aHEM","((era==2018&&run>=319077)?(isMuon1==0?(lep1ETA>-1.479||lep1Phi<-1.55||lep1Phi>-0.9):1.0)&&(isMuon2==0?(lep2ETA>-1.479||lep2Phi<-1.55||lep2Phi>-0.9):1.0):1.0)");
+CutStr aHEM ("aHEM","(era!=2018||run<319077||!hasHEMLep)");
 
 CutStr preSel1("preSel1"  , "lepChan==1");
 CutStr preSel2("preSel2"  , "(lepChan==2&&"+aHEM.cut+")");
