@@ -345,7 +345,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
 
     if(doLargerStudy) {
     	samps.emplace_back(name+"_"+processes[TTBAR],name+"_"+processes[TTBAR].cut);
-    	samps.emplace_back(name+"_"+processes[OTHER],name+"_"+processes[OTHER].cut);
+    	samps.emplace_back(name+"_"+processes[OTHER1],name+"_"+processes[OTHER1].cut);
     }
 
     std::vector<CutStr> srPCrBtagCats;
