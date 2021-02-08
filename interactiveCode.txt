@@ -17,9 +17,8 @@
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 ## tt SF AN plots
 ## ----------------------------------------------------------------------------------------------------------------------------------------
-TString pre = "/Users/brentstone/Dropbox/Physics/HHbbWW/betreesNEW/Run2/supportInputs/";
-TFile *fm = new TFile(pre+"HHbb1o2l_ttbarSF_mc_inputPlots.root");
-TFile *fd = new TFile(pre+"HHbb1o2l_ttbarSF_data_inputPlots.root");
+TFile *fm = new TFile("HHbb1o2l_ttbarSF_mc_inputPlots.root");
+TFile *fd = new TFile("HHbb1o2l_ttbarSF_data_inputPlots.root");
 
 Plotter *p = new Plotter();
 p->addStackHist((TH1*)fm->Get("ttbar_noHbb_hbbMass"),"t#bar{t} MC");
