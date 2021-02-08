@@ -53,10 +53,11 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     topPTProc   .reset(new TopPTWeighting (dataDirectory));
 
     JERProc   .reset(new JERCorrector (dataDirectory,randGen));;
-
     JESUncProc . reset(new JESUncShifter());
     METUncProc . reset(new METUncShifter());
     HEMIssueProc.reset(new HEM1516TestCorrector());
+    METPhiModProc.reset(new METPhiModulationCorrector());
+
     hSolverChi . reset(new HSolverChi());
     hSolverLi . reset(new HSolverLi(dataDirectory));
 
@@ -70,6 +71,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     turnOnCorr(CORR_SDMASS);
 //    turnOnCorr(CORR_TOPPT);
     turnOnCorr(CORR_JER);
+    turnOnCorr(CORR_METPHIMOD);
 }
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
 
@@ -218,30 +220,35 @@ void DefaultSearchRegionAnalyzer::fillEventLabels() {
 
 
 void DefaultSearchRegionAnalyzer::correctJetsAndMET() {
-    if(isRealData()) return;
 
-    if(isCorrOn(CORR_JES) ){
-        Met dummyMET =reader_event->met;
-        JESUncProc ->processJets(*reader_jet,reader_event->met);
-        JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
-        JESUncProc ->processFatJets(reader_fatjet->jets);
-    }
-    if(isCorrOn(CORR_JER) ){
-        JERProc   ->processJets(
-                *reader_jet,reader_event->met,reader_jet->genJets,reader_event->rho.val());
-        JERProc ->processFatJets(
-                reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
-        JERProc ->processFatJets(
-                reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
-    }
-    if(isCorrOn(CORR_MET) ){
-        METUncProc->process(reader_event->met,*reader_event);
-    }
-    if(isCorrOn(CORR_HEM1516) && *reader_event->dataEra == FillerConstants::ERA_2018) {
-        HEMIssueProc->processJets(*reader_jet,reader_event->met);
-        HEMIssueProc->processFatJets(reader_fatjet_noLep->jets);
-        HEMIssueProc->processFatJets(reader_fatjet->jets);
-    }
+	if(!isRealData()) {
+	    if(isCorrOn(CORR_JES)){
+	        Met dummyMET =reader_event->met;
+	        JESUncProc ->processJets(*reader_jet,reader_event->met);
+	        JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
+	        JESUncProc ->processFatJets(reader_fatjet->jets);
+	    }
+	    if(isCorrOn(CORR_JER)){
+	        JERProc   ->processJets(
+	                *reader_jet,reader_event->met,reader_jet->genJets,reader_event->rho.val());
+	        JERProc ->processFatJets(
+	                reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
+	        JERProc ->processFatJets(
+	                reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
+	    }
+	    if(isCorrOn(CORR_MET) ){
+	        METUncProc->process(reader_event->met,*reader_event);
+	    }
+	    if(isCorrOn(CORR_HEM1516) && *reader_event->dataEra == FillerConstants::ERA_2018) {
+	        HEMIssueProc->processJets(*reader_jet,reader_event->met);
+	        HEMIssueProc->processFatJets(reader_fatjet_noLep->jets);
+	        HEMIssueProc->processFatJets(reader_fatjet->jets);
+	    }
+	}
+
+	if(isCorrOn(CORR_METPHIMOD)) {
+    	METPhiModProc->process(reader_event->met,*reader_event,isRealData());
+	}
 }
 
 void DefaultSearchRegionAnalyzer::fillGenInfo() {

@@ -16,6 +16,7 @@ namespace TAna {
 class JetReader;
 class EventReader;
 
+// ---------------------------------------------------------------------------------------------------------------------------------------------
 class JERCorrector {
 public:
     JERCorrector (const std::string& dataDir, std::shared_ptr<TRandom3> rndGen, const CorrHelp::CORRTYPE cT = CorrHelp::NOMINAL );
@@ -41,6 +42,7 @@ private:
     std::shared_ptr<TRandom3> rndGen;
 };
 
+// ---------------------------------------------------------------------------------------------------------------------------------------------
 
 class JESUncShifter { //only does something for down or up
 public:
@@ -55,6 +57,8 @@ private:
     CorrHelp::CORRTYPE cT;
 };
 
+// ---------------------------------------------------------------------------------------------------------------------------------------------
+
 class METUncShifter{ //only does something for up or down
 public:
     METUncShifter (const CorrHelp::CORRTYPE cT = CorrHelp::NONE );
@@ -64,6 +68,8 @@ public:
 private:
     CorrHelp::CORRTYPE cT;
 };
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------
 
 class HEM1516TestCorrector { // only for 2018, shifts jet energies down to account for blown power supply
 public:
@@ -76,6 +82,19 @@ public:
 private:
 	CorrHelp::CORRTYPE cT;
 };
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------
+
+class METPhiModulationCorrector {
+public:
+	METPhiModulationCorrector ();
+	~METPhiModulationCorrector() {};
+	void process(Met& met, const EventReader& eventreader, const bool isData) const;
+
+private:
+	std::pair<double,double> METXYCorr_Met_MetPhi(double originalMet, double originalMet_phi, const EventReader& eventreader, const bool isData) const;
+};
+
 
 }
 #endif /* FRAMEWORK_PROCESSORS_INTERFACE_EVENTWEIGHTS_H_ */

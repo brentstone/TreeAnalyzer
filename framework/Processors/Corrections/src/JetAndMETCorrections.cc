@@ -255,6 +255,147 @@ void HEM1516TestCorrector::processFatJets(FatJetCollection& fatjets) {
     std::sort(fatjets.begin(),fatjets.end(),PhysicsUtilities::greaterPT<FatJet>());
 }
 
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+METPhiModulationCorrector::METPhiModulationCorrector () {}
+//--------------------------------------------------------------------------------------------------
+void METPhiModulationCorrector::process(Met& met, const EventReader& eventreader, const bool isData) const {
+
+	//get corrected MET from function
+	auto metcorrs = METXYCorr_Met_MetPhi(met.pt(), met.phi(), eventreader, isData);
+
+	const Met corrMet(ASTypes::CylLorentzVectorF(metcorrs.first,0,metcorrs.second,0));
+	const Met initMet(ASTypes::CylLorentzVectorF(met.pt(),0,met.phi(),0));
+	auto deltaM = corrMet.p4() - initMet.p4();
+
+	met.p4() += deltaM;
+
+}
+//--------------------------------------------------------------------------------------------------
+std::pair<double,double> METPhiModulationCorrector::METXYCorr_Met_MetPhi(double originalMet, double originalMet_phi, const EventReader& eventreader, const bool isData) const {
+
+// taken from https://lathomas.web.cern.ch/lathomas/METStuff/XYCorrections/XYMETCorrection_withUL17andUL18.h
+
+  std::pair<double,double> TheXYCorr_Met_MetPhi(originalMet,originalMet_phi);
+
+  FillerConstants::DataEra era = FillerConstants::DataEra(*eventreader.dataEra);
+  int npv = *eventreader.npv;
+  if(npv>100) npv=100;
+
+  double METxcorr(0.),METycorr(0.);
+
+  if(isData) {
+//    	  std::cout<<"isrealData"<<std::endl;
+//Current recommendation for 2016 and 2018 DATA
+	  FillerConstants::DataRun datarun = FillerConstants::DataRun(*eventreader.dataRun);
+
+	  if(datarun==FillerConstants::RUN2016B) {
+	  	METxcorr = -(-0.0478335*npv -0.108032);
+	  	METycorr = -(0.125148*npv +0.355672);
+	  }
+	  if(datarun==FillerConstants::RUN2016C) {
+	  	METxcorr = -(-0.0916985*npv +0.393247);
+	  	METycorr = -(0.151445*npv +0.114491);
+	  }
+	  if(datarun==FillerConstants::RUN2016D) {
+	  	METxcorr = -(-0.0581169*npv +0.567316);
+	  	METycorr = -(0.147549*npv +0.403088);
+	  }
+	  if(datarun==FillerConstants::RUN2016E) {
+	  	METxcorr = -(-0.065622*npv +0.536856);
+	  	METycorr = -(0.188532*npv +0.495346);
+	  }
+	  if(datarun==FillerConstants::RUN2016F) {
+	  	METxcorr = -(-0.0313322*npv +0.39866);
+	  	METycorr = -(0.16081*npv +0.960177);
+	  }
+	  if(datarun==FillerConstants::RUN2016G) {
+	  	METxcorr = -(0.040803*npv -0.290384);
+	  	METycorr = -(0.0961935*npv +0.666096);
+	  }
+	  if(datarun==FillerConstants::RUN2016H) {
+	  	METxcorr = -(0.0330868*npv -0.209534);
+	  	METycorr = -(0.141513*npv +0.816732);
+	  }
+// -----------------------------------------------------------------
+	  if(datarun==FillerConstants::RUN2017B) {
+	  	METxcorr = -(-0.19563*npv +1.51859);
+	  	METycorr = -(0.306987*npv +-1.84713);
+	  }
+	  if(datarun==FillerConstants::RUN2017C) {
+	  	METxcorr = -(-0.161661*npv +0.589933);
+	  	METycorr = -(0.233569*npv +-0.995546);
+	  }
+	  if(datarun==FillerConstants::RUN2017D) {
+	  	METxcorr = -(-0.180911*npv +1.23553);
+	  	METycorr = -(0.240155*npv +-1.27449);
+	  }
+	  if(datarun==FillerConstants::RUN2017E) {
+	  	METxcorr = -(-0.149494*npv +0.901305);
+	  	METycorr = -(0.178212*npv +-0.535537);
+	  }
+	  if(datarun==FillerConstants::RUN2017F) {
+	  	METxcorr = -(-0.165154*npv +1.02018);
+	  	METycorr = -(0.253794*npv +0.75776);
+	  }
+// -------------------------------------------------------------------
+	  if(datarun==FillerConstants::RUN2018A) {
+	  	METxcorr = -(0.362865*npv -1.94505);
+	  	METycorr = -(0.0709085*npv -0.307365);
+	  }
+	  if(datarun==FillerConstants::RUN2018B) {
+	  	METxcorr = -(0.492083*npv -2.93552);
+	  	METycorr = -(0.17874*npv -0.786844);
+	  }
+	  if(datarun==FillerConstants::RUN2018C) {
+	  	METxcorr = -(0.521349*npv -1.44544);
+	  	METycorr = -(0.118956*npv -1.96434);
+	  }
+	  if(datarun==FillerConstants::RUN2018D) {
+	  	METxcorr = -(0.531151*npv -1.37568);
+	  	METycorr = -(0.0884639*npv -1.57089);
+	  }
+  } else {
+//    	  std::cout<<"isMC"<<std::endl;
+// ---------------------------- MC ----------------------- //
+      if(era==FillerConstants::ERA_2016) {
+      	METxcorr = -(-0.195191*npv -0.170948);
+      	METycorr = -(-0.0311891*npv +0.787627);
+      }
+
+      if(era==FillerConstants::ERA_2017) {
+      	METxcorr = -(-0.182569*npv +0.276542);
+      	METycorr = -(0.155652*npv +-0.417633);
+      }
+
+      if(era==FillerConstants::ERA_2018) {
+      	METxcorr = -(0.296713*npv -0.141506);
+      	METycorr = -(0.115685*npv +0.0128193);
+      }
+  }
+
+  double CorrectedMET_x = originalMet *cos( originalMet_phi)+METxcorr;
+  double CorrectedMET_y = originalMet *sin( originalMet_phi)+METycorr;
+
+  double CorrectedMET = sqrt(CorrectedMET_x*CorrectedMET_x+CorrectedMET_y*CorrectedMET_y);
+  double CorrectedMETPhi;
+  if(CorrectedMET_x==0 && CorrectedMET_y>0) CorrectedMETPhi = TMath::Pi();
+  else if(CorrectedMET_x==0 && CorrectedMET_y<0 )CorrectedMETPhi = -TMath::Pi();
+  else if(CorrectedMET_x >0) CorrectedMETPhi = TMath::ATan(CorrectedMET_y/CorrectedMET_x);
+  else if(CorrectedMET_x <0&& CorrectedMET_y>0) CorrectedMETPhi = TMath::ATan(CorrectedMET_y/CorrectedMET_x) + TMath::Pi();
+  else if(CorrectedMET_x <0&& CorrectedMET_y<0) CorrectedMETPhi = TMath::ATan(CorrectedMET_y/CorrectedMET_x) - TMath::Pi();
+  else CorrectedMETPhi =0;
+
+  TheXYCorr_Met_MetPhi.first= CorrectedMET;
+  TheXYCorr_Met_MetPhi.second= CorrectedMETPhi;
+
+  return TheXYCorr_Met_MetPhi;
+
+}
+
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+
 }
 
 

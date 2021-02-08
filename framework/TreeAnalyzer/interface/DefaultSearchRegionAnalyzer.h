@@ -31,6 +31,8 @@ class JERCorrector;
 class JESUncShifter;
 class METUncShifter;
 class HEM1516TestCorrector;
+class METPhiModulationCorrector;
+
 class HSolverChi;
 class HSolverLi;
 
@@ -57,6 +59,7 @@ public:
                      ,CORR_JES
                      ,CORR_MET
                      ,CORR_HEM1516
+                     ,CORR_METPHIMOD
     };
 
     enum LepChannels {NOCHANNEL, SINGLELEP, DILEP};
@@ -169,6 +172,8 @@ public:
     std::unique_ptr<JESUncShifter>        JESUncProc ;
     std::unique_ptr<METUncShifter>          METUncProc;
     std::unique_ptr<HEM1516TestCorrector>   HEMIssueProc;
+    std::unique_ptr<METPhiModulationCorrector>   METPhiModProc;
+
     std::unique_ptr<HSolverChi>             hSolverChi;
     std::unique_ptr<HSolverLi>             hSolverLi;
 
