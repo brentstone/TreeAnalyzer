@@ -194,7 +194,7 @@ if(channel == 0 || channel == 1) {
 
         //Make search variables
         makeSearchVars(card);
-        card.rebinY(hhMassRebins);
+//        card.rebinY(hhMassRebins);
 
         //---------------------------------------------------------------------------------------------------
         //Get rates and contributions for backgrounds
@@ -347,7 +347,7 @@ if (channel == 0 || channel == 2) {
 
         //Make search variables
         makeSearchVars(card);
-        card.rebinY(hhMassRebins);
+//        card.rebinY(hhMassRebins);
 
         //---------------------------------------------------------------------------------------------------
         //Get rates and contributions for backgrounds
