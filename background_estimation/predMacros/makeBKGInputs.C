@@ -686,22 +686,15 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
     printf("%s step 5 - make Mjj shapes 1st it\n",name.c_str());
 
     auto mkShapes = [&](std::string catName) {
-        printf("dbgS\n");
-
         makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
-        printf("dbgM\n");
-
         std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root"
                 +" -var "+MOD_MR+" ";
         argsP1 += " -minX 600 -maxX 3000 ";
         std::string jsonArgsStd =
                 " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
-        printf("dbgF\n");
-
     };
 
-    printf("dbg0\n");
     if(!doQuick) {
         if (channel == 0 || channel == 1) {
             CatIterator ci;
@@ -721,7 +714,6 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
             }
         }
     }
-    printf("dbg1\n");
 
     // do the inclusive 1l + 2l category
     for (const auto& b : btagCats) {
@@ -729,8 +721,6 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
-    printf("dbg2\n");
-
 
 }
 

@@ -341,12 +341,12 @@ void PostFitter::doToys(int nToys){
         utils::setAllConstant(*POI, true);
 
         std::cout<<"r = "<<((RooRealVar*)POI->find("r"))->getVal()<<std::endl;
-        std::cout<<"TOY top_norm_SF_L prefit val = ";
-        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
+//        std::cout<<"TOY top_norm_SF_L prefit val = ";
+//        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
         fitres = fit(toyModel,*dobs,true);
 
-        std::cout<<"TOY top_norm_SF_L postfit val = ";
-        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
+//        std::cout<<"TOY top_norm_SF_L postfit val = ";
+//        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
 
         utils::setAllConstant(*POI, false);
         w->saveSnapshot("postfit", utils::returnAllVars(w));
