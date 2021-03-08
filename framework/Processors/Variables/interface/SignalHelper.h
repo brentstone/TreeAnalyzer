@@ -18,6 +18,7 @@ class SignalHelper {
 private:
     std::shared_ptr<ElectronReader   > elReader ;
     std::shared_ptr<MuonReader       > muReader ;
+    TString lepStr = "";
 
 public:
 	double minElRecoPt = 0;
@@ -33,6 +34,9 @@ public:
 	const Lepton* recolep2=0;
 	const FatJet* recoHbb=0;
 
+	bool isTrue1l = false;
+	bool isTrue2l = false;
+
 	DiHiggsEvent::DECAYTYPE type = DiHiggsEvent::BAD;
 	std::vector<const Muon*> candMuons;
 	std::vector<const Electron*> candElectrons;
@@ -46,6 +50,7 @@ public:
 	bool hasMatchedSingleLep();
 	bool hasMatchedDileps();
 	bool hasMatchedHbb();
+	TString getLepStr();
 
 };
 

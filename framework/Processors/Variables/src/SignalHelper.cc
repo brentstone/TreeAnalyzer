@@ -64,6 +64,7 @@ SignalHelper::SignalHelper(DiHiggsEvent dhEvt, std::shared_ptr<MuonReader> reade
 	type = dhEvt.type;
 	genHbb = dhEvt.hbb;
 	if (type == DiHiggsEvent::DILEP) {
+		isTrue2l = true;
 		const GenParticle* glep1_0 = 0;
 		const GenParticle* glep2_0 = 0;
 
@@ -82,11 +83,20 @@ SignalHelper::SignalHelper(DiHiggsEvent dhEvt, std::shared_ptr<MuonReader> reade
 
 	    	if (glep2_0->absPdgId() == ParticleInfo::p_tauminus) genlep2 = getGenLepFromTau(glep2_0);
 	    	else genlep2 = glep2_0;
+
+	    	if(genlep1 && genlep2) {
+	    		if(genlep1->absPdgId() == ParticleInfo::p_muminus) lepStr += "m";
+	    		else if(genlep1->absPdgId() == ParticleInfo::p_eminus) lepStr += "e";
+
+	    		if(genlep2->absPdgId() == ParticleInfo::p_muminus) lepStr += "m";
+	    		else if(genlep2->absPdgId() == ParticleInfo::p_eminus) lepStr += "e";
+	    	}
 		} else {
 			genlep1 = 0;
 			genlep2 = 0;
 		}
 	} else if (type >= DiHiggsEvent::TAU_MU) {
+		isTrue1l = true;
 //		std::cout<<"inside 1l constructor"<<std::endl;
 		genlep2 = 0;
 
@@ -104,6 +114,10 @@ SignalHelper::SignalHelper(DiHiggsEvent dhEvt, std::shared_ptr<MuonReader> reade
 			throw std::invalid_argument("one of w1_d1 or w2_d1 should be a lepton");
 		}
 //		std::cout<<"ending 1l constructor"<<std::endl;
+    	if(genlep1) {
+    		if(genlep1->absPdgId() == ParticleInfo::p_muminus) lepStr += "m";
+    		else if(genlep1->absPdgId() == ParticleInfo::p_eminus) lepStr += "e";
+    	}
 
 	}
 }
@@ -183,6 +197,10 @@ bool SignalHelper::hasMatchedDileps() {
 bool SignalHelper::hasMatchedHbb() {
 	if (!genHbb || !recoHbb) return false;
 	return true;
+}
+
+TString SignalHelper::getLepStr() {
+	return lepStr;
 }
 
 }
