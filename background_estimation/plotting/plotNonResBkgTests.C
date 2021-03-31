@@ -39,7 +39,7 @@ void test2DCondTemplate(std::string name, std::string filename, std::string sel)
     //      for(const auto& s : extras ) addHistos(s,true,false);
 
     std::vector<double> hBBBinning = {30,210,30,40,50,60,80,100,120,140,170,210};
-    std::vector<double> hhBinning  = {700,4000,700,800,900,1000,1500,2000,3000,4000,5000};
+    std::vector<double> hhBinning  = {700,5050,700,800,900,1000,1500,2000,3000,4000,5000,6000};
 
 
     addWr(make2DTests(name + "_COND2D_HHF" ,dH,hs,hNs,hBBBinning,false,-1));
@@ -286,8 +286,9 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool 
     case 3:
         if(outName.size()) outName += "_MVVKern";
         if(doTW) {
-        	if (do1lep) stepSels = {"emu_L_HP_ltmb","emu_T_HP_ltmb","emu_L_LP_ltmb","emu_T_LP_ltmb"};
-        	else        stepSels = {"IF_L_mll","IF_T_mll"};
+        	if (do1lep) stepSels = {"emu_L_HP_ltmb","emu_T_HP_ltmb","emu_L_LP_ltmb","emu_T_LP_ltmb","emu_L_I_ltmb","emu_T_I_ltmb","emu_LMT_I_ltmb",
+        			"emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
+        	else        stepSels = {"IF_L_mll","IF_T_mll","IF_LMT_mll"};
         } else {
         	if (do1lep) stepSels = {"emu_L_HP_ltmb","emu_T_HP_ltmb","emu_L_LP_ltmb","emu_T_LP_ltmb"};
         	else        stepSels = {"IF_L_lrpb","IF_T_lrpb"};
@@ -321,7 +322,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool 
     case 6:
         if(outName.size()) outName += "_2DComp";
         writeables = test2DModel({mod},filename,
-                srList,{700,4000});
+                srList,{700,5050});
         break;
     }
 

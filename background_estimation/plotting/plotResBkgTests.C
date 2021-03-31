@@ -20,13 +20,13 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
 
         TFile * ff = new TFile((filename+"_"+name+"_"+s+"_MVV_template.root").c_str(),"read");
         TH1* h = 0;
-        ff->GetObject("histo",h);hs.push_back(h);hNs.push_back("SR Template: "+ s);
-        ff->GetObject("originalPDF",h);hs.push_back(h);hNs.push_back("Baseline KDE before MC fit");
+        ff->GetObject("histo",h);hs.push_back(h);hNs.push_back("Fitted template: "+ s);
+        ff->GetObject("originalPDF",h);hs.push_back(h);hNs.push_back("Baseline KDE before fit");
 
         for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(hd->Integral()/hs[iH]->Integral());
 
         Plotter * p = new Plotter();
-        p->addHist(hd,"SR MC");
+        p->addHist(hd,"MC");
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
             TH1 * h1D = hs[iH];
             for(int iX = 1; iX <= h1D->GetNbinsX(); ++iX)h1D->SetBinError(iX,0);
@@ -36,7 +36,7 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
         p->setMinMax(.01,hs[0]->Integral());
         p->setUnderflow(false);
         p->setOverflow(false);
-        p->rebin(8);
+        p->rebin(5);
         p->setXTitle(hhMCS.title);
         p->setYTitle("Events");
         p->addText(getCategoryLabel(s,do1l).c_str(),0.15,0.88,0.03);
@@ -152,11 +152,11 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
     case 4:
     	// !! there is a bug in here that just makes the plotting kinda screwy !!
         if(outName.size()) outName += "_MJJ_SFFit";
-        writeables = test2DFits(mod,filename,srList,{700,4000},true,2,"MJJ_SFFit.json.root");
+        writeables = test2DFits(mod,filename,srList,{700,5050},true,2,"MJJ_SFFit.json.root");
         break;
     case 5:
         if(outName.size()) outName += "_2DComp";
-        writeables = test2DModel({mod},filename,srList,{700,4000});
+        writeables = test2DModel({mod},filename,srList,{700,5050});
         break;
     case 6:
     	auto bins = do1lep ? bins1l : bins2l;
