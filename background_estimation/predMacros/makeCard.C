@@ -71,7 +71,7 @@ void addJECSysts(DataCardMaker& card) {
 
 void addSignalNormSysts(DataCardMaker& card, std::string sigName, bool is1l, TString fullcat) {
 	bool isEorSF = is1l ? fullcat.BeginsWith("e") : fullcat.BeginsWith("SF");
-	bool isLoose = fullcat.Contains("_L_");
+	bool isLoose = is1l ? fullcat.Contains("_L_") : fullcat.EndsWith("_L");
 	bool isLP = is1l ? fullcat.Contains("LP") : false;
 	bool isRad = TString(sigName).BeginsWith("rad");
 
