@@ -31,31 +31,36 @@ public:
 };
 
 std::vector<std::pair<int,double>> massR1s_rad = {
-		{800,0.0239258},
-		{900,0.0139648},
-		{1000,0.00925293},
-		{1200,0.00522461},
-		{1400,0.00355225},
-		{1600,0.00269775},
-		{1800,0.00214844},
-		{2000,0.00176392},
-		{2500,0.0012207},
-		{3000,0.000952148},
-		{3500,0.000836182}
+		{800,0.0247803},
+		{900,0.0144653},
+		{1000,0.00970459},
+		{1200,0.00561523},
+		{1400,0.00384521},
+		{1600,0.00296021},
+		{1800,0.002388},
+		{2000,0.00198364},
+		{2500,0.00141144},
+		{3000,0.00112152},
+		{3500,0.000953674},
+		{4000,0.000862122},
+		{4500,0.000816345}
 };
 
 std::vector<std::pair<int,double>> massR1s_blk = {
-		{800,0.0162598},
-		{900,0.00986328},
-		{1000,0.00671387},
-		{1200,0.00394287},
-		{1400,0.002771},
-		{1600,0.00216064},
-		{1800,0.00174561},
-		{2000,0.00145264},
-		{2500,0.00102234},
-		{3000,0.000799561},
-		{3500,0.000692749}
+		{800,0.0168457},
+		{900,0.0100708},
+		{1000,0.00701904},
+		{1200,0.00428772},
+		{1400,0.00302887},
+		{1600,0.00236511},
+		{1800,0.00193024},
+		{2000,0.00161743},
+		{2500,0.00117493},
+		{3000,0.000938416},
+		{3500,0.000816345},
+		{4000,0.000747681},
+		{4500,0.000709534}
+
 };
 
 std::vector<std::pair<int,double>> massR1s = {};
@@ -77,6 +82,8 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
 		// assumes quant*vec.size() is an even integer
 		return 0.5*( vec[int(quant*vec.size())] + vec[int(quant*vec.size())-1]);
 	};
+
+	std::string sdir = (sig == 0 ? "bias_spin0" : "bias_spin2");
 
     auto makeBiasPlot = [&](const std::string& filename, const std::string& hName, const double rV, TFitResultPtr& fitres,
     						double& dMean, double& dMedian, double& dStdDev, double& dLow, double& dUp) ->TH1*  {
@@ -171,7 +178,7 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
             std::cout<<mr.first<<std::endl;
             TFitResultPtr fitres ;
             double dMean=0, dSD=0, dMed=0, dLow=0, dUp=0;
-            auto dist = makeBiasPlot(limitBaseName + "/biasInput_"+label+"_m"+int2Str(mr.first)+".root",
+            auto dist = makeBiasPlot(limitBaseName + "/" + sdir + "/biasInput_"+label+"_m"+int2Str(mr.first)+".root",
                     "biasDist_"+label+"_"+int2Str(mr.first), mr.second,fitres,dMean,dMed,dSD,dLow,dUp);
             if(dist){
                 auto pars = fitres->GetParams();
@@ -195,9 +202,9 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
         }
     };
 
-    doSet("postfit_r1","postfit b-model: r=excluded"  ,massR1s);
-    doSet("postfit_r2","postfit b-model: r=2*excluded",massR2s);
-    doSet("postfit_r5","postfit b-model: r=5*excluded",massR5s);
+    doSet("r1","postfit b-model: r=excluded"  ,massR1s);
+    doSet("r2","postfit b-model: r=2*excluded",massR2s);
+    doSet("r5","postfit b-model: r=5*excluded",massR5s);
 
 
     p->setYTitle("signal strength bias");
@@ -227,7 +234,10 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
 
 void plotBiasTests(std::string limDir, int sig) {
 
-	std::string outName = limDir+"/plots2/biasTest";
+	std::string outName = limDir+"/plots/biasTest";
+	if(sig == 0) outName += "_spin0";
+	else outName += "_spin2";
+
 	doBiasTest(writeables,limDir,sig);
 	Dummy d(outName);
 }
