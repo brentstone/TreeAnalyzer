@@ -67,22 +67,23 @@ unsigned int nHbbMassBins = 30;
 double minHbbMass = 30  ;
 double maxHbbMass = 210 ;
 
-unsigned int nHHMassBins   =86;
-//unsigned int nHHMassBins = 72;
+unsigned int nHHMassBins = 100;
 double minHHMass  = 700;
-double maxHHMass  = 4000;
+double maxHHMass  = 5050;
 
 std::vector<double> hhMassBins = {
         700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,
         1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,
         1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2050,2100,2150,
         2200,2250,2300,2350,2400,2450,2500,2550,2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,
-        3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000
+        3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000,
+		4075,4150,4225,4300,4375,4450,4525,4600,4675,4750,4825,4900,4975,5050
 };
 
-unsigned int nInclHHMassBins   =128;
+unsigned int nInclHHMassBins = 142;
 double minInclHHMass  = 0   ;
-double maxInclHHMass  = 5050;
+double maxInclHHMass  = 6100;
+
 std::vector<double> inclHHMassBins = {0,25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,
         400,425,450,475,500,525,550,575,600,625,650,675,
         700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,
@@ -90,7 +91,8 @@ std::vector<double> inclHHMassBins = {0,25,50,75,100,125,150,175,200,225,250,275
         1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2050,2100,2150,
         2200,2250,2300,2350,2400,2450,2500,2550,2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,
         3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000,
-        4075,4150,4225,4300,4375,4450,4525,4600,4675,4750,4825,4900,4975,5050
+        4075,4150,4225,4300,4375,4450,4525,4600,4675,4750,4825,4900,4975,5050,
+		5125,5200,5275,5350,5425,5500,5575,5650,5725,5800,5875,5950,6025,6100
 };
 
 unsigned int nInclHbbMassBins   =42;
@@ -142,7 +144,7 @@ std::vector<CutStr> lepCats = {
 
 enum DILEPCats  {LEP_INCL, LEP_SF, LEP_OF};
 std::vector<CutStr> dilepCats = {
-        CutStr("IF","(1.0)","incl flavor"),
+        CutStr("IF","(1.0)","IF"),
         CutStr("SF","(isMuon1==isMuon2)","SF"),
         CutStr("OF","(isMuon1!=isMuon2)","OF"),
 };
@@ -162,8 +164,8 @@ std::vector<CutStr > btagCats = {
 std::vector<CutStr > qgBtagCats = {
 //        CutStr("LMT","(hbbCSVCat==1)",""),
 //        CutStr("L"  ,"(hbbCSVCat==1)","")
-        CutStr("LMT","(hbbTag<=0.05)",""),
-        CutStr("L"  ,"(hbbTag<=0.05)","")
+        CutStr("LMT","(hbbTag>=0.01&&hbbTag<=0.04)",""),
+        CutStr("L"  ,"(hbbTag>=0.01&&hbbTag<=0.04)","")
 };
 CutStr inclBtagCat("I","(hbbTag>=0.0)");
 
@@ -353,7 +355,7 @@ std::string getCategoryLabel(const std::string& inStr, bool do1lep){
 
 
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,
-                                 2000,2500,3000,3500,4000};
+                                 2000,2500,3000,3500,4000,4500,5050};
 
 enum SIGNALS  {RADION,BLKGRAV,ALLSIGNAL};
 std::vector<CutStr > signals = {
