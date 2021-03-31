@@ -1,6 +1,7 @@
 #include "TH2.h"
 #include "TH1.h"
 #include "TFile.h"
+#include "TArrow.h"
 #include "HistoPlotting/include/Plotter.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 
@@ -51,9 +52,9 @@ std::pair<double,TH2*> calcSatTS(TH2* mod, TH2 *data, TString name) {
         double binLowY = mod->GetYaxis()->GetBinLowEdge(iY);
 
 	// hack for testing a subrange
-//    if(contMod < 0 || contDat < 11) continue;
-//    if( binLowX >= 150) continue;
-//    if(binLowY >= 1000 ) continue;
+//    if(contMod < 3) continue;
+//    if( binLowX >= 150 || binLowX <= 100) continue;
+//    if(binLowY >= 3100 && binLowY <= 3400 ) continue;
 
         double ts = getSatTS(contMod,contDat);
         hTS->SetBinContent(iX,iY,2*ts);
@@ -110,7 +111,7 @@ for(const auto& sel : (doNonTop ? selsNonTop : selsTop)) {
 std::cout<<std::endl<<"data ts = "<<totTS<<std::endl;
 std::sort(toys_totTS.begin(), toys_totTS.end(), [](const double a, const double b) { return a < b;});
 
-TH1D *htoys = new TH1D("htoys","htoys",40,toys_totTS.front()-20.0,toys_totTS.back()+20.0);
+TH1D *htoys = new TH1D("htoys","htoys",40,toys_totTS.front()-100.0,toys_totTS.back()+100.0);
 for(const auto& val : toys_totTS) htoys->Fill(val);
 Plotter *p = new Plotter();
 p->addStackHist(htoys,"toys");
@@ -118,6 +119,8 @@ p->addStackHist(htoys,"toys");
 std::cout<<"Toys:"<<std::endl;
 showQuantiles(toys_totTS,totTS);
 
+p->setYTitle("N_{toys}");
+p->setXTitle("GoF statistic");
 TCanvas *c = p->draw(false,"toyDist");
 TArrow *arr = new TArrow(totTS,10,totTS,0);
 arr->SetLineWidth(2);

@@ -232,8 +232,6 @@ void PostFitter::plot2DPDFComponents(RooAbsPdf* func, const std::string& name){
 void PostFitter::plotTotal2DPDF(RooAbsPdf* func,RooAbsData* data,  const std::string& name){
 	auto simPdf = dynamic_cast<RooSimultaneous *>(func);
 
-	std::cout<<"simPdf address = "<<simPdf<<std::endl;
-
 	if(simPdf){
         for(const auto& cat : categories){
             auto pdf = simPdf->getPdf(cat.second.c_str());
@@ -341,16 +339,14 @@ void PostFitter::doToys(int nToys){
         utils::setAllConstant(*POI, true);
 
         std::cout<<"r = "<<((RooRealVar*)POI->find("r"))->getVal()<<std::endl;
-//        std::cout<<"TOY top_norm_SF_L prefit val = ";
-//        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
-        fitres = fit(toyModel,*dobs,true);
 
-//        std::cout<<"TOY top_norm_SF_L postfit val = ";
-//        std::cout<<((RooRealVar*)toyModel->GetNuisanceParameters()->find("top_norm_SF_L"))->getVal()<<std::endl;
+        // Initial fit of MC to data
+        fitres = fit(toyModel,*dobs,true);
 
         utils::setAllConstant(*POI, false);
         w->saveSnapshot("postfit", utils::returnAllVars(w));
-        //Now generate toy models about the fit errors
+
+        //Now generate toy models about the fit errors (toyModel is now post-fit)
         cloneFunc =  (RooAbsReal*)toyModel->GetPdf()->cloneTree() ;
         cloneFunc->Print();
         cloneParams = cloneFunc->getObservables(fitres->floatParsFinal()) ;
