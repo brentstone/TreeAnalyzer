@@ -255,7 +255,7 @@ void makeSignalYields(const std::string& name, const std::string& filename,
         plotter.addFit(yieldGraph,"yield");
         plotter.write(filename+"_"+name+"_"+catName+"_yield.root");
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_yield.root ";
-        argsP1 += " -minX 700 -maxX 3600 ";
+        argsP1 += " -minX 700 -maxX 4600 ";
         argsP1 += " -g yield:laur6 ";
         argsP1 += " -var "+MOD_MS+" ";
         MakeJSON(filename+"_"+name+"_"+catName+"_yield.json",argsP1);
@@ -380,7 +380,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
 
         std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root "
                 +" -var "+MOD_MS +" ";
-        argsP1 += doExpo ? " -minX 700 -maxX 3800 " :" -minX 700 -maxX 3800 ";
+        argsP1 += doExpo ? " -minX 700 -maxX 4600 " :" -minX 700 -maxX 4600 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "
                 +  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
     };
@@ -420,7 +420,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,true,&oldJSON,iF,doExpo);
 
         std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root "
-                + " -minX 700 -maxX 3800 "+" -var "+MOD_MS +" ";
+                + " -minX 700 -maxX 4600 "+" -var "+MOD_MS +" ";
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1
                 +" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
         newJSON.replaceEntry(vnMJ("alpha"), oldJSON.getP(vnMJ("alpha")) );
@@ -464,7 +464,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
 
         std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root "
                 +" -var "+MOD_MS +" ";
-        argsP1 += " -minX 700 -maxX 3800 ";
+        argsP1 += " -minX 700 -maxX 4600 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
     };
 
@@ -824,7 +824,7 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
                     &mjjJSON,&mvvJSON,false,doExpo,iF);
 
             std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root "
-                    + " -minX 700 -maxX 3800 -var "+MOD_MS+" ";
+                    + " -minX 700 -maxX 4600 -var "+MOD_MS+" ";
             std::string jsonArgs = argsP1
                     +" -g "+ (doExpo ? fitMJJExpo : fitMJJStd ) + ","+fitMVV+","+fitCond;
 

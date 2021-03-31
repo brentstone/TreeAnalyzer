@@ -78,7 +78,7 @@ std::string getMVVExpoMinMaxStr(std::string sample, bool is1l){
             eMax = 2000;
         } else if(strFind(sample,bkgSels[BKG_MW])){
             eMin = 1000;
-            eMax = 2000;
+            eMax = 2500;
         } else{
             eMin = 1000 ;
             eMax = 2500 ;
@@ -945,7 +945,7 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
         const std::string& funcParamPostfix=""){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
 
-    printf("%s step 8 - convert fit func to 2d template\n",name.c_str());
+    printf("%s step 8 - convert figt func to 2d template\n",name.c_str());
 
     auto makeTemplate = [&](std::string jsonFile, std::string catName) {
         std::unique_ptr<TAxis> xAx(new TAxis(nHbbMassBins*10,minHbbMass,maxHbbMass));
@@ -1158,6 +1158,15 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
             sels.emplace_back(ci.name(),ci.cut());
         }
     }
+
+    for(const auto& b : btagCats) {
+        std::string inclCut = "((("+lepCats[LEP_EMU].cut+"&&"+b.cut+"&&"+purCats[PURE_I].cut
+        		+"&&"+selCuts1[SEL1_FULL].cut+")";
+        inclCut += ")||("+dilepCats[LEP_INCL].cut+"&&"+b.cut+"&&"+selCuts2[SEL2_FULL].cut+"))";
+
+        sels.emplace_back("emu_"+b+"_I_full_IF_"+b+"_full",inclCut);
+    }
+
 
     std::string outFileName=filename+"_"+name+ (
             doIncl ? "_inclM_distributions.root" : "_distributions.root");
