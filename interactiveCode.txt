@@ -9,10 +9,12 @@
 # get MC yields for all bkg processes
 # get signal MC yields for all masses
 # get 1l electron eta comparisons
-# make plot GoF distribution from combine procedure
+# plot GoF distribution from combine procedure
 # compare bbVV and bbtautau H->WW reco
 # print out limits from file
 # HEM dilepton correction plots
+# Bkg MC plots for AN
+# Lepton efficiency plots in signal
 
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 ## tt SF AN plots
@@ -26,7 +28,7 @@ p->addStackHist((TH1*)fm->Get("other_noHbb_hbbMass"),"non-t#bar{t} MC");
 p->addHist((TH1*)fd->Get("data_noHbb_hbbMass"),"data");
 p->draw(false,"s");
 
-TFile *f = TFile::Open(pre+"HHbb1o2l_ttbarSF.json.root");
+TFile *f = TFile::Open("HHbb1o2l_ttbarSF.json.root");
 TGraphErrors *g;
 f->GetObject("RATIO",g);
 g->GetXaxis()->SetNameTitle("mhh","m_{HH} [GeV]");
@@ -46,15 +48,13 @@ Plotter *p = new Plotter();
 float limfactor = 1000;
 
 std::vector<TString> fnames = {
-	"~/Dropbox/Physics/HHbbWW/betrees/Run2/expLimits_092920_blk.root",
-	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_072420_comb_blk.root",
-	"~/Dropbox/Physics/HHbbWW/betrees/Run2/expLimits_092920_rad.root",
-	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_072420_comb_rad.root",
-	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_b2g18008_blkgrav.root",
-	"~/Dropbox/Physics/HHbbWW/beTEST/Run2/limits_b2g18008_radion.root",
+	"~/Dropbox/Physics/HHbbWW/betrees/master/limits_b2g18008_radion.root",
+	"~/Dropbox/Physics/HHbbWW/betrees/master/limits_b2g18008_blkgrav.root",
+	"~/Dropbox/Physics/HHbbWW/betrees/master/expLimits_rad_030221.root",
+	"~/Dropbox/Physics/HHbbWW/betrees/master/expLimits_blk_030221.root",
 };
 
-std::vector<TString> ids = {"spin-2 new","spin-2 old","spin-0 new","spin-0 old","spin-2 B2G-18-008","spin-0 B2G-18-008"};
+std::vector<TString> ids = {"B2G-18-008 spin-0","B2G-18-008 spin-2","Current spin-0","Current spin-2"};
 
 for(unsigned iF=0; iF<fnames.size(); ++iF){
 if(iF < 2) {
@@ -82,18 +82,19 @@ masses.push_back(pt.first);
 lims.push_back(pt.second);
 }
 TGraph *g = new TGraph(pts.size(),&masses[0],&lims[0]);
-p->addGraph(g,ids[iF],-1,1,4,20,0.8);
+p->addGraph(g,ids[iF],-1,1,4,20,0.8,true,true,false,"L");
 limfactor = 1000;
 }
 p->setXTitle("#it{m}_{X} [GeV]");
 p->setYTitle("#sigma#it{B}(X#rightarrowHH) [fb^{-1}]");
 p->draw(false,"gs");
+
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 
 ## ----------------------------------------------------------------------------------------------------------------------------------------
 ## Run some expected limits
 ## ----------------------------------------------------------------------------------------------------------------------------------------
-for mx in 800 900 1000 2000 3000
+for mx in 800 900 1000 1200 1400 1600 1800 2000 2500 3000 3500
 do
   nohup combine -m ${mx} -M AsymptoticLimits --run expected -v 2 --rAbsAcc=0.00001 combinedCard.txt &
 done
@@ -296,11 +297,13 @@ Plotter *p = new Plotter();
 p->addStackHist(h,"toys");
 p->setXTitle("GoF statistic");
 p->setYTitle("N_{toys}");
-TCanvas *c = p->draw(false,"s");
 TArrow *arr = new TArrow(tsData,h->GetMaximum(),tsData,0);
 arr->SetLineWidth(2);
 arr->SetLineColor(kRed);
+//p->addLegendEntry(0,arr,"data");
+TCanvas *c = p->draw(false,"s");
 arr->Draw();
+
 
 std::cout<<"data ts = "<<tsData<<std::endl;
 std::cout<<"pval is = "<<pval/tt->GetEntries()<<std::endl;
@@ -390,4 +393,91 @@ p->rebin(2);
 p->draw(false,suf);
 }
 
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Bkg MC plots for AN
+## ----------------------------------------------------------------------------------------------------------------------------------------
+std::vector<TString> procs = {"qg","losttw","mw","mt"};
+std::map<TString,TString> bmap { {"qg","q/g"}, {"mw","m_{W}"}, {"losttw","lost t/W"}, {"mt","m_{t}"} };
+std::vector<TString> regs= {"emu_LMT_I_full","IF_LMT_full"};
+std::vector<TString> vars= {"hbbMass","hhMass"};
+
+
+for(const auto& r : regs) for(const auto& v : vars) {
+std::cout<<r<<" "<<v<<std::endl;
+
+double bw = 0;
+Plotter *pp = new Plotter();
+
+for(const auto& p : procs){
+std::cout<<p<<std::endl;
+TFile *f = TFile::Open("bkgInputs/HHbb1o2l_"+p+"_distributions.root");
+TString sup = (p=="qg"&&r.Contains("emu")?"wQCD_noQCDSF_":"");
+TH1 *h = (TH1*)f->Get(p+"_"+sup+r+"_"+v);
+
+bw = h->GetBinWidth(1);
+for(int i=2; i<=h->GetNbinsX(); ++i) {
+double inCont = h->GetBinContent(i);
+if(inCont <= 0) continue;
+if(h->GetBinWidth(i) <= bw) continue;
+
+double sf = bw / h->GetBinWidth(i);
+h->SetBinContent(i,inCont*sf);
+
+double inErr = h->GetBinError(i);
+if(inErr == 0) continue;
+h->SetBinError(i,inErr*sf);
+}
+
+pp->addStackHist(h,bmap[p]);
+}
+
+pp->setCMSLumi(0,10);
+float rf = (v=="hhMass"?4:1);
+pp->rebin(rf);
+pp->setYTitle(TString::Format("Events / %d GeV",int(bw*rf)));
+
+pp->draw(false,r+v);
+}
+
+## ------------------------------------------------------------------------------------------------------------------------------------
+
+## ----------------------------------------------------------------------------------------------------------------------------------------
+## Lepton efficiency plots in signal
+## ----------------------------------------------------------------------------------------------------------------------------------------
+
+std::vector<TString> chans{"1l","2l"};
+std::vector<TString> flavs{"m","e"};
+std::vector<TString> flavs2{"mm","ee","me","em"};
+
+std::vector<TString> sels {"base","recoIDIso","recoID","reco"};
+std::vector<TString> selSs {"den","reco. + ID + Iso","reco. + ID","reco."};
+
+TString denID = "genpteta_";
+TString sig = "radion";
+
+TFile *f = TFile::Open("leptonEffs.root");
+for(const auto& ch : chans) {
+	for(const auto& fl : flavs) {
+		Plotter *p = new Plotter();
+		for(int i=0; i<sels.size();++i){
+			TH1 *h = (TH1*)f->Get(sig+"_"+ch+"_"+denID+fl+"_"+sels[i]+"_mx");
+			p->addHist(h,selSs[i],-1,1,4,20,1,true,false);
+		}
+		p->setYTitle("Efficiency");
+		p->drawRatio(0,"stack",false,false,ch+" "+fl);
+	}
+	if(ch=="1l") continue;
+	for(const auto& fl : flavs2) {
+		Plotter *pp = new Plotter();
+		for(int i=0; i<sels.size();++i){
+			TH1 *h = (TH1*)f->Get(sig+"_"+ch+"_"+denID+fl+"_"+sels[i]+"_mx");
+			pp->addHist(h,selSs[i],-1,1,4,20,1,true,false);
+		}
+		pp->setYTitle("Efficiency");
+		pp->drawRatio(0,"stack",false,false,ch+" "+fl);
+	}
+
+}
 ## ------------------------------------------------------------------------------------------------------------------------------------
