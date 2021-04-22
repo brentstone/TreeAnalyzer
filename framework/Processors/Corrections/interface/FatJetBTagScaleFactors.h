@@ -32,13 +32,15 @@ protected:
 	void fillSfLine(int i, sfLine& line, std::string& colVal);
 	std::string dataDir;
 	std::string sfFile="";
+	YR currYr = YR_NONE;
 
 public:
 	FatJetBTagScaleFactors(const std::string& dataDir) : dataDir(dataDir) {};
 	~FatJetBTagScaleFactors() {};
 	void setParameters(const FatJetParameters& parameters, int year);
-	float getSF(const FatJetParameters& parameters, const std::vector<const FatJet*>& fatJets,
+	float getSF(const FatJetParameters& parameters, const FatJet* fj, const bool isTT,
 			CorrHelp::CORRTYPE corrT = CorrHelp::NOMINAL) const;
+	float getTTBAR_dak8_SF(const FatJet* fj, YR yr, CorrHelp::CORRTYPE corrT = CorrHelp::NOMINAL) const;
 
 };
 

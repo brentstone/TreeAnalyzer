@@ -490,7 +490,7 @@ float DefaultSearchRegionAnalyzer::getLeptonWeight() {
 }
 
 float DefaultSearchRegionAnalyzer::getFJBTagWeights() {
-	return fjbtagSFProc->getSF(parameters.fatJets,{hbbCand});
+	return fjbtagSFProc->getSF(parameters.fatJets,hbbCand,(mcProc == FillerConstants::TTBAR));
 }
 
 float DefaultSearchRegionAnalyzer::getSJBTagWeights() {
