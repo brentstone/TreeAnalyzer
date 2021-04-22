@@ -42,6 +42,8 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
         doPDFWeights = (treeInt > TREE_OTHER);
+
+        parameters.fatJets.fatJetBtagSFFile = "corrections/btagging/deepak8_hbbSF_new.csv";
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC,CORRTYPE hemUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
@@ -60,6 +62,8 @@ public:
         }
 
     }
+
+
 
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
 
@@ -89,6 +93,8 @@ public:
         outTree->addSingle(era_,"","era");
         outTree->addSingle(ht_,  "",  "ht");
         outTree->addSingle(met_,  "",  "met");
+        outTree->addSingle(metphi_,  "",  "metphi");
+
         outTree->addSingle(event_, "", "event");
         outTree->addSingle(run_, "", "run");
         outTree->addSingle(lepChan_,  "",  "lepChan");
@@ -124,6 +130,7 @@ public:
         outTree->addSingle(wjjMass_,  "",  "wjjMass");
         outTree->addSingle(wlnuMass_,  "",  "wlnuMass");
         outTree->addSingle(wlnuPT_,  "",  "wlnuPT");
+        outTree->addSingle(wwDM_,  "",  "wwDM");
 
         outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
 
@@ -165,8 +172,6 @@ public:
         	passPre1 = false;
         	passPre2 = false;
         }
-        fjprocTest.reset(new FatJetBTagScaleFactors (dataDirectory));
-        fjprocTest->setParameters(parameters.fatJets,int(*reader_event->dataEra));
 
         if(lepChan != SINGLELEP || !hbbCand || !wjjCand)  passPre1 = false;
         if(lepChan != DILEP || !hbbCand)                  passPre2 = false;
@@ -176,8 +181,6 @@ public:
         else               lepChan_ = NOCHANNEL;
 
         if(!doPDFWeights && lepChan_ == NOCHANNEL) return false;
-
-        fjbtag_N_ = fjprocTest->getSF(parameters.fatJets,{hbbCand});
 
         switch(FillerConstants::DataEra(*reader_event->dataEra)){
         case FillerConstants::ERA_2018:
@@ -195,6 +198,7 @@ public:
 
         ht_        = ht;
         met_       = reader_event->met.pt();
+        metphi_    = reader_event->met.phi();
         event_     = *reader_event->event;
         run_       = *reader_event->run;
         sampParam_ = *reader_event->sampParam;
@@ -218,6 +222,7 @@ public:
                 wjjTau2o1_ = wjjCand->tau2otau1();
                 wjjMass_   = wjjCand->sdMom().mass();
                 wjjPT_     = wqq.pt();
+                wwDM_      = wwDM;
 
                 if(hbbCand) {
                     hhMass_  = hh.mass();
@@ -234,6 +239,7 @@ public:
                 wjjTau2o1_ = 0;
                 wjjMass_   = 0;
                 wjjPT_     = 0;
+                wwDM_      = 0;
 
                 hhMass_  = 0;
                 hhMassBasic_   = 0;
@@ -282,6 +288,7 @@ public:
             wjjMass_   = 0;
             wjjPT_     = 0;
             hhMassBasic_ = 0;
+            wwDM_ = 0;
         } else {
             isMuon1_ = 0;
             isMuon2_ = 0;
@@ -325,12 +332,12 @@ public:
         xsec_    = getXSecWeight();
         pu_N_    = getPUWeight();
         lep_N_   = getLeptonWeight();
-//        fjbtag_N_= getFJBTagWeights(); --> currently done in runEvents()
+        fjbtag_N_= getFJBTagWeights();
         btag_N_  = getAK4BTagWeights();
 //        sjbtag_N_= getSJBTagWeights();
         topPt_N_ = getTopPTWeight();
         trig_N_  = getTriggerWeight();
-        prefire_N_ = FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018 ? 1.0 : *reader_event->prefweight;
+        prefire_N_ = (FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2018) ? 1.0 : *reader_event->prefweight;
     }
 
     void fillGenVariables() {
@@ -432,8 +439,9 @@ public:
         w_bAk4_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN));
         w_bAk4_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL));
         w_bAk4_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL));
-        w_bAk8_Up_   = fjprocTest->getSF(parameters.fatJets,{hbbCand},UP);
-        w_bAk8_Down_ = fjprocTest->getSF(parameters.fatJets,{hbbCand},DOWN);
+
+        w_bAk8_Up_       = float(fjbtagSFProc->getSF(parameters.fatJets,hbbCand,mcProc == FillerConstants::TTBAR,UP));
+        w_bAk8_Down_     = float(fjbtagSFProc->getSF(parameters.fatJets,hbbCand,mcProc == FillerConstants::TTBAR,DOWN));
 
         w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
 
@@ -483,6 +491,7 @@ public:
     //SR variables
     float ht_        = 0;
     float met_       = 0;
+    float metphi_    = 0;
 
     size8 isMuon1_    = 0;
     size8 isMuon2_    = 0;
@@ -516,6 +525,7 @@ public:
     float wjjPT_     = 0;
     float wlnuMass_  = 0;
     float wlnuPT_    = 0;
+    float wwDM_      = 0;
 
     size8 nAK4Btags_ = 0;
 
@@ -552,8 +562,6 @@ public:
 
     bool addUncVariables = false;
     bool doPDFWeights = false;
-
-    std::unique_ptr<FatJetBTagScaleFactors> fjprocTest;
 
 };
 
