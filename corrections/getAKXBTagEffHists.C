@@ -92,7 +92,10 @@ public:
             const float pt2 = sj2.pt();
             const float eta2 = sj2.eta();
 
-            auto fill = [&](const TString& label, bool isSJ1) {
+            const float ptJ = j->pt();
+            const float etaJ = j->eta();
+
+            auto fillSJ = [&](const TString& label, bool isSJ1) {
                 TString genS = isSignal() ? "sig" : "bkg";
                 TString suf, flvS;
                 float pt, eta;
@@ -120,15 +123,41 @@ public:
                 }
             };
 
+            auto fillFJ = [&](const TString& label) {
+                TString genS = isSignal() ? "sig" : "bkg";
+                TString suf = "_fj";
+                TString flvS = flvS1+flvS2;
+
+
+                plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(ptJ,fabs(etaJ),weight);
+                plotter.getOrMake2DPre(genS+"_"+id+"_"+flvS+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(ptJ,fabs(etaJ),weight);
+
+                plotter.getOrMake2DPre(pref+"_"+id+"_"+flvS+"_fulleta"+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(ptJ,etaJ,weight);
+                plotter.getOrMake2DPre(genS+"_"+id+"_"+flvS+"_fulleta"+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(ptJ,etaJ,weight);
+
+                if(!isSignal() && mcProc != FillerConstants::QCD) {
+                    plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,24,0,2.4)->Fill(ptJ,fabs(etaJ),weight);
+                    plotter.getOrMake2DPre("bkg_noQCD_"+id+"_"+flvS+"_fulleta"+suf, label,";jet p_{T}[GeV];jet |#eta|",196,20,1000,48,-2.4,2.4)->Fill(ptJ,fabs(etaJ),weight);
+                }
+            };
+
+            // subjet
             if(pt1 >= 20 && fabs(eta1) <= 2.4) {
-                fill("incl",true);
-                if(BTagging::passSubjetBTagLWP(parameters.jets,sj1)) fill("loose",true);
-                if(BTagging::passSubjetBTagMWP(parameters.jets,sj1)) fill("med",true);
+                fillSJ("incl",true);
+                if(BTagging::passSubjetBTagLWP(parameters.jets,sj1)) fillSJ("loose",true);
+                if(BTagging::passSubjetBTagMWP(parameters.jets,sj1)) fillSJ("med",true);
             }
             if(pt2 >= 20 && fabs(eta2) <= 2.4) {
-                fill("incl",false);
-                if(BTagging::passSubjetBTagLWP(parameters.jets,sj2)) fill("loose",false);
-                if(BTagging::passSubjetBTagMWP(parameters.jets,sj2)) fill("med",false);
+                fillSJ("incl",false);
+                if(BTagging::passSubjetBTagLWP(parameters.jets,sj2)) fillSJ("loose",false);
+                if(BTagging::passSubjetBTagMWP(parameters.jets,sj2)) fillSJ("med",false);
+            }
+
+            // fatjet
+            if(pt1 >= 20 && pt2 >= 20 && fabs(eta1) <= 2.4 && fabs(eta2) <= 2.4 && fabs(etaJ) <= 2.4) {
+            	fillFJ("incl");
+            	if(j->deep_MDZHbb() >= 0.8)  fillFJ("loose");
+            	if(j->deep_MDZHbb() >= 0.97) fillFJ("tight");
             }
 
         }
