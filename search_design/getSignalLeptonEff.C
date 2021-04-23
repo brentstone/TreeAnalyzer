@@ -82,7 +82,7 @@ public:
 
     	// do old electron selection
     	if(isMuon) return;
-    	bool passOldElID = ((const Electron*)sh)->passTightID_noIso();
+    	bool passOldElID = ((const Electron*)sh.recolep1)->passTightID_noIso();
     	bool passOldElIso = sh.recolep1->miniIso() <= 0.1;
 
     	if(passOldElID) {
