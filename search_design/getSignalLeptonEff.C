@@ -80,6 +80,16 @@ public:
     		if(passIso1) plt(sn,chS+"_recoIDIso");
     	}
 
+    	// do old electron selection
+    	if(isMuon) return;
+    	bool passOldElID = ((const Electron*)sh)->passTightID_noIso();
+    	bool passOldElIso = sh.recolep1->miniIso() <= 0.1;
+
+    	if(passOldElID) {
+    		plt(sn,chS+"_oldRecoID");
+    		if(passOldElIso) plt(sn,chS+"_oldRecoIDIso");
+    	}
+
     }
 
     void getEfficiency2(TString sn, SignalHelper& sh, bool isMuon1, bool isMuon2) {
