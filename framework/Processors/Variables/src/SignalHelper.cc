@@ -119,6 +119,14 @@ SignalHelper::SignalHelper(DiHiggsEvent dhEvt, std::shared_ptr<MuonReader> reade
     		else if(genlep1->absPdgId() == ParticleInfo::p_eminus) lepStr += "e";
     	}
 
+    	if(ParticleInfo::isQuark(dhEvt.w1_d1->absPdgId()) && ParticleInfo::isQuark(dhEvt.w1_d2->absPdgId())) {
+    		genWqq = dhEvt.w1_d1->p4() + dhEvt.w1_d2->p4();
+    		hasGenWqq = true;
+    	} else if (ParticleInfo::isQuark(dhEvt.w2_d1->absPdgId()) && ParticleInfo::isQuark(dhEvt.w2_d2->absPdgId())) {
+    		genWqq = dhEvt.w2_d1->p4() + dhEvt.w2_d2->p4();
+    		hasGenWqq = true;
+    	}
+
 	}
 }
 
@@ -181,6 +189,18 @@ void SignalHelper::setRecoHbb(std::vector<FatJet>& fatjets, double matchDR) {
 		return;
 	}
 	recoHbb = getMatchedFJ(genHbb->p4(),fatjets,matchDR);
+}
+
+void SignalHelper::setRecoWqq(std::vector<FatJet>& fatjets, double matchDR) {
+	if (!fatjets.size()) {
+		recoWqq = 0;
+		return;
+	}
+	if (!hasGenWqq) {
+		recoWqq = 0;
+		return;
+	}
+	recoWqq = getMatchedFJ(genWqq,fatjets,matchDR);
 }
 
 
