@@ -42,8 +42,6 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
         doPDFWeights = (treeInt > TREE_OTHER);
-
-        parameters.fatJets.fatJetBtagSFFile = "corrections/btagging/deepak8_hbbSF_new.csv";
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC,CORRTYPE hemUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){

@@ -52,7 +52,7 @@ ParameterSet setCommonParameters() {
     paramSet.fatJets.hbbLL_minSJs      = 2;
     paramSet.fatJets.hbbLL_minDRbbLL   = 2.0;
 
-    paramSet.fatJets.fatJetBtagSFFile = "corrections/btagging/deepak8_hbbSF_new.csv";
+    paramSet.fatJets.fatJetBtagSFFile = "corrections/btagging/deepak8_hbbSF_final_noTTSF.csv";
     paramSet.fatJets.DeepAK8_WP = {-100,0.8,0.97};
     paramSet.fatJets.DeepAK8_LWP = paramSet.fatJets.DeepAK8_WP[1];
     paramSet.fatJets.DeepAK8_TWP = paramSet.fatJets.DeepAK8_WP[2];
