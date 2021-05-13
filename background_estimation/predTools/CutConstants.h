@@ -24,8 +24,8 @@ std::vector<CutStr > processes = {
         CutStr("wjets"     ,"(process==3)","W+jets"),
         CutStr("zjets"     ,"(process==4)","Z+jets"),
         CutStr("qcd"       ,"(process==8)","QCD multi-jet"),
-        CutStr("other1"     ,"(process>1&&!(process==2||process==3||process==8))","Other 1l SM"),
-        CutStr("other2"     ,"(process>1&&!(process==2||process==4))","Other 2l SM")
+        CutStr("other1"     ,"(process>1&&!(process==2||process==3||process==8))","Other SM"),
+        CutStr("other2"     ,"(process>1&&!(process==2||process==4))","Other SM")
 };
 
 enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
@@ -55,7 +55,7 @@ CutStr drCrC  ("drCrC"   , "dilepDR>=0.4");
 //CutStr aHEM ("aHEM","((era==2018&&run>=319077)?(isMuon1==0?(lep1ETA>-1.479||lep1Phi<-1.55||lep1Phi>-0.9):1.0)&&(isMuon2==0?(lep2ETA>-1.479||lep2Phi<-1.55||lep2Phi>-0.9):1.0):1.0)");
 CutStr aHEM ("aHEM","(era!=2018||run<319077||!hasHEMLep)");
 
-CutStr preSel1("preSel1"  , "lepChan==1");
+CutStr preSel1("preSel1"  , "(lepChan==1)");
 CutStr preSel2("preSel2"  , "(lepChan==2&&"+aHEM.cut+")");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
