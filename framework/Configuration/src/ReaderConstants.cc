@@ -143,7 +143,7 @@ void setSubjetWorkingPoints(JetParameters& jetParams, std::vector<float> wps) {
 
 ParameterSet set2016Parameters() {
     ParameterSet paramSet = setCommonParameters();
-    paramSet.event.lumi = 35.9;
+    paramSet.event.lumi = 36.33;
     paramSet.event.puCorrSFFile = "corrections/pileup/puSF_2016.root";
     paramSet.event.leptonCorrSFFile = "corrections/trigger/triggerSF_2016.root";
     paramSet.event.passTrigger = &EventSelection::passTriggerSuite2016;
@@ -184,7 +184,7 @@ ParameterSet set2016Parameters() {
 }
 ParameterSet set2017Parameters() {
     ParameterSet paramSet = setCommonParameters();
-    paramSet.event.lumi = 41.5;
+    paramSet.event.lumi = 41.53;
     paramSet.event.puCorrSFFile = "corrections/pileup/puSF_2017.root";
     paramSet.event.leptonCorrSFFile = "corrections/trigger/triggerSF_2017.root";
     paramSet.event.passTrigger = &EventSelection::passTriggerSuite2017;
@@ -226,7 +226,7 @@ ParameterSet set2017Parameters() {
 }
 ParameterSet set2018Parameters() {
     ParameterSet paramSet = setCommonParameters();
-    paramSet.event.lumi = 59.7;
+    paramSet.event.lumi = 59.74;
     paramSet.event.puCorrSFFile = "corrections/pileup/puSF_2018.root";
     paramSet.event.leptonCorrSFFile = "corrections/trigger/triggerSF_2018.root";
     paramSet.event.passTrigger = &EventSelection::passTriggerSuite2018;

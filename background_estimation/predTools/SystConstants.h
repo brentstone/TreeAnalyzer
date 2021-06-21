@@ -44,7 +44,7 @@ float sf_sdmass_res_Run2 = 1.133;
 float unc_sdmass_res_2016 = 0.2;
 float unc_sdmass_res_2017 = 0.05;
 float unc_sdmass_res_2018 = 0.041;
-float unc_sdmass_res_Run2 = 0.085;
+float unc_sdmass_res_Run2 = 0.086;
 
 
 }
