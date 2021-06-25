@@ -8,7 +8,7 @@ using namespace ASTypes;
 std::vector<double> hhMassRebins = {
         700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,
         1700,1750,1800,1850,1900,1950,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,3100,
-        3250,3400,3550,3700,3850,4000
+        3250,3400,3550,3700,3850,4000,4150,4300,4450,4600,4750,4900,5050
 };
 
 
@@ -75,11 +75,11 @@ void addSignalNormSysts(DataCardMaker& card, std::string sigName, bool is1l, TSt
 	bool isLP = is1l ? fullcat.Contains("LP") : false;
 	bool isRad = TString(sigName).BeginsWith("rad");
 
-	double eeFrac = 0.46;
+	double eeFrac = 0.45;
 	double mmFrac = 1.0 - eeFrac;
-	double tau21LPFrac = 0.727;
+	double tau21LPFrac = 1.0 - 0.255;
 
-    card.addSystematic("lumi","lnN",{{sigName,1.018}});         // from Lumi POG TWIKI
+    card.addSystematic("lumi","lnN",{{sigName,1.016}});         // from Lumi POG TWIKI
     card.addSystematic("prefire","lnN",{{sigName,1.005}});      // prefire weights (1l could be 0.4% but this is fine)
     card.addSystematic("pdfscale","lnN",{{sigName,isRad ? 1.02 : 1.025}}); // pdf + scale
 
