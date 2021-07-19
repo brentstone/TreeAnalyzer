@@ -40,9 +40,9 @@ void makeSearchVars(DataCardMaker& card) {
 void addSDMassSysts(DataCardMaker& card, std::string yr) {
     if(yr == "") {
     	card.addParamSystematic("hbb_scale"+yr,    sf_sdmass_scale_Run2-1.0,unc_sdmass_scale_Run2);
-        card.addParamSystematic("hbb_scale_top"+yr,sf_sdmass_scale_Run2-1.0,0.01*sf_sdmass_scale_Run2);
+        card.addParamSystematic("hbb_scale_top"+yr,sf_sdmass_scale_Run2-1.0,0.02*sf_sdmass_scale_Run2);
         card.addParamSystematic("hbb_res"+yr,    sf_sdmass_res_Run2-1.0,unc_sdmass_res_Run2);
-        card.addParamSystematic("hbb_res_top"+yr,sf_sdmass_res_Run2-1.0,unc_sdmass_res_Run2);
+        card.addParamSystematic("hbb_res_top"+yr,sf_sdmass_res_Run2-1.0,2*unc_sdmass_res_Run2);
     } else if(yr == "_16") {
     	card.addParamSystematic("hbb_scale"+yr,    1.0-1.0,0.0094);
         card.addParamSystematic("hbb_scale_top"+yr,1.0-1.0,0.01);
@@ -402,7 +402,7 @@ if (channel == 0 || channel == 2) {
         addSDMassSysts(card,yr);    // soft-drop mass, applied to resonant mbb
 
         // QG normalization and KDE shape systematics (PT = scale (m), OPT = res (1/m))
-        card.addSystematic(systName(bkgSels[BKG_QG],"norm")  ,"lnN",{{bkgSels[BKG_QG],1.5}});
+        card.addSystematic(systName(bkgSels[BKG_QG],"norm")  ,"lnN",{{bkgSels[BKG_QG],2.0}});
         card.addParamSystematic(systName(bkgSels[BKG_QG],"PTX",b+"_2l")    ,0.0,0.75);
         card.addParamSystematic(systName(bkgSels[BKG_QG],"OPTX",b+"_2l")   ,0.0,0.5);
         card.addParamSystematic(systName(bkgSels[BKG_QG],"PTY",b+"_2l")    ,0.0,1.0);
@@ -414,9 +414,9 @@ if (channel == 0 || channel == 2) {
 
         // Top normalization and HH resolution (1/m) and scale (m)
         if(reg != REG_NONTOPCR) {
-            card.addSystematic(systName("top","norm"),"lnN",{{bkgSels[BKG_LOSTTW],1.35},{bkgSels[BKG_MW],1.35},{bkgSels[BKG_MT],1.35}});
+            card.addSystematic(systName("top","norm"),"lnN",{{bkgSels[BKG_LOSTTW],1.7},{bkgSels[BKG_MW],1.7},{bkgSels[BKG_MT],1.7}});
         } else {
-            card.addSystematic(systName("top","norm"),"lnN",{{bkgSels[BKG_LOSTTW],1.35},{bkgSels[BKG_MW],1.35}});
+            card.addSystematic(systName("top","norm"),"lnN",{{bkgSels[BKG_LOSTTW],1.7},{bkgSels[BKG_MW],1.7}});
         }
 
         card.addParamSystematic(systName("top","res"  ) ,0.0,0.75);
